@@ -41,7 +41,7 @@ export default function OnboardingPage() {
             transition={{ duration: 0.6 }}
           >
             <WorkspaceStep 
-              onNext={(name) => {
+              onNext={(name : string) => {
                 setData(d => ({ ...d, workspaceName: name }));
                 next();
               }} 
@@ -59,7 +59,7 @@ export default function OnboardingPage() {
           >
             <TutorialStep 
               workspaceName={data.workspaceName}
-              onNext={(schemaName) => {
+              onNext={(schemaName: string) => {
                 setData(d => ({ ...d, firstSchemaName: schemaName }));
                 next();
               }} 

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { SocialAuth } from "@/components/auth/social-auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -205,6 +206,10 @@ export default function RegisterPage() {
           {loading ? "Creating Account..." : "Create Free Account"}
         </Button>
       </form>
+
+      <div className="mt-10">
+        <SocialAuth />
+      </div>
 
       <div className="mt-16 pt-10 border-t border-border">
         <p className="text-ink-muted text-xs font-light">

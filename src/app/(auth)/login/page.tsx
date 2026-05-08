@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { SocialAuth } from "@/components/auth/social-auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -132,6 +133,10 @@ export default function LoginPage() {
           {loading ? "Authenticating..." : "Sign in to Dashboard"}
         </Button>
       </form>
+
+      <div className="mt-10">
+        <SocialAuth />
+      </div>
 
       <div className="mt-16 pt-10 border-t border-border">
         <p className="text-ink-muted text-xs font-light">
