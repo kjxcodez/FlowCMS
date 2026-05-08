@@ -1,0 +1,63 @@
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "richtext"
+  | "number"
+  | "boolean"
+  | "date"
+  | "media"
+  | "reference";
+
+export interface FieldDefinition {
+  id: string;
+  name: string;
+  slug: string;
+  type: FieldType;
+  required: boolean;
+  multiple: boolean;
+  options?: Record<string, unknown>;
+}
+
+export type BlockType = "heading" | "text" | "image" | "cta" | "divider";
+
+export interface Block {
+  id: string;
+  type: BlockType;
+  props: Record<string, unknown>;
+}
+
+export interface PlanLimits {
+  contentTypes: number;
+  apiRequestsPerMonth: number;
+  environments: number;
+  webhooks: boolean;
+  customRoles: boolean;
+  sso: boolean;
+}
+
+export const PLAN_LIMITS: Record<string, PlanLimits> = {
+  HOBBY: {
+    contentTypes: 3,
+    apiRequestsPerMonth: 5_000,
+    environments: 1,
+    webhooks: false,
+    customRoles: false,
+    sso: false,
+  },
+  PRO: {
+    contentTypes: -1,
+    apiRequestsPerMonth: 500_000,
+    environments: 3,
+    webhooks: true,
+    customRoles: false,
+    sso: false,
+  },
+  TEAM: {
+    contentTypes: -1,
+    apiRequestsPerMonth: -1,
+    environments: -1,
+    webhooks: true,
+    customRoles: true,
+    sso: true,
+  },
+};
