@@ -25,7 +25,8 @@ export async function middleware(request: NextRequest) {
   // For protected routes, check for Better Auth session cookie.
   // The actual session is validated server-side by the API routes.
   const sessionToken =
-    request.cookies.get("better-auth.session_token")?.value;
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value;
 
   if (!sessionToken) {
     const loginUrl = new URL("/login", request.url);

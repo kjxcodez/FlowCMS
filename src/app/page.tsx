@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Ticker } from "@/components/landing/Ticker";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { useSession } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +95,7 @@ const COMING_SOON = [
 ];
 
 export default function LandingPage() {
+  const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -166,14 +168,24 @@ export default function LandingPage() {
                 ))}
               </div>
             )}
-            <Link href="/login" className="hidden lg:flex text-[11px] font-bold uppercase tracking-[0.15em] text-ink-muted hover:text-ink no-underline px-4 py-2 transition-colors">
-              Sign in
-            </Link>
-            <Button asChild className="rounded-sm px-6 h-10 text-[11px] font-bold uppercase tracking-[0.15em]">
-              <Link href="/register">
-                Get started <ArrowRightIcon className="ml-2 size-3.5" />
-              </Link>
-            </Button>
+            {session ? (
+              <Button asChild className="rounded-sm px-6 h-10 text-[11px] font-bold uppercase tracking-[0.15em]">
+                <Link href="/dashboard">
+                  Dashboard <ArrowRightIcon className="ml-2 size-3.5" />
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Link href="/login" className="hidden lg:flex text-[11px] font-bold uppercase tracking-[0.15em] text-ink-muted hover:text-ink no-underline px-4 py-2 transition-colors">
+                  Sign in
+                </Link>
+                <Button asChild className="rounded-sm px-6 h-10 text-[11px] font-bold uppercase tracking-[0.15em]">
+                  <Link href="/register">
+                    Get started <ArrowRightIcon className="ml-2 size-3.5" />
+                  </Link>
+                </Button>
+              </>
+            )}
             <button
               className="md:hidden bg-transparent border-none text-ink cursor-pointer p-1.5"
               onClick={() => setMobileMenuOpen(true)}
@@ -269,14 +281,24 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
-              <Button asChild size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl">
-                <Link href="/register">
-                  Start building free <ArrowRightIcon className="ml-2 size-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong bg-transparent hover:bg-paper/50">
-                <Link href="#demo">Watch Live Demo</Link>
-              </Button>
+              {session ? (
+                <Button asChild size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl">
+                  <Link href="/dashboard">
+                    Go to Dashboard <ArrowRightIcon className="ml-2 size-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl">
+                    <Link href="/register">
+                      Start building free <ArrowRightIcon className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong bg-transparent hover:bg-paper/50">
+                    <Link href="#demo">Watch Live Demo</Link>
+                  </Button>
+                </>
+              )}
             </motion.div>
 
             <motion.div
