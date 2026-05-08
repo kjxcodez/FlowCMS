@@ -20,6 +20,7 @@ import {
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
+import { useWorkspace } from "@/hooks/use-workspace";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -68,6 +69,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { data: workspaceData } = useWorkspace();
 
   useEffect(() => {
     setMounted(true);
@@ -88,10 +90,10 @@ export function Sidebar() {
           </div>
           <div className="flex flex-col overflow-hidden">
             <span className="text-[13px] font-semibold text-white truncate leading-tight">
-              My Workspace
+              {workspaceData?.name ?? "My Workspace"}
             </span>
             <span className="text-[10px] font-mono uppercase tracking-wider text-white/30 truncate mt-0.5">
-              Professional Plan
+              {workspaceData?.plan ?? "Free Plan"}
             </span>
           </div>
           <ChevronDown className="size-3.5 ml-auto text-white/20 group-hover:text-white/40 transition-colors" />

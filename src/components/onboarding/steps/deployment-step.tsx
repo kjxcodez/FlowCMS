@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Terminal, ShieldCheck, Activity } from "lucide-react";
+import { Activity } from "lucide-react";
 
 export function DeploymentStep({ data }: { data: any }) {
   const router = useRouter();
