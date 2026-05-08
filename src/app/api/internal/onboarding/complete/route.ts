@@ -58,6 +58,42 @@ export async function POST(req: NextRequest) {
           }
         });
       }
+    } else {
+      // No workspace found — create one now
+      const name = workspaceName || "My Workspace";
+      const workspace = await prisma.workspace.create({
+        data: {
+          name,
+          slug: slugify(name) + "-" + Math.random().toString(36).substring(7)
+        }
+      });
+      const workspaceId = workspace.id;
+      await prisma.workspaceMember.create({
+        data: { userId: session.user.id, workspaceId, role: "OWNER" }
+      });
+
+      // Create the first content type if a template was selected
+      if (firstSchemaName && firstSchemaName !== "Empty Vessel") {
+        const fields = firstSchemaName === "Blog Engine"
+          ? [
+              { id: "1", name: "Title", slug: "title", type: "text", required: true },
+              { id: "2", name: "Content", slug: "content", type: "richtext", required: true },
+              { id: "3", name: "Cover Image", slug: "cover", type: "media" }
+            ]
+          : [
+              { id: "1", name: "Title", slug: "title", type: "text", required: true },
+              { id: "2", name: "Body", slug: "body", type: "richtext" }
+            ];
+
+        await prisma.contentType.create({
+          data: {
+            workspaceId,
+            name: firstSchemaName,
+            slug: slugify(firstSchemaName),
+            fields: fields as any
+          }
+        });
+      }
     }
 
     return apiSuccess({ ok: true });

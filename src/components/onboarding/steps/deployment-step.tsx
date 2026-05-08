@@ -30,6 +30,7 @@ export function DeploymentStep({ data }: { data: any }) {
         // We'll call an internal API to mark as onboarded
         await fetch("/api/internal/onboarding/complete", { 
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
         
