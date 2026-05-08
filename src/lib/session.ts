@@ -22,6 +22,19 @@ export async function requireSession() {
  */
 export async function requireWorkspace() {
   const session = await requireSession();
+  
+  // Get the user from database to check onboarding status
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { onboarded: true }
+  });
+
+  // Redirect to onboarding if not completed
+  // Note: we check if user exists and onboarded is explicitly false
+  if (user && user.onboarded === false) {
+    redirect("/onboarding");
+  }
+
   const member = await prisma.workspaceMember.findFirst({
     where: { userId: session.user.id },
     include: { workspace: true },
