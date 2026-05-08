@@ -1,0 +1,55 @@
+import { NextRequest } from "next/server";
+import { requireWorkspace } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { apiError, apiSuccess } from "@/types/api";
+import { PLAN_LIMITS } from "@/types/cms";
+import { CreateWebhookSchema } from "@/lib/validations/webhook";
+import crypto from "crypto";
+
+export async function GET() {
+  const { workspace } = await requireWorkspace();
+  const webhooks = await prisma.webhook.findMany({
+    where: { workspaceId: workspace.id },
+    orderBy: { createdAt: "desc" },
+  });
+  return apiSuccess(webhooks);
+}
+
+export async function POST(req: NextRequest) {
+  const { workspace } = await requireWorkspace();
+
+  if (!PLAN_LIMITS[workspace.plan]?.webhooks) {
+    return apiError(
+      "PLAN_LIMIT_REACHED",
+      "Webhooks require a Pro or Team plan."
+    );
+  }
+
+  const body = await req.json();
+  const parsed = CreateWebhookSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError("INVALID_INPUT", parsed.error.issues[0].message);
+  }
+
+  const webhook = await prisma.webhook.create({
+    data: {
+      workspaceId: workspace.id,
+      url: parsed.data.url,
+      events: parsed.data.events as never[],
+      secret: crypto.randomBytes(32).toString("hex"),
+    },
+  });
+  return apiSuccess(webhook);
+}
+
+export async function DELETE(req: NextRequest) {
+  const { workspace } = await requireWorkspace();
+  const id = req.nextUrl.searchParams.get("id");
+  if (!id) return apiError("INVALID_INPUT", "Webhook ID required.");
+
+  const result = await prisma.webhook.deleteMany({
+    where: { id, workspaceId: workspace.id },
+  });
+  if (!result.count) return apiError("NOT_FOUND", "Webhook not found.");
+  return apiSuccess({ deleted: true });
+}
