@@ -3,6 +3,7 @@ import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { CreateEntrySchema } from "@/lib/validations/entry";
+import { dispatchWebhooks } from "@/lib/webhooks";
 
 export async function GET(req: NextRequest) {
   const { workspace } = await requireWorkspace();
@@ -64,6 +65,10 @@ export async function POST(req: NextRequest) {
         parsed.data.status === "PUBLISHED" ? new Date() : null,
     },
   });
+
+  // Dispatch Webhooks
+  const event = entry.status === "PUBLISHED" ? "ENTRY_PUBLISHED" : "ENTRY_CREATED";
+  dispatchWebhooks(workspace.id, event, entry);
 
   return apiSuccess(entry);
 }
