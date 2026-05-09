@@ -1,25 +1,39 @@
+import { Redis } from "@upstash/redis";
 import { prisma } from "./prisma";
 import { PLAN_LIMITS } from "@/types/cms";
 import { logger } from "./logger";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
 export async function incrementUsage(
   workspaceId: string
 ): Promise<void> {
   const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const redisKey = `usage:${workspaceId}:${year}:${month}`;
+
   try {
+    // 1. Increment in Redis (Atomic)
+    await redis.incr(redisKey);
+
+    // 2. Increment in Postgres
     await prisma.monthlyUsage.upsert({
       where: {
         workspaceId_year_month: {
           workspaceId,
-          year: now.getFullYear(),
-          month: now.getMonth() + 1,
+          year,
+          month,
         },
       },
       update: { apiRequests: { increment: 1 } },
       create: {
         workspaceId,
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
+        year,
+        month,
         apiRequests: 1,
       },
     });
@@ -41,17 +55,29 @@ export async function checkUsageLimit(
   }
 
   const now = new Date();
-  const usage = await prisma.monthlyUsage.findUnique({
-    where: {
-      workspaceId_year_month: {
-        workspaceId,
-        year: now.getFullYear(),
-        month: now.getMonth() + 1,
-      },
-    },
-  });
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const redisKey = `usage:${workspaceId}:${year}:${month}`;
 
-  const used = usage?.apiRequests ?? 0;
+  // 1. Try Redis first
+  let used = await redis.get<number>(redisKey);
+
+  // 2. Fallback to DB if Redis is empty
+  if (used === null) {
+    const usage = await prisma.monthlyUsage.findUnique({
+      where: {
+        workspaceId_year_month: {
+          workspaceId,
+          year,
+          month,
+        },
+      },
+    });
+    used = usage?.apiRequests ?? 0;
+    // Backfill Redis with 1 hour TTL for safety
+    await redis.set(redisKey, used, { ex: 3600 });
+  }
+
   return {
     allowed: used < limits.apiRequestsPerMonth,
     used,
