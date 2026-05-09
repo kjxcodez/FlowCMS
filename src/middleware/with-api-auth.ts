@@ -2,7 +2,6 @@ import { NextRequest } from "next/server";
 import { verifyApiKey } from "@/lib/api-key";
 import {
   checkRateLimit,
-  RATE_LIMIT_CONFIGS,
   rateLimitHeaders,
 } from "@/lib/rate-limit";
 import { checkUsageLimit, incrementUsage } from "@/lib/usage";
@@ -46,9 +45,7 @@ export function withApiAuth(handler: ApiHandler) {
     const { workspaceId, plan, apiKeyId } = keyData;
 
     // 3. Rate limit
-    const rlConfig =
-      RATE_LIMIT_CONFIGS[plan] ?? RATE_LIMIT_CONFIGS.HOBBY;
-    const rl = checkRateLimit(`ws:${workspaceId}`, rlConfig);
+    const rl = await checkRateLimit(`ws:${workspaceId}`, plan);
     if (!rl.allowed) {
       return new Response(
         JSON.stringify({
