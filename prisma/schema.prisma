@@ -16,6 +16,7 @@ model User {
   emailVerified Boolean  @default(false)
   onboarded     Boolean  @default(false)
   image         String?
+  inviteToken   String? // Temporary field for waitlist validation
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -309,6 +310,7 @@ model RazorpayCustomer {
   subscriptionStatus  String?   // "created" | "authenticated" | "active" | "paused" | "cancelled" | "expired"
   currentPeriodEnd    DateTime?
   cancelAtPeriodEnd   Boolean   @default(false)
+  lastEventAt         DateTime? // For event sequencing
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
