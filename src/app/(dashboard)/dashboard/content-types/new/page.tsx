@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TemplateBrowser } from "@/components/dashboard/templates/template-browser";
 
 export default function NewContentTypePage() {
   const router = useRouter();
@@ -91,74 +93,91 @@ export default function NewContentTypePage() {
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* Main Content: Field Builder */}
-        <div className="lg:col-span-2 space-y-8">
-          <section>
-            <div className="flex items-center gap-2 mb-6">
-              <Layers className="size-4 text-accent" />
-              <h2 className="font-display text-xl font-semibold text-ink">Field Definitions</h2>
+      <Tabs defaultValue="scratch" className="space-y-12">
+        <TabsList className="rounded-none h-14 p-1 bg-muted border-2 border-border grid grid-cols-2 max-w-md">
+          <TabsTrigger value="scratch" className="rounded-none font-bold uppercase tracking-widest text-[10px] data-[state=active]:bg-sidebar data-[state=active]:text-white">
+            Custom Schema
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="rounded-none font-bold uppercase tracking-widest text-[10px] data-[state=active]:bg-sidebar data-[state=active]:text-white">
+            Industrial Blueprints
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="scratch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            {/* Main Content: Field Builder */}
+            <div className="lg:col-span-2 space-y-8">
+              <section>
+                <div className="flex items-center gap-2 mb-6">
+                  <Layers className="size-4 text-accent" />
+                  <h2 className="font-display text-xl font-semibold text-ink">Field Definitions</h2>
+                </div>
+                <FieldBuilder fields={fields} onChange={setFields} />
+              </section>
             </div>
-            <FieldBuilder fields={fields} onChange={setFields} />
-          </section>
-        </div>
 
-        {/* Sidebar: Configuration */}
-        <aside className="lg:col-span-1 space-y-8">
-          <section className="p-8 bg-paper border border-border rounded-lg space-y-6">
-            <h3 className="font-display text-lg font-semibold text-ink">Configuration</h3>
-            
-            <div className="space-y-5">
-              <div className="space-y-2">
-                <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
-                  Display Name
-                </Label>
-                <Input 
-                  value={title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder="e.g. Blog Post"
-                  className="bg-canvas border-border h-10 text-sm"
-                />
-              </div>
+            {/* Sidebar: Configuration */}
+            <aside className="lg:col-span-1 space-y-8">
+              <section className="p-8 bg-paper border border-border rounded-lg space-y-6">
+                <h3 className="font-display text-lg font-semibold text-ink">Configuration</h3>
+                
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
+                      Display Name
+                    </Label>
+                    <Input 
+                      value={title}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      placeholder="e.g. Blog Post"
+                      className="bg-canvas border-border h-10 text-sm"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
-                  API Slug
-                </Label>
-                <Input 
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder="e.g. blog-post"
-                  className="font-mono text-xs bg-canvas border-border h-10"
-                />
-              </div>
+                  <div className="space-y-2">
+                    <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
+                      API Slug
+                    </Label>
+                    <Input 
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="e.g. blog-post"
+                      className="font-mono text-xs bg-canvas border-border h-10"
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
-                  Description
-                </Label>
-                <Textarea 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  placeholder="What is this type for?"
-                  className="bg-canvas border-border text-sm min-h-[80px]"
-                />
-              </div>
-            </div>
-          </section>
+                  <div className="space-y-2">
+                    <Label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-widest">
+                      Description
+                    </Label>
+                    <Textarea 
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
+                      placeholder="What is this type for?"
+                      className="bg-canvas border-border text-sm min-h-[80px]"
+                    />
+                  </div>
+                </div>
+              </section>
 
-          <section className="p-6 bg-canvas border border-border rounded-lg flex gap-4">
-            <Info className="size-5 text-accent shrink-0 mt-0.5" />
-            <div className="space-y-1.5">
-              <h4 className="text-[11px] font-bold text-ink uppercase tracking-widest">About Types</h4>
-              <p className="text-[12px] text-ink-muted leading-relaxed font-light">
-                Content Types define the structure of your data. Once saved, you can start creating entries based on this schema.
-              </p>
-            </div>
-          </section>
-        </aside>
-      </div>
+              <section className="p-6 bg-canvas border border-border rounded-lg flex gap-4">
+                <Info className="size-5 text-accent shrink-0 mt-0.5" />
+                <div className="space-y-1.5">
+                  <h4 className="text-[11px] font-bold text-ink uppercase tracking-widest">About Types</h4>
+                  <p className="text-[12px] text-ink-muted leading-relaxed font-light">
+                    Content Types define the structure of your data. Once saved, you can start creating entries based on this schema.
+                  </p>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <TemplateBrowser />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
