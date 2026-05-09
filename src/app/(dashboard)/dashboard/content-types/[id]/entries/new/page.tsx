@@ -68,17 +68,54 @@ export default function NewEntryPage() {
     }
   };
 
+  const handleAiAssist = async (field: Field) => {
+    try {
+      // Gather context from other fields
+      const otherContext = Object.entries(content)
+        .filter(([k, v]) => k !== field.slug && v && String(v).length > 0)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join("\n");
+
+      const response = await fetch("/api/internal/ai/seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          content: otherContext || "New entry content",
+          context: `This is for the field "${field.name}". Generate a professional ${field.type === "text" ? "short string" : "long paragraph"} for this field.`
+        }),
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setContent(prev => ({ ...prev, [field.slug]: field.type === "text" ? data.data.title : data.data.description }));
+      }
+    } catch (err) {
+      console.error("AI Assist failed", err);
+    }
+  };
+
   const renderField = (field: Field) => {
     const value = (content[field.slug] as string) || "";
     const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => 
       setContent(prev => ({ ...prev, [field.slug]: e.target.value }));
 
     return (
-      <div key={field.id} className="space-y-3">
+      <div key={field.id} className="space-y-3 group/field">
         <div className="flex items-center justify-between">
-          <label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-[0.2em]">
-            {field.name} {field.required && <span className="text-destructive">*</span>}
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="block font-mono text-[10px] font-bold text-ink-muted uppercase tracking-[0.2em]">
+              {field.name} {field.required && <span className="text-destructive">*</span>}
+            </label>
+            {(field.type === "text" || field.type === "richtext") && (
+              <button 
+                onClick={() => handleAiAssist(field)}
+                className="opacity-0 group-hover/field:opacity-100 transition-all text-accent hover:scale-110"
+                title="AI Assist"
+              >
+                <Sparkles className="size-3" />
+              </button>
+            )}
+          </div>
           <span className="text-[9px] font-mono text-ink-faint uppercase tracking-widest">{field.type}</span>
         </div>
         

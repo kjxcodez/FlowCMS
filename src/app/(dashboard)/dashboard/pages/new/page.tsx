@@ -15,6 +15,8 @@ import { BlockEditor } from "@/components/editor/BlockEditor";
 import { Block } from "@/types/cms";
 import { useCreatePage } from "@/hooks/use-pages";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageTemplateBrowser } from "@/components/dashboard/templates/page-template-browser";
 
 export default function NewPageEditor() {
   const router = useRouter();
@@ -112,85 +114,107 @@ export default function NewPageEditor() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-        {/* Editor Main Canvas */}
-        <div className="lg:col-span-3 space-y-12">
-          {/* Settings Section (Toggleable) */}
-          {showSettings && (
-            <section className="p-8 bg-[var(--paper)] border border-[var(--border)] rounded space-y-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Settings2 className="w-4 h-4 text-[var(--accent)]" />
-                  <h2 className="font-display text-xl font-semibold text-[var(--ink)]">Page Configuration</h2>
-                </div>
-                <button onClick={() => setShowSettings(false)} className="text-[10px] font-mono uppercase tracking-widest text-[var(--ink-faint)] hover:text-[var(--ink)]">Hide</button>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="block font-mono text-[10px] font-semibold text-[var(--ink-muted)] uppercase tracking-widest">
-                    Page Title
-                  </label>
-                  <input 
-                    type="text"
-                    value={title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    placeholder="e.g. Home Page"
-                    className="w-full bg-[var(--canvas)] border border-[var(--border)] rounded px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="block font-mono text-[10px] font-semibold text-[var(--ink-muted)] uppercase tracking-widest">
-                    Path Slug
-                  </label>
-                  <div className="flex items-center bg-[var(--canvas)] border border-[var(--border)] rounded px-4 overflow-hidden focus-within:border-[var(--accent)] transition-all">
-                    <span className="text-xs text-[var(--ink-faint)] font-mono">/</span>
-                    <input 
-                      type="text"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      placeholder="home"
-                      className="flex-1 bg-transparent border-none py-2.5 text-sm text-[var(--ink)] font-mono outline-none"
-                    />
+      <Tabs defaultValue="canvas" className="space-y-12">
+        <TabsList className="rounded-none h-14 p-1 bg-[var(--canvas)] border-2 border-[var(--border)] grid grid-cols-2 max-w-md">
+          <TabsTrigger value="canvas" className="rounded-none font-bold uppercase tracking-widest text-[10px] data-[state=active]:bg-[var(--sidebar)] data-[state=active]:text-white">
+            Blank Canvas
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="rounded-none font-bold uppercase tracking-widest text-[10px] data-[state=active]:bg-[var(--sidebar)] data-[state=active]:text-white">
+            Blueprints
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="canvas">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+            {/* Editor Main Canvas */}
+            <div className="lg:col-span-3 space-y-12">
+              {/* Settings Section (Toggleable) */}
+              {showSettings && (
+                <section className="p-8 bg-[var(--paper)] border border-[var(--border)] rounded space-y-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Settings2 className="w-4 h-4 text-[var(--accent)]" />
+                      <h2 className="font-display text-xl font-semibold text-[var(--ink)]">Page Configuration</h2>
+                    </div>
+                    <button onClick={() => setShowSettings(false)} className="text-[10px] font-mono uppercase tracking-widest text-[var(--ink-faint)] hover:text-[var(--ink)]">Hide</button>
                   </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="block font-mono text-[10px] font-semibold text-[var(--ink-muted)] uppercase tracking-widest">
+                        Page Title
+                      </label>
+                      <input 
+                        type="text"
+                        value={title}
+                        onChange={(e) => handleTitleChange(e.target.value)}
+                        placeholder="e.g. Home Page"
+                        className="w-full bg-[var(--canvas)] border border-[var(--border)] rounded px-4 py-2.5 text-sm text-[var(--ink)] outline-none focus:border-[var(--accent)] transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block font-mono text-[10px] font-semibold text-[var(--ink-muted)] uppercase tracking-widest">
+                        Path Slug
+                      </label>
+                      <div className="flex items-center bg-[var(--canvas)] border border-[var(--border)] rounded px-4 overflow-hidden focus-within:border-[var(--accent)] transition-all">
+                        <span className="text-xs text-[var(--ink-faint)] font-mono">/</span>
+                        <input 
+                          type="text"
+                          value={slug}
+                          onChange={(e) => setSlug(e.target.value)}
+                          placeholder="home"
+                          className="flex-1 bg-transparent border-none py-2.5 text-sm text-[var(--ink)] font-mono outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* Block Editor */}
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-[var(--accent)]" />
+                    <h2 className="font-display text-xl font-semibold text-[var(--ink)]">Layout Canvas</h2>
+                  </div>
+                  {!showSettings && (
+                    <button onClick={() => setShowSettings(true)} className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--ink-muted)] hover:text-[var(--ink)]">
+                      <Settings2 className="w-3 h-3" /> Page Settings
+                    </button>
+                  )}
+                </div>
+                
+                <BlockEditor blocks={blocks} onChange={setBlocks} />
+              </section>
+            </div>
+
+            {/* Info Sidebar */}
+            <aside className="lg:col-span-1 space-y-6">
+              <div className="p-6 bg-[var(--canvas)] border border-[var(--border)] rounded space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--ink-muted)]">About Pages</h4>
+                <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
+                  Pages allow you to build custom layouts using a block-based system. Each page is accessible via its unique slug in the public API.
+                </p>
+                <div className="pt-4 border-t border-[var(--border-strong)]">
+                  <Link href="/docs/blocks" className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest hover:underline">
+                    Block Guide
+                  </Link>
                 </div>
               </div>
-            </section>
-          )}
-
-          {/* Block Editor */}
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4 text-[var(--accent)]" />
-                <h2 className="font-display text-xl font-semibold text-[var(--ink)]">Layout Canvas</h2>
-              </div>
-              {!showSettings && (
-                <button onClick={() => setShowSettings(true)} className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-[var(--ink-muted)] hover:text-[var(--ink)]">
-                  <Settings2 className="w-3 h-3" /> Page Settings
-                </button>
-              )}
-            </div>
-            
-            <BlockEditor blocks={blocks} onChange={setBlocks} />
-          </section>
-        </div>
-
-        {/* Info Sidebar */}
-        <aside className="lg:col-span-1 space-y-6">
-          <div className="p-6 bg-[var(--canvas)] border border-[var(--border)] rounded space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--ink-muted)]">About Pages</h4>
-            <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
-              Pages allow you to build custom layouts using a block-based system. Each page is accessible via its unique slug in the public API.
-            </p>
-            <div className="pt-4 border-t border-[var(--border-strong)]">
-              <Link href="/docs/blocks" className="text-[10px] font-bold text-[var(--accent)] uppercase tracking-widest hover:underline">
-                Block Guide
-              </Link>
-            </div>
+            </aside>
           </div>
-        </aside>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <PageTemplateBrowser onApply={(tplBlocks) => {
+            setBlocks(tplBlocks);
+            // Optionally switch tab back to canvas
+            const scratchTab = document.querySelector('[value="canvas"]') as HTMLElement;
+            scratchTab?.click();
+          }} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
