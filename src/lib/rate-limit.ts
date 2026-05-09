@@ -1,22 +1,35 @@
+import { Redis } from "@upstash/redis";
+import { Ratelimit } from "@upstash/ratelimit";
 import { logger } from "./logger";
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
+// Initialize Redis client
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
-const store = new Map<string, RateLimitEntry>();
-
-export interface RateLimitConfig {
-  windowMs: number;
-  max: number;
-}
-
-export const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
-  HOBBY: { windowMs: 60_000, max: 30 },
-  PRO: { windowMs: 60_000, max: 300 },
-  TEAM: { windowMs: 60_000, max: 1000 },
-  PUBLIC: { windowMs: 60_000, max: 10 },
+// Map Plan to ratelimit instances using sliding window
+const limiters = {
+  HOBBY: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(30, "1 m"),
+    prefix: "rl:hobby",
+  }),
+  PRO: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(300, "1 m"),
+    prefix: "rl:pro",
+  }),
+  TEAM: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(1000, "1 m"),
+    prefix: "rl:team",
+  }),
+  PUBLIC: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(10, "1 m"),
+    prefix: "rl:public",
+  }),
 };
 
 export interface RateLimitResult {
@@ -26,44 +39,23 @@ export interface RateLimitResult {
   limit: number;
 }
 
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
-  config: RateLimitConfig
-): RateLimitResult {
-  const now = Date.now();
-  const entry = store.get(key);
+  plan: string
+): Promise<RateLimitResult> {
+  const limiter =
+    limiters[plan as keyof typeof limiters] ?? limiters.HOBBY;
+  const { success, limit, remaining, reset } = await limiter.limit(key);
 
-  if (!entry || now > entry.resetAt) {
-    store.set(key, { count: 1, resetAt: now + config.windowMs });
-    return {
-      allowed: true,
-      remaining: config.max - 1,
-      resetAt: now + config.windowMs,
-      limit: config.max,
-    };
-  }
-
-  entry.count++;
-
-  if (entry.count > config.max) {
-    logger.warn("Rate limit exceeded", {
-      key,
-      count: entry.count,
-      limit: config.max,
-    });
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: entry.resetAt,
-      limit: config.max,
-    };
+  if (!success) {
+    logger.warn("Rate limit exceeded", { key, plan });
   }
 
   return {
-    allowed: true,
-    remaining: config.max - entry.count,
-    resetAt: entry.resetAt,
-    limit: config.max,
+    allowed: success,
+    remaining,
+    resetAt: reset,
+    limit,
   };
 }
 
