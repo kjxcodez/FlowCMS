@@ -18,8 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SocialAuth } from "@/components/auth/social-auth";
 
+import { useSearchParams } from "next/navigation";
+
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+  
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -48,6 +53,7 @@ export default function RegisterPage() {
         name: values.name,
         email: values.email,
         password: values.password,
+        inviteToken: inviteToken || undefined,
       });
 
       if (result.error) {
@@ -208,7 +214,7 @@ export default function RegisterPage() {
       </form>
 
       <div className="mt-10">
-        <SocialAuth />
+        <SocialAuth inviteToken={inviteToken} />
       </div>
 
       <div className="mt-16 pt-10 border-t border-border">

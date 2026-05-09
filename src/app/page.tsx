@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { isWaitlistMode } from "@/lib/launch";
+import { WaitlistForm } from "@/components/landing/WaitlistForm";
 
 // --- Staggered fade-up animation wrapper ---
 const FadeUp = ({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) => {
@@ -174,6 +176,12 @@ export default function LandingPage() {
                   Dashboard <ArrowRightIcon className="ml-2 size-3.5" />
                 </Link>
               </Button>
+            ) : isWaitlistMode ? (
+                <Button asChild className="rounded-sm px-6 h-10 text-[11px] font-bold uppercase tracking-[0.15em]">
+                  <Link href="#waitlist-form">
+                    Join Waitlist <ArrowRightIcon className="ml-2 size-3.5" />
+                  </Link>
+                </Button>
             ) : (
               <>
                 <Link href="/login" className="hidden lg:flex text-[11px] font-bold uppercase tracking-[0.15em] text-ink-muted hover:text-ink no-underline px-4 py-2 transition-colors">
@@ -231,12 +239,20 @@ export default function LandingPage() {
               ))}
             </nav>
             <div className="flex flex-col gap-4 mt-auto">
-              <Button asChild className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm">
-                <Link href="/register">Get started</Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong">
-                <Link href="/login">Sign in</Link>
-              </Button>
+              {isWaitlistMode ? (
+                <Button asChild className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href="#waitlist-form">Join Waitlist</Link>
+                </Button>
+              ) : (
+                <>
+                  <Button asChild className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm">
+                    <Link href="/register">Get started</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong">
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -287,6 +303,12 @@ export default function LandingPage() {
                     Go to Dashboard <ArrowRightIcon className="ml-2 size-4" />
                   </Link>
                 </Button>
+              ) : isWaitlistMode ? (
+                <div className="w-full mt-4">
+                  <div id="waitlist-form" className="scroll-mt-32">
+                    <WaitlistForm />
+                  </div>
+                </div>
               ) : (
                 <>
                   <Button asChild size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl">
@@ -487,7 +509,7 @@ export default function LandingPage() {
                       </ul>
                     </CardContent>
                     <Button asChild variant={tier.featured ? "default" : "outline"} className="w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong">
-                      <Link href="/register">{tier.cta}</Link>
+                      <Link href={isWaitlistMode ? "#waitlist-form" : "/register"}>{tier.cta}</Link>
                     </Button>
                   </Card>
                 </FadeUp>
@@ -510,11 +532,19 @@ export default function LandingPage() {
                 The industrial-strength headless CMS for developers who care about structure and designers who care about detail.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Button asChild size="lg" className="h-16 px-12 text-sm font-bold uppercase tracking-widest rounded-sm bg-accent-bright text-sidebar hover:bg-white shadow-2xl">
-                  <Link href="/register">
-                    Create free account <ArrowRightIcon className="ml-2 size-4" />
-                  </Link>
-                </Button>
+                {isWaitlistMode ? (
+                  <Button asChild size="lg" className="h-16 px-12 text-sm font-bold uppercase tracking-widest rounded-sm bg-accent-bright text-sidebar hover:bg-white shadow-2xl">
+                    <Link href="#waitlist-form">
+                      Join the Waitlist <ArrowRightIcon className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button asChild size="lg" className="h-16 px-12 text-sm font-bold uppercase tracking-widest rounded-sm bg-accent-bright text-sidebar hover:bg-white shadow-2xl">
+                    <Link href="/register">
+                      Create free account <ArrowRightIcon className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline" size="lg" className="h-16 px-12 text-sm font-bold uppercase tracking-widest rounded-sm bg-transparent border-white/20 text-white hover:bg-white/5 hover:border-white/40">
                   <Link href={APP_CONFIG.docsUrl}>Documentation</Link>
                 </Button>

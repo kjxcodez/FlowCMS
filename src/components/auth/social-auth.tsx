@@ -26,7 +26,11 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export function SocialAuth() {
+interface SocialAuthProps {
+  inviteToken?: string | null;
+}
+
+export function SocialAuth({ inviteToken }: SocialAuthProps) {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSocialLogin = async (provider: "google") => {
@@ -35,6 +39,12 @@ export function SocialAuth() {
       await signIn.social({
         provider,
         callbackURL: "/dashboard",
+        // Pass inviteToken to Better Auth so it's available in databaseHooks.user.create.before
+        newUserOptions: {
+            data: {
+                inviteToken: inviteToken || undefined
+            }
+        }
       });
     } catch (err) {
       console.error(err);
