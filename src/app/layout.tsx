@@ -3,6 +3,7 @@ import { DM_Mono, DM_Sans, Playfair_Display } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { APP_CONFIG } from "@/config/app";
 import { QueryProvider } from "@/providers/query-provider";
+import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );
