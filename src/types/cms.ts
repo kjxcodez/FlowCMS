@@ -18,7 +18,7 @@ export interface FieldDefinition {
   options?: Record<string, unknown>;
 }
 
-export type BlockType = "heading" | "text" | "image" | "cta" | "divider";
+export type BlockType = "heading" | "text" | "image" | "cta" | "divider" | "quote" | "code" | "callout" | "accordion";
 
 export interface Block {
   id: string;
@@ -46,13 +46,21 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
   },
   PRO: {
     contentTypes: -1,
-    apiRequestsPerMonth: 500_000,
-    environments: 3,
+    apiRequestsPerMonth: 250_000,
+    environments: 2,
     webhooks: true,
     customRoles: false,
     sso: false,
   },
-  TEAM: {
+  AGENCY: {
+    contentTypes: -1,
+    apiRequestsPerMonth: 1_000_000,
+    environments: 5,
+    webhooks: true,
+    customRoles: true,
+    sso: false,
+  },
+  ENTERPRISE: {
     contentTypes: -1,
     apiRequestsPerMonth: -1,
     environments: -1,
