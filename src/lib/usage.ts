@@ -17,11 +17,12 @@ export async function incrementUsage(
   const redisKey = `usage:${workspaceId}:${year}:${month}`;
 
   try {
-    // 1. Increment in Redis (Atomic)
+    // 1. Increment in Redis (Atomic & Blocking - very fast)
     await redis.incr(redisKey);
 
-    // 2. Increment in Postgres
-    await prisma.monthlyUsage.upsert({
+    // 2. Increment in Postgres (Fire-and-forget to prevent blocking API response)
+    // We don't await this. If it fails, we rely on the Redis count and occasional syncs.
+    prisma.monthlyUsage.upsert({
       where: {
         workspaceId_year_month: {
           workspaceId,
@@ -36,9 +37,15 @@ export async function incrementUsage(
         month,
         apiRequests: 1,
       },
+    }).catch((err) => {
+        logger.error("Background usage sync failed", {
+            workspaceId,
+            error: String(err),
+        });
     });
+
   } catch (err) {
-    logger.error("Failed to increment usage", {
+    logger.error("Failed to increment usage in Redis", {
       workspaceId,
       error: String(err),
     });
@@ -59,10 +66,10 @@ export async function checkUsageLimit(
   const month = now.getMonth() + 1;
   const redisKey = `usage:${workspaceId}:${year}:${month}`;
 
-  // 1. Try Redis first
+  // 1. Try Redis first (Single round-trip)
   let used = await redis.get<number>(redisKey);
 
-  // 2. Fallback to DB if Redis is empty
+  // 2. Fallback to DB if Redis is empty (Cache miss)
   if (used === null) {
     const usage = await prisma.monthlyUsage.findUnique({
       where: {

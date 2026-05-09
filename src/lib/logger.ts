@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogEntry {
@@ -19,6 +21,7 @@ function log(
     ...context,
   };
 
+  // 1. Console Logging
   if (process.env.NODE_ENV === "production") {
     const method = level === "debug" ? "log" : level;
     console[method](JSON.stringify(entry));
@@ -29,6 +32,22 @@ function log(
       : "";
     const method = level === "debug" ? "log" : level;
     console[method](`${prefix} ${message}${ctx}`);
+  }
+
+  // 2. Sentry Integration
+  if (level === "error") {
+    Sentry.captureException(context.error || new Error(message), {
+      extra: context,
+      tags: { 
+        workspaceId: context.workspaceId as string,
+        subscriptionId: context.subscriptionId as string
+      }
+    });
+  } else if (level === "warn") {
+    Sentry.captureMessage(message, {
+      level: "warning",
+      extra: context,
+    });
   }
 }
 

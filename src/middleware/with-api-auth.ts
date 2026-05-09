@@ -115,6 +115,14 @@ export function withApiAuth(handler: ApiHandler) {
     const headers = new Headers(response.headers);
     headers.set("X-Request-Id", requestId);
     headers.set("X-Response-Time", `${duration}ms`);
+    
+    // Cloudflare Cache Engineering
+    // We EXCLUDE 'Authorization' from Vary to prevent cache fragmentation.
+    // Security is enforced via Step 2-4 (Auth/Rate-limit) before this response is generated.
+    headers.set("Vary", "Accept-Encoding"); 
+    headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    headers.set("X-Cache-Tag", `ws:${workspaceId}`);
+
     Object.entries(rateLimitHeaders(rl)).forEach(([k, v]) =>
       headers.set(k, v)
     );

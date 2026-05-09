@@ -52,7 +52,8 @@ export async function PATCH(
     },
   });
 
-  if (isPublishing) {
+  if (isPublishing || parsed.data.status === "PUBLISHED") {
+    purgeCacheTags([`ws:${workspace.id}`]).catch(() => {});
     fireWebhooks(workspace.id, "ENTRY_PUBLISHED", {
       entryId: entry.id,
     }).catch(() => {});
@@ -60,6 +61,8 @@ export async function PATCH(
 
   return apiSuccess(entry);
 }
+
+import { purgeCacheTags } from "@/lib/cloudflare";
 
 export async function DELETE(
   _req: NextRequest,
@@ -75,6 +78,7 @@ export async function DELETE(
 
   await prisma.entry.delete({ where: { id } });
 
+  purgeCacheTags([`ws:${workspace.id}`]).catch(() => {});
   fireWebhooks(workspace.id, "ENTRY_DELETED", {
     entryId: id,
   }).catch(() => {});
