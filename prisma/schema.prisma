@@ -439,3 +439,67 @@ enum InvitationStatus {
   EXPIRED
   REVOKED
 }
+
+// ── Waitlist ──────────────────────────────────────────────────────
+model WaitlistEntry {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+
+  // Segmentation
+  role         WaitlistRole?
+  useCase      String?
+  source       String?
+  referredBy   String?
+
+  // Position & Priority
+  position     Int
+  priority     WaitlistPriority @default(NORMAL)
+
+  // Approval flow
+  status       WaitlistStatus  @default(PENDING)
+  inviteToken  String?         @unique
+  inviteSentAt DateTime?
+  inviteUsedAt DateTime?
+  inviteExpiresAt DateTime?
+
+  // Confirmation
+  confirmed    Boolean         @default(false)
+  confirmedAt  DateTime?
+
+  // Referral
+  referralCode String?         @unique
+  referralCount Int            @default(0)
+
+  joinedAt     DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([status, joinedAt])
+  @@index([priority, joinedAt])
+  @@index([inviteToken])
+  @@index([referralCode])
+}
+
+enum WaitlistRole {
+  INDIE_DEV
+  AGENCY
+  FOUNDER
+  OTHER
+}
+
+enum WaitlistStatus {
+  PENDING
+  CONFIRMED
+  APPROVED
+  INVITED
+  JOINED
+  REJECTED
+}
+
+enum WaitlistPriority {
+  LOW
+  NORMAL
+  HIGH
+  IMMEDIATE
+}
+
