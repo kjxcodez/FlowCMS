@@ -8,7 +8,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// ── Auth (Better Auth managed) ─────────────────────────────────────
+// ── Auth ───────────────────────────────────────────────────────────
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -64,21 +64,29 @@ model Verification {
 
 // ── Workspace ──────────────────────────────────────────────────────
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  plan      Plan     @default(HOBBY)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  plan          Plan      @default(HOBBY)
+  planExpiresAt DateTime?
+  trialEndsAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  members      WorkspaceMember[]
-  contentTypes ContentType[]
-  pages        Page[]
-  media        Media[]
-  apiKeys      ApiKey[]
-  webhooks     Webhook[]
-  usageLogs    UsageLog[]
-  monthlyUsage MonthlyUsage[]
+  members        WorkspaceMember[]
+  environments   Environment[]
+  contentTypes   ContentType[]
+  pages          Page[]
+  media          Media[]
+  apiKeys        ApiKey[]
+  webhooks       Webhook[]
+  usageLogs      UsageLog[]
+  monthlyUsage   MonthlyUsage[]
+  auditLogs      AuditLog[]
+  invitations    Invitation[]
+  draftTokens    DraftToken[]
+  customDomains  CustomDomain[]
+  razorpayCustomer RazorpayCustomer?
 }
 
 model WorkspaceMember {
@@ -94,7 +102,24 @@ model WorkspaceMember {
   @@unique([workspaceId, userId])
 }
 
-// ── Content Schema ─────────────────────────────────────────────────
+// ── Environments ───────────────────────────────────────────────────
+model Environment {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  apiKeys   ApiKey[]
+  entries   Entry[]
+  pages     Page[]
+
+  @@unique([workspaceId, slug])
+}
+
+// ── Content ────────────────────────────────────────────────────────
 model ContentType {
   id          String   @id @default(cuid())
   workspaceId String
@@ -115,30 +140,42 @@ model Entry {
   id            String      @id @default(cuid())
   contentTypeId String
   workspaceId   String
+  environmentId String?
   data          Json
   status        EntryStatus @default(DRAFT)
+  version       Int         @default(1)
+  localeCode    String?     @default("en")
   publishedAt   DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  contentType ContentType @relation(fields: [contentTypeId], references: [id], onDelete: Cascade)
+  contentType ContentType  @relation(fields: [contentTypeId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
+
+  @@index([workspaceId, status])
+  @@index([contentTypeId, status])
 }
 
-// ── Pages (Block Editor) ───────────────────────────────────────────
 model Page {
-  id          String      @id @default(cuid())
-  workspaceId String
-  title       String
-  slug        String
-  blocks      Json
-  status      EntryStatus @default(DRAFT)
-  publishedAt DateTime?
-  seoTitle    String?
-  seoDesc     String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  workspaceId   String
+  environmentId String?
+  title         String
+  slug          String
+  blocks        Json
+  status        EntryStatus @default(DRAFT)
+  publishedAt   DateTime?
+  seoTitle      String?
+  seoDesc       String?
+  ogImage       String?
+  canonicalUrl  String?
+  noIndex       Boolean     @default(false)
+  localeCode    String?     @default("en")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
 
   @@unique([workspaceId, slug])
 }
@@ -152,23 +189,31 @@ model Media {
   mimeType    String
   size        Int
   alt         String?
+  width       Int?
+  height      Int?
+  folder      String?  @default("/")
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, folder])
 }
 
 // ── API Keys ───────────────────────────────────────────────────────
 model ApiKey {
-  id          String    @id @default(cuid())
-  workspaceId String
-  name        String
-  keyHash     String    @unique
-  keyPrefix   String
-  lastUsedAt  DateTime?
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(cuid())
+  workspaceId   String
+  environmentId String?
+  name          String
+  keyHash       String    @unique
+  keyPrefix     String
+  scopes        String[]  @default(["read:entries", "read:pages", "read:media"])
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
 }
 
 // ── Webhooks ───────────────────────────────────────────────────────
@@ -233,11 +278,118 @@ model MonthlyUsage {
   @@unique([workspaceId, year, month])
 }
 
+model AuditLog {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  userId       String?
+  apiKeyId     String?
+  action       AuditAction
+  resourceType String
+  resourceId   String
+  resourceName String?
+  before       Json?
+  after        Json?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime    @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, resourceType, resourceId])
+}
+
+// ── Billing ────────────────────────────────────────────────────────
+model RazorpayCustomer {
+  id                  String    @id @default(cuid())
+  workspaceId         String    @unique
+  razorpayCustomerId  String?
+  subscriptionId      String?   @unique
+  planId              String?
+  subscriptionStatus  String?   // "created" | "authenticated" | "active" | "paused" | "cancelled" | "expired"
+  currentPeriodEnd    DateTime?
+  cancelAtPeriodEnd   Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ── Team ───────────────────────────────────────────────────────────
+model Invitation {
+  id          String           @id @default(cuid())
+  workspaceId String
+  email       String
+  role        MemberRole       @default(EDITOR)
+  token       String           @unique
+  status      InvitationStatus @default(PENDING)
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime         @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+}
+
+// ── Preview & Domains ──────────────────────────────────────────────
+model DraftToken {
+  id          String    @id @default(cuid())
+  workspaceId String
+  name        String
+  token       String    @unique
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+model CustomDomain {
+  id          String   @id @default(cuid())
+  workspaceId String
+  domain      String   @unique
+  verified    Boolean  @default(false)
+  verifyToken String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ── Templates ─────────────────────────────────────────────────────
+model ContentTypeTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    String
+  fields      Json
+  previewData Json?
+  isPremium   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model PageTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    String
+  blocks      Json
+  thumbnail   String?
+  isPremium   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
 // ── Enums ──────────────────────────────────────────────────────────
 enum Plan {
   HOBBY
   PRO
-  TEAM
+  AGENCY
+  ENTERPRISE
 }
 
 enum MemberRole {
@@ -262,4 +414,28 @@ enum WebhookEvent {
   PAGE_UPDATED
   PAGE_PUBLISHED
   PAGE_DELETED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  ARCHIVE
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  WEBHOOK_FIRED
+  MEMBER_INVITED
+  MEMBER_REMOVED
+  PLAN_CHANGED
+  WEBHOOK_CREATED
+  WEBHOOK_DELETED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
 }
