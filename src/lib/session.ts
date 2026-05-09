@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "./prisma";
 import { redirect } from "next/navigation";
+import { logger } from "./logger";
 
 export async function getSession() {
   const session = await auth.api.getSession({
@@ -46,4 +47,19 @@ export async function requireWorkspace() {
     workspace: member.workspace,
     role: member.role,
   };
+}
+
+export async function requireAdmin() {
+  const session = await requireSession();
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminEmail || session.user.email !== adminEmail) {
+    logger.warn("Unauthorized admin access attempt", { 
+        userId: session.user.id, 
+        email: session.user.email 
+    });
+    redirect("/dashboard");
+  }
+
+  return session;
 }
