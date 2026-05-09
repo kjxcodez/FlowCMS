@@ -1,39 +1,42 @@
-interface CacheEntry<T> {
-  data: T;
-  expiresAt: number;
-}
+import { Redis } from "@upstash/redis";
+import { logger } from "./logger";
 
-const cache = new Map<string, CacheEntry<unknown>>();
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
-/** Get a value from cache, or compute and store it */
+/** Get a value from Redis cache, or compute and store it */
 export async function cached<T>(
   key: string,
-  ttlMs: number,
+  ttlSeconds: number,
   compute: () => Promise<T>
 ): Promise<T> {
-  const existing = cache.get(key) as
-    | CacheEntry<T>
-    | undefined;
-
-  if (existing && Date.now() < existing.expiresAt) {
-    return existing.data;
+  try {
+    const existing = await redis.get<T>(key);
+    if (existing !== null) {
+      return existing;
+    }
+  } catch (err) {
+    logger.error("Redis cache get error", { key, error: String(err) });
   }
 
   const data = await compute();
-  cache.set(key, { data, expiresAt: Date.now() + ttlMs });
+
+  try {
+    await redis.set(key, data, { ex: ttlSeconds });
+  } catch (err) {
+    logger.error("Redis cache set error", { key, error: String(err) });
+  }
+
   return data;
 }
 
-/** Invalidate a specific key or all keys matching a prefix */
-export function invalidateCache(keyOrPrefix: string): void {
-  if (cache.has(keyOrPrefix)) {
-    cache.delete(keyOrPrefix);
-    return;
-  }
-  // Prefix invalidation
-  for (const key of cache.keys()) {
-    if (key.startsWith(keyOrPrefix)) {
-      cache.delete(key);
-    }
+/** Invalidate a specific key */
+export async function invalidateCache(key: string): Promise<void> {
+  try {
+    await redis.del(key);
+  } catch (err) {
+    logger.error("Redis cache delete error", { key, error: String(err) });
   }
 }
