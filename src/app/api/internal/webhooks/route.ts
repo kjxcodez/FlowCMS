@@ -5,6 +5,7 @@ import { apiError, apiSuccess } from "@/types/api";
 import { PLAN_LIMITS } from "@/types/cms";
 import { CreateWebhookSchema } from "@/lib/validations/webhook";
 import crypto from "crypto";
+import { logAction } from "@/lib/audit";
 
 export async function GET() {
   const { workspace } = await requireWorkspace();
@@ -16,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { workspace } = await requireWorkspace();
+  const { workspace, session } = await requireWorkspace();
 
   if (!PLAN_LIMITS[workspace.plan]?.webhooks) {
     return apiError(
@@ -39,11 +40,21 @@ export async function POST(req: NextRequest) {
       secret: crypto.randomBytes(32).toString("hex"),
     },
   });
+
+  logAction({
+    workspaceId: workspace.id,
+    userId: session.user.id,
+    action: "WEBHOOK_CREATED",
+    resourceType: "WEBHOOK",
+    resourceId: webhook.id,
+    resourceName: webhook.url,
+  });
+
   return apiSuccess(webhook);
 }
 
 export async function DELETE(req: NextRequest) {
-  const { workspace } = await requireWorkspace();
+  const { workspace, session } = await requireWorkspace();
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return apiError("INVALID_INPUT", "Webhook ID required.");
 
@@ -51,5 +62,14 @@ export async function DELETE(req: NextRequest) {
     where: { id, workspaceId: workspace.id },
   });
   if (!result.count) return apiError("NOT_FOUND", "Webhook not found.");
+
+  logAction({
+    workspaceId: workspace.id,
+    userId: session.user.id,
+    action: "WEBHOOK_DELETED",
+    resourceType: "WEBHOOK",
+    resourceId: id,
+  });
+
   return apiSuccess({ deleted: true });
 }
