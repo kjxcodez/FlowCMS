@@ -26,14 +26,22 @@ import {
   Image as ImageIcon, 
   MousePointer2, 
   Minus,
-  Plus
+  Plus,
+  Quote,
+  Code as CodeIcon,
+  AlertCircle,
+  ChevronDown
 } from "lucide-react";
 import { Block, BlockType } from "@/types/cms";
 import { 
-  HeadingBlock, 
-  TextBlock, 
+  HeadingBlock,
+  TextBlock,
   ImageBlock, 
-  CtaBlock 
+  CtaBlock,
+  QuoteBlock,
+  CodeBlock,
+  CalloutBlock,
+  AccordionBlock
 } from "./blocks";
 import { cn } from "@/lib/utils";
 import { nanoid } from "nanoid";
@@ -49,6 +57,10 @@ const BLOCK_TYPES: { type: BlockType; label: string; icon: React.ElementType }[]
   { type: "image", label: "Image", icon: ImageIcon },
   { type: "cta", label: "Button / CTA", icon: MousePointer2 },
   { type: "divider", label: "Divider", icon: Minus },
+  { type: "quote", label: "Quote", icon: Quote },
+  { type: "code", label: "Code Block", icon: CodeIcon },
+  { type: "callout", label: "Callout", icon: AlertCircle },
+  { type: "accordion", label: "Accordion", icon: ChevronDown },
 ];
 
 function SortableBlock({ block, onUpdate, onRemove }: { block: Block; onUpdate: (props: Record<string, unknown>) => void; onRemove: () => void }) {
@@ -74,6 +86,10 @@ function SortableBlock({ block, onUpdate, onRemove }: { block: Block; onUpdate: 
       case "image": return <ImageBlock props={block.props} onChange={onUpdate} />;
       case "cta": return <CtaBlock props={block.props} onChange={onUpdate} />;
       case "divider": return <div className="h-px bg-[var(--border)] w-full my-4" />;
+      case "quote": return <QuoteBlock props={block.props} onChange={onUpdate} />;
+      case "code": return <CodeBlock props={block.props} onChange={onUpdate} />;
+      case "callout": return <CalloutBlock props={block.props} onChange={onUpdate} />;
+      case "accordion": return <AccordionBlock props={block.props} onChange={onUpdate} />;
       default: return null;
     }
   };
