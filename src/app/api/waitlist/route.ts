@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { sendWaitlistConfirmation } from "@/lib/email";
+import { sendWaitlistConfirmation } from "@/lib/email/index";
 import { generateReferralCode, generateSecureToken } from "@/lib/tokens";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";

@@ -72,7 +72,7 @@ function AuthErrorContent() {
             </Button>
             
             <Button variant="outline" asChild className="w-full border-border-strong text-ink hover:border-accent hover:text-accent font-sans font-medium uppercase tracking-widest text-xs h-12">
-              <Link href="mailto:support@flowcms.dev">
+              <Link href="mailto:support@getflowcms.com">
                 <Mail className="w-4 h-4 mr-2" />
                 Contact Support
               </Link>

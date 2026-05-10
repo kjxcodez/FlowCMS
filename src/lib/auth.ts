@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { isWaitlistMode, isEarlyAccessMode } from "@/lib/launch";
 import { logger } from "@/lib/logger";
+import { verifyInvitePayload } from "@/lib/tokens";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -49,7 +50,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user, ctx) => {
+        before: async (user, ctx: any) => {
           if (isWaitlistMode || isEarlyAccessMode) {
             const pendingInviteCookie = ctx.getCookie("pending_invite");
             
@@ -59,7 +60,14 @@ export const auth = betterAuth({
             }
 
             try {
-              const { token, email } = JSON.parse(Buffer.from(pendingInviteCookie, "base64").toString());
+              const payload = verifyInvitePayload(pendingInviteCookie);
+              
+              if (!payload) {
+                logger.warn("Registration blocked: Invalid signature or payload", { email: user.email });
+                return false;
+              }
+
+              const { token, email } = payload;
               
               if (email !== user.email) {
                 logger.warn("Registration blocked: Email mismatch", { 
@@ -85,8 +93,12 @@ export const auth = betterAuth({
                 return false;
               }
 
-              // Final check: status must be INVITED or APPROVED
-              if (entry.status !== "INVITED" && entry.status !== "APPROVED") {
+              // Final check: status must be EXACTLY INVITED
+              if (entry.status !== "INVITED") {
+                logger.warn("Registration blocked: Status not INVITED", { 
+                  email: user.email, 
+                  status: entry.status 
+                });
                 return false;
               }
 
@@ -119,13 +131,8 @@ export const auth = betterAuth({
 
           if (!user) return false;
 
-          // LOGIN ENFORCEMENT: block suspended or revoked users
-          // (assuming status field exists on User, if not we check workspace/billing)
-          // For now, let's assume we have a way to check user health
-          const isSuspended = false; // Placeholder for actual business logic
-          
-          if (isSuspended) {
-            logger.warn("Login blocked: User suspended", { userId: user.id });
+          if (user.isSuspended) {
+            logger.warn("Login blocked: User suspended", { userId: user.id, email: user.email });
             return false;
           }
 

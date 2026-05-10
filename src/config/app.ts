@@ -4,8 +4,8 @@ export const APP_CONFIG = {
   description:
     "FlowCMS is an open-source headless CMS with a visual block editor and predictable REST APIs.",
   url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "https://api.flowcms.dev",
-  docsUrl: "https://docs.flowcms.dev",
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "https://getflowcms.com/api",
+  docsUrl: "https://getflowcms.com/docs",
   githubUrl: "https://github.com/kjxcodez/FlowCMS",
   nav: [
     { label: "Features", href: "#features" },

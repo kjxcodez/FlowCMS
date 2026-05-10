@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { signInvitePayload } from "@/lib/tokens";
 
 export async function GET(req: Request, { params }: { params: { provider: string } }) {
   const { searchParams } = new URL(req.url);
@@ -27,11 +28,11 @@ export async function GET(req: Request, { params }: { params: { provider: string
 
   // Set secure handoff cookie (Checkpoint 1)
   const cookieStore = await cookies();
-  const cookieValue = Buffer.from(JSON.stringify({ token, email })).toString("base64");
+  const cookieValue = signInvitePayload({ token, email, ts: Date.now() });
   
   cookieStore.set("pending_invite", cookieValue, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true, // Always secure for signed handoff
     sameSite: "lax",
     path: "/",
     maxAge: 600, // 10 minutes

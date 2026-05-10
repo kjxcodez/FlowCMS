@@ -346,7 +346,7 @@ export function EmailLayout({
           <div style={styles.footer}>
             <Text style={styles.footerText}>
               You received this email from{" "}
-              <a href="https://flowcms.dev" style={styles.footerLink}>
+              <a href="https://getflowcms.com" style={styles.footerLink}>
                 FlowCMS
               </a>
               . Questions? Reply directly to this email.
