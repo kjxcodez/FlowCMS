@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 
 /**
  * Generates Cache-Control headers for the public API.
@@ -25,8 +24,9 @@ export function getApiCacheHeaders({
     `public, s-maxage=${sMaxAge}, stale-while-revalidate=${staleWhileRevalidate}`
   );
   
-  // CRITICAL: Prevent Cloudflare from serving the same response to different API keys
-  headers.set("Vary", "Authorization, Accept-Encoding");
+  // REMOVED: Vary: Authorization causes excessive cache fragmentation on Cloudflare.
+  // We rely on origin-side validation in the middleware/adapter layer instead.
+  headers.set("Vary", "Accept-Encoding");
   
   return headers;
 }

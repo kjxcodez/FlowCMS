@@ -30,6 +30,10 @@ export const auth = betterAuth({
    * ISSUE 1: Correct Better Auth hook architecture using databaseHooks.
    * Validates waitlist status at the database level before user creation.
    */
+  /**
+   * ISSUE 1: Correct Better Auth hook architecture using databaseHooks.
+   * Validates waitlist status at the database level before user creation.
+   */
   user: {
     additionalFields: {
       inviteToken: {
@@ -38,20 +42,24 @@ export const auth = betterAuth({
       },
     },
   },
-  /**
-   * CUSTOM ERROR PAGES
-   * Redirects users to our branded Meridian error page instead of Better Auth defaults.
-   */
-  pages: {
-    signIn: "/login",
-    newUser: "/onboarding",
-    error: "/auth/error",
-  },
   databaseHooks: {
     user: {
       create: {
-        before: async (user, ctx: any) => {
+        before: async (user, ctx) => {
+          // 1. ADMIN BYPASS: Founders skip all gating
+          const adminEmails = (process.env.ADMIN_BYPASS_EMAILS ?? "").split(",").map(e => e.trim());
+          if (adminEmails.includes(user.email)) {
+            logger.info("Registration: Admin bypass granted", { email: user.email });
+            return { data: user };
+          }
+
           if (isWaitlistMode || isEarlyAccessMode) {
+            // Ensure context exists before accessing cookies
+            if (!ctx) {
+              logger.warn("Registration blocked: No request context available", { email: user.email });
+              return false;
+            }
+
             const pendingInviteCookie = ctx.getCookie("pending_invite");
             
             if (!pendingInviteCookie) {
@@ -77,39 +85,30 @@ export const auth = betterAuth({
                 return false;
               }
 
-              // ATOMIC CONSUMPTION: mark as JOINED in a transaction
-              // This prevents replay attacks and race conditions
-              const entry = await prisma.waitlistEntry.findUnique({
-                where: { inviteToken: token },
-              });
-
-              if (!entry || entry.status === "JOINED") {
-                logger.warn("Registration blocked: Invite invalid or already used", { token });
-                return false;
-              }
-
-              if (entry.inviteExpiresAt && entry.inviteExpiresAt < new Date()) {
-                logger.warn("Registration blocked: Invite expired", { token });
-                return false;
-              }
-
-              // Final check: status must be EXACTLY INVITED
-              if (entry.status !== "INVITED") {
-                logger.warn("Registration blocked: Status not INVITED", { 
-                  email: user.email, 
-                  status: entry.status 
-                });
-                return false;
-              }
-
-              // Update status atomically
-              await prisma.waitlistEntry.update({
-                where: { inviteToken: token },
+              /**
+               * ATOMIC CONSUMPTION: mark as JOINED using updateMany
+               * This is the ONLY way to prevent race conditions where multiple requests
+               * use the same token simultaneously. prisma.update() is NOT atomic for state checks.
+               */
+              const consumed = await prisma.waitlistEntry.updateMany({
+                where: { 
+                  inviteToken: token,
+                  status: "INVITED", // Must be exactly INVITED
+                  OR: [
+                    { inviteExpiresAt: null },
+                    { inviteExpiresAt: { gt: new Date() } }
+                  ]
+                },
                 data: {
                   status: "JOINED",
                   inviteUsedAt: new Date(),
                 },
               });
+
+              if (consumed.count !== 1) {
+                logger.warn("Registration blocked: Token already consumed or invalid", { token });
+                return false;
+              }
 
               logger.info("Invite consumed successfully", { email: user.email });
             } catch (err) {
@@ -124,7 +123,7 @@ export const auth = betterAuth({
     },
     session: {
       create: {
-        before: async (session, ctx) => {
+        before: async (session) => {
           const user = await prisma.user.findUnique({
             where: { id: session.userId },
           });

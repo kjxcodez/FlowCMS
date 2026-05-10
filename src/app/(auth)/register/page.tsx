@@ -48,21 +48,42 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // 1. Sign up user
+      // 1. Prepare signup (Checkpoint 1): Set pending_invite cookie
+      if (inviteToken) {
+        const prepareResult = await fetch("/api/auth/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: inviteToken, email: values.email }),
+        });
+
+        if (!prepareResult.ok) {
+          const data = await prepareResult.json();
+          router.push(`/auth/error?code=INVITE_INVALID&message=${encodeURIComponent(data.error || "Invalid invite")}`);
+          return;
+        }
+      }
+
+      // 2. Sign up user
       const result = await signUp.email({
         name: values.name,
         email: values.email,
         password: values.password,
-        inviteToken: inviteToken || undefined,
       });
 
       if (result.error) {
+        // EXPLICIT REDIRECT for hard errors (e.g. databaseHook rejection)
+        // This ensures parity with Social Auth flow
+        if (result.error.status === 403 || result.error.status === 422) {
+          router.push(`/auth/error?code=AUTH_FAILED&message=${encodeURIComponent(result.error.message || "Registration blocked")}`);
+          return;
+        }
+        
         setError(result.error.message ?? "Failed to create account.");
         setLoading(false);
         return;
       }
 
-      // 2. Register workspace
+      // 3. Register workspace
       const wsResult = await fetch("/api/auth/register-workspace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,9 +94,11 @@ export default function RegisterPage() {
         console.error("Failed to create workspace");
       }
 
+      // 4. Final Handoff: Force session refresh and navigation
+      router.refresh(); // Refresh server components
       router.push("/dashboard");
-      router.refresh();
-    } catch {
+    } catch (err) {
+      console.error("Signup error:", err);
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }

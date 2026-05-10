@@ -12,18 +12,24 @@ export async function GET(req: Request, { params }: { params: { provider: string
     return NextResponse.redirect(new URL("/auth/error?code=INVITE_MISSING", req.url));
   }
 
-  const entry = await prisma.waitlistEntry.findUnique({
-    where: { inviteToken: token },
-  });
+  // ADMIN BYPASS: Founders skip all gating
+  const adminEmails = (process.env.ADMIN_BYPASS_EMAILS ?? "").split(",").map(e => e.trim());
+  const isAdmin = adminEmails.includes(email);
 
-  // Security: Token must match email and not be used
-  if (!entry || entry.email !== email || entry.status === "JOINED") {
-    return NextResponse.redirect(new URL("/auth/error?code=INVITE_INVALID", req.url));
-  }
+  if (!isAdmin) {
+    const entry = await prisma.waitlistEntry.findUnique({
+      where: { inviteToken: token },
+    });
 
-  // Expiry check
-  if (entry.inviteExpiresAt && entry.inviteExpiresAt < new Date()) {
-    return NextResponse.redirect(new URL("/auth/error?code=INVITE_EXPIRED", req.url));
+    // Security: Token must match email and status must be EXACTLY INVITED
+    if (!entry || entry.email !== email || entry.status !== "INVITED") {
+      return NextResponse.redirect(new URL("/auth/error?code=INVITE_INVALID", req.url));
+    }
+
+    // Expiry check
+    if (entry.inviteExpiresAt && entry.inviteExpiresAt < new Date()) {
+      return NextResponse.redirect(new URL("/auth/error?code=INVITE_EXPIRED", req.url));
+    }
   }
 
   // Set secure handoff cookie (Checkpoint 1)
