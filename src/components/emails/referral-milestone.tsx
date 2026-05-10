@@ -59,7 +59,7 @@ export function ReferralMilestoneEmail({
           }}
         >
           You just reached <strong style={{ color: tokens.ink }}>{milestone} referrals</strong>. 
-          That's incredible! For every person you've invited, you've jumped ahead in the queue. 
+          That&apos;s incredible! For every person you&apos;ve invited, you&apos;ve jumped ahead in the queue. 
           You are now significantly closer to getting full access to FlowCMS.
         </Text>
 

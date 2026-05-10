@@ -106,8 +106,7 @@ export function ApiKeyNotificationEmail({
             margin: "0 0 16px",
           }}
         >
-          If this wasn't you or someone on your team, please review your
-          workspace security settings immediately.
+          If this wasn&apos;t you or someone on your team, please review your workspace security settings immediately.
         </Text>
         <a
           href={settingsUrl}

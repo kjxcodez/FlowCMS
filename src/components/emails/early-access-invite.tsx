@@ -48,7 +48,7 @@ export function EarlyAccessInviteEmail({
       {/* ── Hero ──────────────────────────────────────────── */}
       <Section style={{ marginBottom: "32px" }}>
         <div style={{ marginBottom: "20px" }}>
-          <Badge variant="accent">You're in</Badge>
+          <Badge variant="accent">You&apos;re in</Badge>
           {position && (
             <span
               style={{
@@ -88,8 +88,7 @@ export function EarlyAccessInviteEmail({
             margin: "0 0 32px",
           }}
         >
-          We've been building carefully. You waited patiently. It's time. Click
-          below to create your account and unlock{" "}
+          We&apos;ve been building carefully. You waited patiently. It&apos;s time. Click below to create your account and unlock{" "}
           <strong style={{ color: tokens.ink }}>
             {trialDays} days of PRO access
           </strong>{" "}

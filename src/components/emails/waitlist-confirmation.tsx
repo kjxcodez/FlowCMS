@@ -31,7 +31,7 @@ export function WaitlistConfirmationEmail({
 
   return (
     <EmailLayout
-      preview={`You're #${position} on the FlowCMS waitlist — confirm your spot.`}
+      preview={`You&apos;re #${position} on the FlowCMS waitlist — confirm your spot.`}
       tagline="EARLY ACCESS"
       footerNote="Reply to this email if you have questions — I read every message."
     >
@@ -86,8 +86,8 @@ export function WaitlistConfirmationEmail({
             margin: "0 0 24px",
           }}
         >
-          You're on the list. FlowCMS is in private beta — we're letting people
-          in carefully, in order. We'll email you the moment your spot opens up.
+          You&apos;re on the list. FlowCMS is in private beta — we&apos;re letting people
+          in carefully, in order. We&apos;ll email you the moment your spot opens up.
         </Text>
 
         <div style={{ marginBottom: "8px" }}>
@@ -173,7 +173,7 @@ export function WaitlistConfirmationEmail({
             letterSpacing: "-0.01em",
           }}
         >
-          What you're getting access to
+          What you&apos;re getting access to
         </Text>
 
         {[

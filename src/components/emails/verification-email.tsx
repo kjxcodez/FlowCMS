@@ -138,7 +138,7 @@ export function VerificationEmail({
           }}
         >
           <strong style={{ color: tokens.inkMuted }}>
-            Didn't create a FlowCMS account?
+            Didn&apos;t create a FlowCMS account?
           </strong>{" "}
           You can safely ignore this email. No account has been created.
         </Text>

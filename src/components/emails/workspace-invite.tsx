@@ -60,7 +60,7 @@ export function WorkspaceInviteEmail({
             margin: "0 0 16px",
           }}
         >
-          You've been invited to join a workspace
+          You&apos;ve been invited to join a workspace
         </Text>
 
         <Text
@@ -177,7 +177,7 @@ export function WorkspaceInviteEmail({
             lineHeight: "1.6",
           }}
         >
-          If you weren't expecting this invitation, you can ignore this email.
+          If you weren&apos;t expecting this invitation, you can ignore this email.
           This invite link will expire and your information will not be shared.
         </Text>
       </Section>

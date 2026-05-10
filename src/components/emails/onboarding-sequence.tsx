@@ -1,7 +1,6 @@
 import { Hr, Section, Text } from "@react-email/components";
 import * as React from "react";
 import {
-  Callout,
   EmailLayout,
   Label,
   PrimaryButton,

@@ -135,7 +135,7 @@ export function PasswordResetEmail({
               fontWeight: "600",
             }}
           >
-            Didn't request this?
+            Didn&apos;t request this?
           </Text>
           <Text
             style={{
@@ -146,7 +146,7 @@ export function PasswordResetEmail({
               lineHeight: "1.6",
             }}
           >
-            If you didn't request a password reset, your password won't change
+            If you didn&apos;t request a password reset, your password won&apos;t change
             — you can safely ignore this email.{" "}
             {requestedFrom && (
               <>
@@ -154,7 +154,7 @@ export function PasswordResetEmail({
                 <strong style={{ color: tokens.ink }}>{requestedFrom}</strong>.{" "}
               </>
             )}
-            If you're concerned, reply to this email immediately.
+            If you&apos;re concerned, reply to this email immediately.
           </Text>
         </Callout>
       </Section>

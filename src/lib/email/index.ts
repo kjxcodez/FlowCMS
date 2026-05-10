@@ -151,7 +151,7 @@ export async function orchestrateEmail({
   // 2. Create or update log to PENDING
   const templateName = typeof react.type === "string" 
     ? react.type 
-    : (react.type as any).displayName || (react.type as any).name || "Unknown";
+    : (react.type as any).displayName || (react.type as any).name || "Unknown"; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const log = await prisma.emailLog.upsert({
     where: { idempotencyKey },
@@ -180,7 +180,7 @@ export async function orchestrateEmail({
     where: { id: log.id },
     data: {
       status: result.success ? "SENT" : "FAILED",
-      providerMessageId: result.data ? (result.data as any).id : null,
+      providerMessageId: result.data ? (result.data as any).id : null, // eslint-disable-line @typescript-eslint/no-explicit-any
       error: result.error ? JSON.stringify(result.error) : null,
     },
   });

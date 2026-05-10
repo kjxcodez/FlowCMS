@@ -101,7 +101,7 @@ export function MarketingUpdateEmail({
         <>
           <Hr style={styles.hr} />
           <Section style={{ marginBottom: "32px" }}>
-            <Label>What's new</Label>
+            <Label>What&apos;s new</Label>
             <div style={{ marginTop: "16px" }}>
               {highlights.map((item) => (
                 <div
@@ -179,7 +179,7 @@ export function MarketingUpdateEmail({
               textAlign: "center",
             }}
           >
-            You're receiving this because you're on the FlowCMS waitlist or
+            You&apos;re receiving this because you&apos;re on the FlowCMS waitlist or
             have an account.{" "}
             <a
               href={unsubscribeUrl}

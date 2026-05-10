@@ -44,7 +44,7 @@ export function ReEngagementEmail({
             margin: "0 0 16px",
           }}
         >
-          {greeting} come see what we've built.
+          {greeting} come see what we&apos;ve built.
         </Text>
 
         <Text
@@ -56,9 +56,9 @@ export function ReEngagementEmail({
             margin: "0 0 24px",
           }}
         >
-          It's been {daysInactive} days since you last logged into FlowCMS. 
-          We've been busy shipping updates to make your content workflow even smoother. 
-          Here's what you might have missed:
+          It&apos;s been {daysInactive} days since you last logged into FlowCMS. 
+          We&apos;ve been busy shipping updates to make your content workflow even smoother. 
+          Here&apos;s what you might have missed:
         </Text>
 
         <div style={{ marginBottom: "32px" }}>
