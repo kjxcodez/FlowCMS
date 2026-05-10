@@ -282,7 +282,7 @@ model MonthlyUsage {
 
 model AuditLog {
   id           String      @id @default(cuid())
-  workspaceId  String
+  workspaceId  String?
   userId       String?
   apiKeyId     String?
   action       AuditAction
@@ -295,7 +295,7 @@ model AuditLog {
   userAgent    String?
   createdAt    DateTime    @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
   @@index([workspaceId, resourceType, resourceId])
@@ -434,6 +434,11 @@ enum AuditAction {
   PLAN_CHANGED
   WEBHOOK_CREATED
   WEBHOOK_DELETED
+  WAITLIST_APPROVED
+  WAITLIST_INVITED
+  WAITLIST_REVOKED
+  WAITLIST_SUSPENDED
+  WAITLIST_RESTORED
 }
 
 enum InvitationStatus {
