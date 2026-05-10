@@ -8,6 +8,7 @@ export const APP_CONFIG = {
   docsUrl: "https://getflowcms.com/docs",
   githubUrl: "https://github.com/kjxcodez/FlowCMS",
   nav: [
+    { label: "Docs", href: "/docs" },
     { label: "Features", href: "#features" },
     { label: "Use Cases", href: "#use-cases" },
     { label: "How it works", href: "#how-it-works" },
