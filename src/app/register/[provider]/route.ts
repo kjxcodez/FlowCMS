@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { signInvitePayload } from "@/lib/tokens";
 
-export async function GET(req: Request, { params }: { params: { provider: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider } = await params;
   const { searchParams } = new URL(req.url);
   const token = searchParams.get("invite");
   const email = searchParams.get("email");
@@ -45,7 +46,7 @@ export async function GET(req: Request, { params }: { params: { provider: string
   });
 
   // Handoff to Better Auth or Signup UI
-  if (params.provider === "google") {
+  if (provider === "google") {
     // Redirect to Better Auth social sign-in entry point
     return NextResponse.redirect(new URL("/api/auth/login/social/google", req.url));
   }

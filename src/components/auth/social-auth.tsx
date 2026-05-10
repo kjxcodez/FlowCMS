@@ -40,10 +40,8 @@ export function SocialAuth({ inviteToken }: SocialAuthProps) {
         provider,
         callbackURL: "/dashboard",
         // Pass inviteToken to Better Auth so it's available in databaseHooks.user.create.before
-        newUserOptions: {
-            data: {
-                inviteToken: inviteToken || undefined
-            }
+        additionalData: {
+          inviteToken: inviteToken || undefined
         }
       });
     } catch (err) {
