@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "motion/react";
 import { APP_CONFIG } from "@/config/app";
 
 export const Ticker = () => {

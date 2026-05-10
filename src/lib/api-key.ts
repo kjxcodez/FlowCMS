@@ -23,7 +23,7 @@ export async function verifyApiKey(raw: string): Promise<{
   apiKeyId: string;
 } | null> {
   const prefix = raw.slice(0, 8);
-  const cacheKey = `auth:key:${raw}`; // Using the raw key as part of the cache key (risky? No, it's a secure token)
+  // const cacheKey = `auth:key:${raw}`; // Using the raw key as part of the cache key (risky? No, it's a secure token)
   // Actually, better to cache by the hash of the raw key to avoid storing raw keys in Redis.
   const secureCacheKey = `auth:key:v1:${crypto.createHash("sha256").update(raw).digest("hex")}`;
 

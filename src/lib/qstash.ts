@@ -13,7 +13,7 @@ interface QueueWebhookOptions {
   webhookId: string;
   url: string;
   event: string;
-  payload: any;
+  payload: unknown;
   secret: string;
 }
 
@@ -22,7 +22,7 @@ export async function queueWebhook({
   url,
   event,
   payload,
-  secret,
+  secret: _secret, // prefixed with _ to avoid unused var warning until signing is implemented
 }: QueueWebhookOptions) {
   try {
     // We send the webhook request THROUGH QStash to the destination URL

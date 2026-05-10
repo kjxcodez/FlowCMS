@@ -17,12 +17,12 @@ export async function logAction({
   workspaceId: string;
   userId?: string;
   apiKeyId?: string;
-  action: any; // Using any to avoid rigid enum dependencies during development
+  action: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   resourceType: string;
   resourceId: string;
   resourceName?: string;
-  before?: any;
-  after?: any;
+  before?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  after?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   ip?: string;
   userAgent?: string;
 }) {

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { PlusIcon, MinusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const FAQS = [

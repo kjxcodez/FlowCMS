@@ -2,13 +2,13 @@ import { prisma } from "./prisma";
 import { queueWebhook } from "./qstash";
 import { logger } from "./logger";
 
-export async function dispatchWebhooks(workspaceId: string, event: string, payload: any) {
+export async function dispatchWebhooks(workspaceId: string, event: string, payload: unknown) {
   try {
     const activeWebhooks = await prisma.webhook.findMany({
       where: {
         workspaceId,
         enabled: true,
-        events: { has: event as any },
+        events: { has: event as any }, // eslint-disable-line @typescript-eslint/no-explicit-any
       },
     });
 

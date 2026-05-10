@@ -3,7 +3,6 @@
 import React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
 import { motion } from "motion/react";
-import { cn } from "@/lib/utils";
 
 const COMPARISON_DATA = [
   {

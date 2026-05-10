@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CheckIcon, CopyIcon } from "./LandingIcons";
 import { ChevronDownIcon, GripVerticalIcon } from "lucide-react";
@@ -39,11 +39,11 @@ const DEMO_BLOCKS = [
   { type: "Code Snippet", defaultContent: "const flow = new FlowCMS();" },
 ];
 
-const JsonHighlighter = ({ data, level = 0 }: { data: any; level?: number }) => {
+const JsonHighlighter = ({ data, level = 0 }: { data: any; level?: number }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const indent = "  ".repeat(level);
   
   if (data === null) return <span className="text-[#FF5252]">null</span>;
-  if (typeof data === "string") return <span className="text-[#CAFF4D]">"{data}"</span>;
+  if (typeof data === "string") return <span className="text-[#CAFF4D]">&quot;{data}&quot;</span>;
   if (typeof data === "number" || typeof data === "boolean") return <span className="text-[#F2A623]">{String(data)}</span>;
   
   if (Array.isArray(data)) {
@@ -73,7 +73,7 @@ const JsonHighlighter = ({ data, level = 0 }: { data: any; level?: number }) => 
         <div className="flex flex-col">
           {keys.map((key, i) => (
             <div key={key} className="pl-4">
-              <span className="text-[#88C0D0]">"{key}"</span>
+              <span className="text-[#88C0D0]">&quot;{key}&quot;</span>
               <span className="text-white/30">: </span>
               <JsonHighlighter data={data[key as keyof typeof data]} level={level + 1} />
               {i < keys.length - 1 && <span className="text-white/30">,</span>}
@@ -230,7 +230,7 @@ const HighlightedText = ({ text }: { text: string }) => {
   );
 };
 
-const TypewriterJson = ({ data, active }: { data: any; active: boolean }) => {
+const TypewriterJson = ({ data, active }: { data: any; active: boolean }) => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const text = JSON.stringify(data, null, 2);
   const [revealedLength, setRevealedLength] = useState(active ? 0 : text.length);
 
@@ -280,7 +280,7 @@ export const LiveDemo = () => {
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false); // For mobile accordion
   const [lastUpdated, setLastUpdated] = useState("just now");
 
-  const schemaDefinitions: Record<string, any[]> = {
+  const schemaDefinitions: Record<string, any[]> = { // eslint-disable-line @typescript-eslint/no-explicit-any
     "Blog Post": [
       { name: "Title", type: "Heading", required: true },
       { name: "Body", type: "Rich Text", required: true },
@@ -758,7 +758,7 @@ export const LiveDemo = () => {
                              )}
                              {block.type === "Image" && (
                                 <div className="aspect-video w-full bg-accent/5 rounded-sm overflow-hidden border border-accent/10 relative">
-                                   <img src={content} className="size-full object-cover grayscale" />
+                                   <img src={content} alt={content} className="size-full object-cover grayscale" />
                                 </div>
                              )}
                              {block.type === "CTA" && (

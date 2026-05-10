@@ -12,7 +12,7 @@ export function generateReferralCode(name?: string): string {
   return `${prefix}-${suffix}`; // e.g. "kapil-a3f9c2"
 }
 
-export function signInvitePayload(payload: any): string {
+export function signInvitePayload(payload: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any
   const secret = process.env.BETTER_AUTH_SECRET!;
   const data = JSON.stringify(payload);
   const signature = crypto
@@ -23,7 +23,7 @@ export function signInvitePayload(payload: any): string {
   return Buffer.from(JSON.stringify({ data, signature })).toString("base64");
 }
 
-export function verifyInvitePayload(cookieValue: string): any | null {
+export function verifyInvitePayload(cookieValue: string): any | null { // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     const secret = process.env.BETTER_AUTH_SECRET!;
     const { data, signature } = JSON.parse(

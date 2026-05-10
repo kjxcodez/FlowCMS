@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { Activity } from "lucide-react";
 
-export function DeploymentStep({ data }: { data: any }) {
+export function DeploymentStep({ data }: { data: any }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const router = useRouter();
   const [status, setStatus] = useState(0);
   const messages = [

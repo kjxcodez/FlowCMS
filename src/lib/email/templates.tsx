@@ -14,8 +14,8 @@ export function WaitlistConfirmationEmail({
   return (
     <div style={{ fontFamily: "sans-serif", color: "#18180F", padding: "40px" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em" }}>FlowCMS</h1>
-      <p>You're on the waitlist. We're building something worth waiting for.</p>
-      <p style={{ fontSize: "18px" }}>You're <strong>#{position}</strong> on the waitlist.</p>
+      <p>You&apos;re on the waitlist. We&apos;re building something worth waiting for.</p>
+      <p style={{ fontSize: "18px" }}>You&apos;re <strong>#{position}</strong> on the waitlist.</p>
       <div style={{ marginTop: "32px", padding: "24px", backgroundColor: "#f9f9f9", border: "1px solid #e5e5e5" }}>
         <p style={{ margin: "0 0 16px 0" }}>Jump the queue — share your link and move up for every person who joins.</p>
         <a href={referralUrl} style={{ color: "#7C9D2E", textDecoration: "none", fontWeight: "bold" }}>{referralUrl}</a>
@@ -51,7 +51,7 @@ export function InviteEmail({ acceptUrl }: InviteEmailProps) {
   return (
     <div style={{ fontFamily: "sans-serif", color: "#18180F", padding: "40px" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.1em" }}>FlowCMS</h1>
-      <p>We've saved you a spot. You're in.</p>
+      <p>We&apos;ve saved you a spot. You&apos;re in.</p>
       <div style={{ marginTop: "32px" }}>
         <a 
           href={acceptUrl} 
@@ -69,9 +69,9 @@ export function InviteEmail({ acceptUrl }: InviteEmailProps) {
         </a>
       </div>
       <p style={{ marginTop: "32px" }}>Your invite expires in 7 days.</p>
-      <p>You'll have full access to the PRO plan free for 30 days. No credit card needed.</p>
+      <p>You&apos;ll have full access to the PRO plan free for 30 days. No credit card needed.</p>
       <p style={{ marginTop: "40px", fontSize: "12px", color: "#666" }}>
-        PS: Reply to this email if you hit any issues — I'm the founder and I read every message.
+        PS: Reply to this email if you hit any issues — I&apos;m the founder and I read every message.
       </p>
     </div>
   );
