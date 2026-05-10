@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
-import { fireWebhooks } from "@/lib/webhooks";
+import { dispatchWebhooks } from "@/lib/webhooks";
 import { UpdateEntrySchema } from "@/lib/validations/entry";
 
 export async function GET(
@@ -54,7 +54,7 @@ export async function PATCH(
 
   if (isPublishing || parsed.data.status === "PUBLISHED") {
     purgeCacheTags([`ws:${workspace.id}`]).catch(() => {});
-    fireWebhooks(workspace.id, "ENTRY_PUBLISHED", {
+    dispatchWebhooks(workspace.id, "ENTRY_PUBLISHED", {
       entryId: entry.id,
     }).catch(() => {});
   }
@@ -79,7 +79,7 @@ export async function DELETE(
   await prisma.entry.delete({ where: { id } });
 
   purgeCacheTags([`ws:${workspace.id}`]).catch(() => {});
-  fireWebhooks(workspace.id, "ENTRY_DELETED", {
+  dispatchWebhooks(workspace.id, "ENTRY_DELETED", {
     entryId: id,
   }).catch(() => {});
 

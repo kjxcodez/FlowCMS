@@ -6,7 +6,7 @@ import { logAction } from "@/lib/audit";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   // Use await params for Next.js 15
   const { token } = await params;

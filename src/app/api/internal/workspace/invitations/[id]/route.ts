@@ -6,7 +6,7 @@ import { logAction } from "@/lib/audit";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { workspace, session, role } = await requireWorkspace();
@@ -39,7 +39,7 @@ export async function DELETE(
     });
 
     return apiSuccess({ success: true });
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to revoke invitation.");
   }
 }

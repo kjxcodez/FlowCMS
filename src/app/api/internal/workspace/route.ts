@@ -39,7 +39,7 @@ export async function PATCH(req: Request) {
     });
 
     return apiSuccess({ name: updated.name, plan: updated.plan, slug: updated.slug });
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to update workspace.");
   }
 }

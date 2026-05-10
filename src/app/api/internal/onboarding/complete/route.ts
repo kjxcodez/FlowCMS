@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             workspaceId: membership.workspaceId,
             name: firstSchemaName,
             slug: slugify(firstSchemaName),
-            fields: fields as any
+            fields: fields as any // eslint-disable-line @typescript-eslint/no-explicit-any
           }
         });
       }
@@ -90,14 +90,14 @@ export async function POST(req: NextRequest) {
             workspaceId,
             name: firstSchemaName,
             slug: slugify(firstSchemaName),
-            fields: fields as any
+            fields: fields as any // eslint-disable-line @typescript-eslint/no-explicit-any
           }
         });
       }
     }
 
     return apiSuccess({ ok: true });
-  } catch (err: any) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Onboarding error:", err);
     return apiError("INTERNAL_ERROR", err.message);
   }

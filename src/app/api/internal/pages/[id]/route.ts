@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
-import { fireWebhooks } from "@/lib/webhooks";
+import { dispatchWebhooks } from "@/lib/webhooks";
 import { UpdatePageSchema } from "@/lib/validations/page";
 
 export async function GET(
@@ -50,7 +50,7 @@ export async function PATCH(
   });
 
   if (isPublishing) {
-    fireWebhooks(workspace.id, "PAGE_PUBLISHED", {
+    dispatchWebhooks(workspace.id, "PAGE_PUBLISHED", {
       pageId: page.id,
     }).catch(() => {});
   }
@@ -69,6 +69,6 @@ export async function DELETE(
   });
   if (!page) return apiError("NOT_FOUND", "Page not found.");
   await prisma.page.delete({ where: { id } });
-  fireWebhooks(workspace.id, "PAGE_DELETED", { pageId: id }).catch(() => {});
+  dispatchWebhooks(workspace.id, "PAGE_DELETED", { pageId: id }).catch(() => {});
   return apiSuccess({ deleted: true });
 }

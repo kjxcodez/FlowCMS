@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
         name: template.name,
         slug,
         description: template.description,
-        fields: template.fields as any,
+        fields: template.fields as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       },
     });
 
