@@ -6,8 +6,10 @@ import { PLAN_LIMITS } from "@/types/cms";
 import { CreateWebhookSchema } from "@/lib/validations/webhook";
 import crypto from "crypto";
 import { logAction } from "@/lib/audit";
+import { FEATURES } from "@/lib/launch";
 
 export async function GET() {
+  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace } = await requireWorkspace();
   const webhooks = await prisma.webhook.findMany({
     where: { workspaceId: workspace.id },
@@ -17,6 +19,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
 
   if (!PLAN_LIMITS[workspace.plan]?.webhooks) {
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return apiError("INVALID_INPUT", "Webhook ID required.");

@@ -3,8 +3,11 @@ import { requireWorkspace } from "@/lib/session";
 import { razorpay, RAZORPAY_PLANS, PlanKey } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { FEATURES } from "@/lib/launch";
 
 export async function POST(req: NextRequest) {
+  if (!FEATURES.enableBilling) return apiError("FORBIDDEN", "This feature is not available yet.");
+  
   try {
     const { workspace, session } = await requireWorkspace();
     const body = await req.json();

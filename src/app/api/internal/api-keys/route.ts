@@ -5,8 +5,10 @@ import { apiError, apiSuccess } from "@/types/api";
 import { generateApiKey, hashApiKey } from "@/lib/api-key";
 import { CreateApiKeySchema } from "@/lib/validations/api-key";
 import { logAction } from "@/lib/audit";
+import { FEATURES } from "@/lib/launch";
 
 export async function GET() {
+  if (!FEATURES.enableApiKeyGeneration) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace } = await requireWorkspace();
   const keys = await prisma.apiKey.findMany({
     where: { workspaceId: workspace.id },
@@ -24,6 +26,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!FEATURES.enableApiKeyGeneration) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
   const body = await req.json();
   const parsed = CreateApiKeySchema.safeParse(body);
@@ -68,6 +71,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!FEATURES.enableApiKeyGeneration) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
   const { searchParams } = req.nextUrl;
   const id = searchParams.get("id");
