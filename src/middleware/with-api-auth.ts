@@ -115,6 +115,7 @@ export function withApiAuth(handler: ApiHandler) {
     const headers = new Headers(response.headers);
     headers.set("X-Request-Id", requestId);
     headers.set("X-Response-Time", `${duration}ms`);
+    headers.set("X-API-Version", "1");
     
     // Cloudflare Cache Engineering
     // We EXCLUDE 'Authorization' from Vary to prevent cache fragmentation.
