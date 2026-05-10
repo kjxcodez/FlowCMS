@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowcms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowcms_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-flowcms}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowcms} -d ${POSTGRES_DB:-flowcms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-flowcms}:${POSTGRES_PASSWORD:-flowcms_pass}@postgres:5432/${POSTGRES_DB:-flowcms}?schema=public
+      - DIRECT_URL=postgresql://${POSTGRES_USER:-flowcms}:${POSTGRES_PASSWORD:-flowcms_pass}@postgres:5432/${POSTGRES_DB:-flowcms}?schema=public
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      # Add other necessary variables from .env here
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
