@@ -489,10 +489,12 @@ model WaitlistEntry {
 }
 
 enum WaitlistRole {
-  INDIE_DEV
+  SOLO_DEV
+  TEAM_DEV
   AGENCY
   FOUNDER
-  OTHER
+  STUDENT
+  OPEN_SOURCE_MAINTAINER
 }
 
 enum WaitlistStatus {
