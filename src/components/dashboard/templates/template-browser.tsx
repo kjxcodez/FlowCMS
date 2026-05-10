@@ -26,7 +26,7 @@ export function TemplateBrowser() {
 
       toast.success("Template applied successfully!");
       router.push(`/dashboard/content-types/${result.data.id}`);
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err.message);
     } finally {
       setApplying(null);

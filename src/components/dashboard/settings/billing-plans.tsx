@@ -29,7 +29,7 @@ export function BillingPlans({ currentPlan }: BillingPlansProps) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Failed to start checkout");
 
-      const { subscriptionId, keyId, workspaceName, userEmail, userName } = result.data;
+      const { subscriptionId, keyId, userEmail, userName } = result.data;
 
       const options = {
         key: keyId,
@@ -37,7 +37,7 @@ export function BillingPlans({ currentPlan }: BillingPlansProps) {
         name: "FlowCMS",
         description: `Subscription to ${planKey.replace("_MONTHLY", "")} Plan`,
         image: "/logo.png",
-        handler: function (response: any) {
+        handler: function () {
           toast.success("Payment successful! Your workspace will be upgraded shortly.");
           setTimeout(() => window.location.reload(), 2000);
         },
@@ -50,12 +50,12 @@ export function BillingPlans({ currentPlan }: BillingPlansProps) {
         },
       };
 
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (response: any) {
+      const rzp = new (window as any).Razorpay(options); // eslint-disable-line @typescript-eslint/no-explicit-any
+      rzp.on('payment.failed', function (response: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         toast.error("Payment failed: " + response.error.description);
       });
       rzp.open();
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err.message);
     } finally {
       setLoading(null);

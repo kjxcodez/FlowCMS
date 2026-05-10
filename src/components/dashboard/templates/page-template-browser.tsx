@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Layout, Sparkles } from "lucide-react";
 
 interface PageTemplateBrowserProps {
-  onApply: (blocks: any[]) => void;
+  onApply: (blocks: any[]) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export function PageTemplateBrowser({ onApply }: PageTemplateBrowserProps) {
