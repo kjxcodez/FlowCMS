@@ -11,7 +11,6 @@ import {
   Eye,
   History,
   Info,
-  Layers,
   Sparkles
 } from "lucide-react";
 import Link from "next/link";

@@ -120,7 +120,7 @@ export default function ContentTypeEntriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entries?.map((entry: any) => (
+              {entries?.map((entry: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                 <TableRow key={entry.id} className="group hover:bg-canvas/40 transition-colors border-border">
                   <TableCell>
                     <Badge 
@@ -182,6 +182,6 @@ export default function ContentTypeEntriesPage() {
   );
 }
 
-function cn(...inputs: any[]) {
+function cn(...inputs: any[]) { // eslint-disable-line @typescript-eslint/no-explicit-any
     return inputs.filter(Boolean).join(" ");
 }

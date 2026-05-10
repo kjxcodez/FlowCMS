@@ -15,7 +15,7 @@ export async function syncSubscription(subscriptionId: string) {
 
   try {
     const sub = await razorpay.subscriptions.fetch(subscriptionId);
-    const workspaceId = (sub as any).notes?.workspaceId;
+    const workspaceId = sub.notes?.workspaceId;
 
     if (!workspaceId) throw new Error("No workspaceId in subscription notes");
 
@@ -41,7 +41,7 @@ export async function syncSubscription(subscriptionId: string) {
       }
 
       await tx.workspace.update({
-        where: { id: workspaceId },
+        where: { id: workspaceId as unknown as string },
         data: { plan },
       });
     });

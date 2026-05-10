@@ -29,12 +29,6 @@ import {
   DatabaseIcon, 
   GlobeIcon, 
   ShieldCheckIcon,
-  ZapIcon,
-  SearchIcon,
-  Share2Icon,
-  TerminalIcon,
-  CpuIcon,
-  WorkflowIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";

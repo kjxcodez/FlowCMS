@@ -2,7 +2,6 @@
 
 import React from "react";
 import { 
-  Activity, 
   Database, 
   Zap, 
   BarChart3,
@@ -12,8 +11,7 @@ import {
 import { useUsage } from "@/hooks/use-usage";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";

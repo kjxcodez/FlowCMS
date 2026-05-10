@@ -37,7 +37,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error(data.error);
       toast.success("Workspace updated successfully");
       router.refresh();
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err.message);
     } finally {
       setLoading(false);
@@ -54,7 +54,7 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error(data.error);
       toast.success("Workspace deleted. Redirecting...");
       window.location.href = "/onboarding";
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err.message);
     } finally {
       setDeleting(false);

@@ -12,7 +12,6 @@ export async function inviteUser(id: string) {
   if (!res.success) throw new Error("Failed to send invite");
 
   revalidatePath("/admin/waitlist");
-  return { success: true };
 }
 
 export async function approveUser(id: string) {
@@ -22,5 +21,4 @@ export async function approveUser(id: string) {
   });
 
   revalidatePath("/admin/waitlist");
-  return { success: true };
 }

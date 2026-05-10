@@ -129,7 +129,7 @@ export default function EditContentTypePage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="font-display text-xl">Delete Content Type?</AlertDialogTitle>
                   <AlertDialogDescription className="text-ink-muted font-light">
-                    This will permanently delete the "<span className="font-bold">{type?.title}</span>" type and all associated entries. This action cannot be undone.
+                    This will permanently delete the &quot;<span className="font-bold">{type?.title}</span>&quot; type and all associated entries. This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
