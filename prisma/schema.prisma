@@ -486,6 +486,7 @@ model WaitlistEntry {
   @@index([priority, joinedAt])
   @@index([inviteToken])
   @@index([referralCode])
+  @@index([referredBy])
 }
 
 enum WaitlistRole {
