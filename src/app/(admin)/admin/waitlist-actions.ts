@@ -11,7 +11,7 @@ import { sendApprovalEmail, sendInviteEmail } from "@/lib/email/index";
  * APPROVE: Move CONFIRMED -> APPROVED
  */
 export async function approveWaitlistEntry(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return await prisma.$transaction(async (tx) => {
     const entry = await tx.waitlistEntry.findUnique({ where: { id } });
@@ -23,6 +23,16 @@ export async function approveWaitlistEntry(id: string) {
     const updated = await tx.waitlistEntry.update({
       where: { id },
       data: { status: "APPROVED" },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_APPROVED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: id,
+        resourceName: entry.email,
+      }
     });
 
     // Send approval notice (optional/deterministic)
@@ -39,7 +49,7 @@ export async function approveWaitlistEntry(id: string) {
  * INVITE: Move APPROVED -> INVITED and send email
  */
 export async function sendInvite(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return await prisma.$transaction(async (tx) => {
     const entry = await tx.waitlistEntry.findUnique({ where: { id } });
@@ -61,6 +71,16 @@ export async function sendInvite(id: string) {
       },
     });
 
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_INVITED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: id,
+        resourceName: entry.email,
+      }
+    });
+
     const emailResult = await sendInviteEmail(updated);
 
     if (!emailResult.success) {
@@ -78,7 +98,7 @@ export async function sendInvite(id: string) {
  * RESEND: Refreshes token and resends invite
  */
 export async function resendInvite(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return await prisma.$transaction(async (tx) => {
     const entry = await tx.waitlistEntry.findUnique({ where: { id } });
@@ -100,6 +120,17 @@ export async function resendInvite(id: string) {
       },
     });
 
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_INVITED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: id,
+        resourceName: entry.email,
+        after: { event: "RESEND" },
+      }
+    });
+
     const emailResult = await sendInviteEmail(updated);
 
     if (!emailResult.success) {
@@ -117,26 +148,41 @@ export async function resendInvite(id: string) {
  * REVOKE: Move INVITED -> REVOKED
  */
 export async function revokeInvite(id: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
-  await prisma.waitlistEntry.update({
-    where: { id },
-    data: {
-      status: "REVOKED",
-      inviteToken: null, // Nullify token immediately
-    },
+  return await prisma.$transaction(async (tx) => {
+    const entry = await tx.waitlistEntry.findUnique({ where: { id } });
+    if (!entry) throw new Error("Entry not found");
+
+    await tx.waitlistEntry.update({
+      where: { id },
+      data: {
+        status: "REVOKED",
+        inviteToken: null, // Nullify token immediately
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_REVOKED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: id,
+        resourceName: entry.email,
+      }
+    });
+
+    logger.info("Waitlist invite revoked", { id });
+    revalidatePath("/admin/waitlist");
+    return { success: true };
   });
-
-  logger.info("Waitlist invite revoked", { id });
-  revalidatePath("/admin/waitlist");
-  return { success: true };
 }
 
 /**
  * SUSPEND: Mark User as suspended and block access
  */
 export async function suspendUser(entryId: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return await prisma.$transaction(async (tx) => {
     const entry = await tx.waitlistEntry.findUnique({ where: { id: entryId } });
@@ -160,6 +206,16 @@ export async function suspendUser(entryId: string) {
       await tx.session.deleteMany({ where: { userId: user.id } });
     }
 
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_SUSPENDED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: entryId,
+        resourceName: entry.email,
+      }
+    });
+
     logger.warn("User suspended", { email: entry.email });
     revalidatePath("/admin/waitlist");
     return { success: true };
@@ -170,7 +226,7 @@ export async function suspendUser(entryId: string) {
  * RESTORE: Unsuspend user
  */
 export async function restoreUser(entryId: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   return await prisma.$transaction(async (tx) => {
     const entry = await tx.waitlistEntry.findUnique({ where: { id: entryId } });
@@ -188,6 +244,16 @@ export async function restoreUser(entryId: string) {
         data: { isSuspended: false },
       });
     }
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "WAITLIST_RESTORED",
+        resourceType: "WAITLIST_ENTRY",
+        resourceId: entryId,
+        resourceName: entry.email,
+      }
+    });
 
     revalidatePath("/admin/waitlist");
     return { success: true };

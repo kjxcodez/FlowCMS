@@ -4,6 +4,7 @@ import { sendWaitlistConfirmation } from "@/lib/email/index";
 import { generateReferralCode, generateSecureToken } from "@/lib/tokens";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest } from "next/server";
+import { WaitlistRole } from "@/generated/prisma";
 
 const schema = z.object({
   email:   z.string().email().toLowerCase().trim(),
@@ -60,25 +61,30 @@ export async function POST(req: NextRequest) {
 
   try {
     // 5. Create Entry
-    const position = await prisma.waitlistEntry.count() + 1;
     const inviteToken = generateSecureToken();
 
-    const entry = await prisma.waitlistEntry.create({
-      data: {
-        email,
-        name,
-        role: role as any,
-        useCase,
-        source,
-        position,
-        inviteToken,
-        referredBy: referrer?.email ?? null,
-        referralCode: generateReferralCode(name || undefined),
-        priority: role === "AGENCY" ? "HIGH" : "NORMAL",
-      },
+    const entry = await prisma.$transaction(async (tx) => {
+      const position = await tx.waitlistEntry.count() + 1;
+      return tx.waitlistEntry.create({
+        data: {
+          email,
+          name,
+          role: role as WaitlistRole,
+          useCase,
+          source,
+          position,
+          inviteToken,
+          referredBy: referrer?.email ?? null,
+          referralCode: generateReferralCode(name || undefined),
+          priority: role === "AGENCY" ? "HIGH" : "NORMAL",
+        },
+      });
     });
 
     // 6. Increment referrer count
+    // TODO: Referral queue movement is currently purely cosmetic.
+    // GitHub Issue: Dynamic Waitlist Queue Positioning
+    // We need a background job or DB trigger to recalculate positions based on referralCount.
     if (referrer) {
       await prisma.waitlistEntry.update({
         where: { id: referrer.id },
@@ -93,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     return new Response(JSON.stringify({
       success: true,
-      position,
+      position: entry.position,
       referralCode: entry.referralCode,
       referralUrl: `${process.env.NEXT_PUBLIC_APP_URL}/?ref=${entry.referralCode}`,
     }), { 
@@ -101,7 +107,7 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" }
     });
 
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Waitlist creation error", e);
     return new Response(JSON.stringify({ error: "Something went wrong. Please try again." }), { 
       status: 500,
