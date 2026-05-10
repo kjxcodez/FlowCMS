@@ -1,0 +1,45 @@
+---
+title: Environment Variables
+description: Required configuration for self-hosting FlowCMS.
+---
+
+# Environment Variables
+
+When running FlowCMS, you must configure the following environment variables in your `.env` file.
+
+## Required Variables
+
+### Database
+- `DATABASE_URL`: Connection string for PostgreSQL (used for connection pooling).
+- `DIRECT_URL`: Direct connection string for PostgreSQL (used for migrations).
+
+### Authentication (Better Auth)
+- `BETTER_AUTH_SECRET`: A secure, random 32-character string used to sign sessions.
+- `BETTER_AUTH_URL`: The base URL of your application (e.g., `https://cms.yourdomain.com`).
+
+### Core Settings
+- `NEXT_PUBLIC_APP_URL`: The public-facing URL of your app (used for client-side routing and links).
+- `NEXT_PUBLIC_LAUNCH_MODE`: Controls the onboarding flow. Options: `waitlist`, `early_access`, `open`.
+
+### Redis (Upstash)
+- `UPSTASH_REDIS_REST_URL`: REST API URL from your Upstash Redis console.
+- `UPSTASH_REDIS_REST_TOKEN`: REST API Token from your Upstash Redis console.
+
+### Email (Resend)
+- `RESEND_API_KEY`: Your Resend API key for sending transactional emails and waitlist invites.
+
+## Example `.env`
+
+```bash
+DATABASE_URL="postgresql://flowcms:flowcms_pass@postgres:5432/flowcms?schema=public"
+DIRECT_URL="postgresql://flowcms:flowcms_pass@postgres:5432/flowcms?schema=public"
+
+BETTER_AUTH_SECRET="your_super_secret_32_char_string"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+UPSTASH_REDIS_REST_URL="https://your-upstash-url.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your_upstash_token"
+
+RESEND_API_KEY="re_..."
+```

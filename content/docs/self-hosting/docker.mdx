@@ -1,0 +1,75 @@
+---
+title: Docker Installation
+description: How to self-host FlowCMS using Docker Compose.
+---
+
+# Self-Hosting with Docker
+
+The easiest way to self-host FlowCMS is using Docker Compose. We provide a complete setup that includes the application server and PostgreSQL database.
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) installed on your server.
+- [Docker Compose](https://docs.docker.com/compose/install/) installed.
+
+## Installation
+
+1. Create a `docker-compose.yml` file:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-flowcms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-flowcms_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-flowcms}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowcms} -d ${POSTGRES_DB:-flowcms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: kjxcodez/flowcms:latest
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-flowcms}:${POSTGRES_PASSWORD:-flowcms_pass}@postgres:5432/${POSTGRES_DB:-flowcms}?schema=public
+      - DIRECT_URL=postgresql://${POSTGRES_USER:-flowcms}:${POSTGRES_PASSWORD:-flowcms_pass}@postgres:5432/${POSTGRES_DB:-flowcms}?schema=public
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+```
+
+2. Create a `.env` file next to your `docker-compose.yml`. See [Environment Variables](/docs/self-hosting/environment-variables) for required configuration.
+
+3. Start the services:
+
+```bash
+docker compose up -d
+```
+
+The container automatically runs `npx prisma migrate deploy` on startup to ensure your database schema is up-to-date.
+
+## Health Check
+
+You can verify the application is running by visiting:
+`http://localhost:3000`

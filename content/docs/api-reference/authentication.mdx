@@ -1,0 +1,31 @@
+---
+title: API Authentication
+description: How to authenticate requests to the FlowCMS API.
+---
+
+# Authentication
+
+The FlowCMS API uses Bearer Tokens to authenticate requests. 
+
+## Passing your API Key
+
+You must include your API key in the `Authorization` header of every API request. Additionally, you must specify the API version using the `X-API-Version` header.
+
+```bash
+curl -X GET "https://getflowcms.com/api/v1/entries?type=blog_post" \
+  -H "Authorization: Bearer flw_123456789abcdef" \
+  -H "X-API-Version: 1"
+```
+
+## Creating API Keys
+
+1. Log into your FlowCMS Dashboard.
+2. Navigate to **Settings > API Keys**.
+3. Click **Generate New Key**.
+4. Copy the raw key immediately — it will never be displayed again.
+
+## Security Best Practices
+
+- **Never** expose your API key in client-side code (e.g., React, Vue, vanilla JS).
+- Always proxy requests through your own backend or use API routes in frameworks like Next.js.
+- If a key is compromised, revoke it immediately from the dashboard.
