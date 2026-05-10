@@ -50,37 +50,51 @@ export const FAQS = [
 
 const FAQItem = ({ question, answer, isOpen, onClick }: { question: string, answer: string, isOpen: boolean, onClick: () => void }) => {
   return (
-    <div className="border-b border-border last:border-none">
+    <motion.div 
+      className="border-b border-border last:border-none overflow-hidden rounded-sm transition-all"
+      animate={{ 
+        backgroundColor: isOpen ? "rgba(202, 255, 77, 0.04)" : "transparent",
+      }}
+      transition={{ duration: 0.3 }}
+    >
       <button
         onClick={onClick}
-        className="w-full py-8 flex items-center justify-between text-left group transition-colors hover:text-accent"
+        className="w-full px-6 py-8 flex items-center justify-between text-left group transition-colors"
       >
-        <span className="font-display text-xl md:text-2xl font-semibold tracking-tight">
+        <span className={cn(
+          "font-display text-xl md:text-2xl font-semibold tracking-tight transition-colors",
+          isOpen ? "text-accent" : "text-ink group-hover:text-accent"
+        )}>
           {question}
         </span>
-        <div className={cn(
-          "shrink-0 ml-4 p-2 rounded-sm border border-border-strong transition-all",
-          isOpen ? "bg-accent text-white border-accent" : "bg-transparent text-ink-muted group-hover:border-accent group-hover:text-accent"
-        )}>
-          {isOpen ? <MinusIcon size={16} /> : <PlusIcon size={16} />}
-        </div>
+        <motion.div 
+          animate={{ 
+            rotate: isOpen ? 45 : 0,
+            backgroundColor: isOpen ? "#CAFF4D" : "transparent",
+            borderColor: isOpen ? "#CAFF4D" : "rgba(255,255,255,0.1)",
+            color: isOpen ? "#000000" : "#888888"
+          }}
+          className="shrink-0 ml-4 p-2 rounded-sm border transition-all"
+        >
+          <PlusIcon size={16} />
+        </motion.div>
       </button>
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="pb-8 pr-12 text-ink-muted font-light leading-relaxed max-w-[800px]">
+            <div className="px-6 pb-8 pr-12 text-ink-muted font-light leading-relaxed max-w-[800px]">
               {answer}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

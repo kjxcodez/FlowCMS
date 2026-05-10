@@ -232,6 +232,43 @@
   animation: pulse-lime 2s ease-in-out infinite;
 }
 
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 25s linear infinite;
+}
+
+@keyframes rotate-shimmer {
+  from { transform: rotate(0deg) scale(2); }
+  to { transform: rotate(360deg) scale(2); }
+}
+
+.shimmer-border-container {
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: var(--border);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.shimmer-border-container::before {
+  content: "";
+  position: absolute;
+  inset: -150%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 300deg,
+    var(--accent-bright) 340deg,
+    transparent 360deg
+  );
+  animation: rotate-shimmer 4s linear infinite;
+}
+
 /* Noise grain overlay for premium depth */
 .noise-overlay::before {
   content: '';

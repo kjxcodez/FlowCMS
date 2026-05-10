@@ -3,7 +3,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from "motion/react";
+import { 
+  motion, 
+  useScroll, 
+  useTransform, 
+  useInView, 
+  AnimatePresence, 
+  useMotionValue, 
+  animate 
+} from "motion/react";
 import { APP_CONFIG } from "@/config/app";
 import { 
   SunIcon, 
@@ -18,30 +26,45 @@ import {
   LayoutGridIcon, 
   FileTextIcon, 
   CodeIcon, 
-  PenLineIcon, 
-  UsersIcon, 
-  WebhookIcon 
+  DatabaseIcon, 
+  GlobeIcon, 
+  ShieldCheckIcon,
+  ZapIcon,
+  SearchIcon,
+  Share2Icon,
+  TerminalIcon,
+  CpuIcon,
+  WorkflowIcon
 } from "lucide-react";
-import { Ticker } from "@/components/landing/Ticker";
-import { LiveDemo } from "@/components/landing/LiveDemo";
-import { FAQ, FAQS } from "@/components/landing/FAQ";
-import { UseCases } from "@/components/landing/UseCases";
-import { Comparison } from "@/components/landing/Comparison";
-import { useSession } from "@/lib/auth-client";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription, 
-  CardContent 
-} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { LiveDemo } from "@/components/landing/LiveDemo";
+import { Ticker } from "@/components/landing/Ticker";
+import { UseCases } from "@/components/landing/UseCases";
+import { Comparison } from "@/components/landing/Comparison";
+import { FAQ, FAQS } from "@/components/landing/FAQ";
 import { isWaitlistMode } from "@/lib/launch";
 import { WaitlistForm } from "@/components/landing/WaitlistForm";
+
+// --- Counter animation component ---
+const Counter = ({ value }: { value: number }) => {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (inView) {
+      animate(count, value, { duration: 2, ease: [0.16, 1, 0.3, 1] });
+    }
+  }, [inView, count, value]);
+
+  return <motion.span ref={ref}>{rounded}</motion.span>;
+};
 
 // --- Staggered fade-up animation wrapper ---
 const FadeUp = ({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) => {
@@ -60,68 +83,67 @@ const FadeUp = ({ children, delay = 0, className = "" }: { children: React.React
   );
 };
 
+// --- Directional fade animation wrapper ---
+const DirectionalFade = ({ children, delay = 0, index, className = "" }: { children: React.ReactNode; delay?: number; index: number; className?: string }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  
+  const column = index % 3; // 0=left, 1=middle, 2=right
+  
+  const initial = {
+    opacity: 0,
+    x: column === 0 ? -40 : column === 2 ? 40 : 0,
+    y: column === 1 ? 40 : 0
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={initial}
+      animate={inView ? { opacity: 1, x: 0, y: 0 } : initial}
+      transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
 const FEATURE_LIST = [
-  {
-    num: "01", title: "Visual block editor",
-    desc: "Drag and drop content blocks to build page layouts. Each block maps to a structured JSON field your API returns predictably.",
-    icon: <LayoutGridIcon className="size-5" strokeWidth={1.5} />
-  },
-  {
-    num: "02", title: "Flexible content types",
-    desc: "Define your own schema: text, rich text, images, references. Each type produces a typed field in the API response.",
-    icon: <FileTextIcon className="size-5" strokeWidth={1.5} />
-  },
-  {
-    num: "03", title: "REST API first",
-    desc: "Every content type gets a fully documented REST endpoint. Filter by status, paginate, sort. Consistent JSON shape.",
-    icon: <CodeIcon className="size-5" strokeWidth={1.5} />
-  },
-  {
-    num: "04", title: "Draft & publish",
-    desc: "Write in draft mode, publish when ready. Preview endpoints let you render drafts before they go live.",
-    icon: <PenLineIcon className="size-5" strokeWidth={1.5} />
-  },
-  {
-    num: "05", title: "Role-based access",
-    desc: "Admins define types. Editors create entries. Developers get API keys. Roles keep responsibilities clear.",
-    icon: <UsersIcon className="size-5" strokeWidth={1.5} />
-  },
-  {
-    num: "06", title: "Webhook triggers",
-    desc: "Send POST requests on publish or update events. Trigger rebuilds or sync to external search indexes.",
-    icon: <WebhookIcon className="size-5" strokeWidth={1.5} />
-  },
+  { num: "01", icon: <LayoutGridIcon />, title: "Visual Block Builder", desc: "Craft editorial experiences without code. Every block maps 1:1 to structured JSON." },
+  { num: "02", icon: <FileTextIcon />, title: "Dynamic Schemas", desc: "Define fields and validations visually. Zero migrations, zero configuration required." },
+  { num: "03", icon: <GlobeIcon />, title: "Edge Native", desc: "Global content delivery with sub-50ms latency. No cold starts, no overhead." },
+  { num: "04", icon: <DatabaseIcon />, title: "Content Versioning", desc: "Infinite history and atomic rollbacks. Never lose a draft or break a production release." },
+  { num: "05", icon: <ShieldCheckIcon />, title: "Enterprise RBAC", desc: "Granular permissions for teams. Separate editorial power from administrative control." },
+  { num: "06", icon: <CodeIcon />, title: "Universal API", desc: "Query via REST or GraphQL. Type-safe outputs for Next.js, Remix, and native apps." }
 ];
 
 const COMING_SOON = [
-  { title: "Edge Caching", desc: "Global CDN distribution for < 20ms response times worldwide." },
-  { title: "GraphQL Support", desc: "Native GraphQL endpoints with full introspection support." },
-  { title: "AI Assistant", desc: "Generate content suggestions and SEO metadata automatically." },
-  { title: "Mobile SDKs", desc: "Optimized libraries for Swift, Kotlin, and React Native." },
+  { title: "Visual Comparison", desc: "Side-by-side diffing for content versions." },
+  { title: "Native DAM", desc: "Integrated digital asset management with AI tagging." },
+  { title: "Webhooks V2", desc: "Durable event triggers with automatic retries." },
+  { title: "SDK Generator", desc: "One-click generation of type-safe clients." }
 ];
 
-export default function LandingPage() {
-  const { data: session } = useSession();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function Home() {
   const [scrolled, setScrolled] = useState(false);
-  const heroRef = useRef(null);
-  const { scrollYProgress } = useScroll({ target: heroRef });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+  
+  const session = null; // Mock session for now
 
   useEffect(() => {
     setMounted(true);
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const themeOptions = [
-    { key: "light", icon: <SunIcon size={16} />, label: "Light" },
-    { key: "dark", icon: <MoonIcon size={16} />, label: "Dark" },
-    { key: "system", icon: <SystemIcon size={16} />, label: "System" },
+    { key: "light", label: "Light", icon: <SunIcon className="size-4" /> },
+    { key: "dark", label: "Dark", icon: <MoonIcon className="size-4" /> },
+    { key: "system", label: "System", icon: <SystemIcon className="size-4" /> },
   ];
 
   const faqSchema = {
@@ -248,15 +270,37 @@ export default function LandingPage() {
                 <CloseIcon />
               </button>
             </div>
-            <nav className="flex flex-col gap-4">
-              {APP_CONFIG.nav.map(link => (
+            <nav className="flex flex-col gap-2">
+              {APP_CONFIG.nav.map((link, linkIndex) => (
                 <Link 
                   key={link.href} 
                   href={link.href} 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="font-display text-4xl font-semibold text-ink no-underline py-2"
+                  className="font-display text-5xl font-bold text-ink no-underline py-3 group flex items-center gap-4"
                 >
-                  {link.label}
+                  <div className="flex">
+                    {link.label.split("").map((char, charIndex) => (
+                      <motion.span
+                        key={charIndex}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ 
+                          duration: 0.4, 
+                          delay: 0.1 + (linkIndex * 0.08) + (charIndex * 0.02),
+                          ease: [0.16, 1, 0.3, 1]
+                        }}
+                        className="inline-block"
+                      >
+                        {char === " " ? "\u00A0" : char}
+                      </motion.span>
+                    ))}
+                  </div>
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + (linkIndex * 0.08) + (link.label.length * 0.02) }}
+                    className="h-px flex-1 bg-accent/20 hidden sm:block"
+                  />
                 </Link>
               ))}
             </nav>
@@ -293,9 +337,6 @@ export default function LandingPage() {
                   <Button asChild className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm">
                     <Link href="/register">Get started</Link>
                   </Button>
-                  <Button asChild variant="outline" className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong">
-                    <Link href="/login">Sign in</Link>
-                  </Button>
                 </>
               )}
             </div>
@@ -303,34 +344,73 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      <main id="main-content">
+      <main>
         {/* --- HERO --- */}
-        <section ref={heroRef} className="min-h-screen flex flex-col justify-center px-8 pt-[140px] pb-32 relative overflow-hidden noise-overlay">
-          <div className="absolute inset-0 z-0 graph-bg opacity-30" aria-hidden="true" />
-          <div className="absolute inset-0 z-[1] bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(202,255,77,0.08)_0%,transparent_70%),radial-gradient(ellipse_50%_40%_at_80%_80%,rgba(78,124,89,0.05)_0%,transparent_60%)]" aria-hidden="true" />
-
-          <motion.div className="max-w-[1200px] mx-auto w-full relative z-[2]" style={{ y: heroY, opacity: heroOpacity }}>
-            <FadeUp>
-              <div className="inline-flex items-center gap-3 font-mono text-[10px] font-bold text-accent tracking-[0.2em] uppercase bg-accent/5 border border-accent/20 px-4 py-2 rounded-full mb-10">
-                <span className="w-2 h-2 rounded-full bg-accent-bright shadow-[0_0_0_4px_rgba(202,255,77,0.2)] animate-pulse-custom" />
-                Open source industrial CMS
-              </div>
+        <section className="relative pt-32 pb-24 px-8 overflow-hidden bg-canvas noise-overlay">
+          <div className="absolute inset-0 graph-bg opacity-[0.03]" aria-hidden="true" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(202,255,77,0.07)_0%,transparent_100%)]" aria-hidden="true" />
+          
+          <motion.div 
+            className="max-w-[1200px] mx-auto relative z-10"
+          >
+            <FadeUp delay={0}>
+              <Badge variant="outline" className="mb-8 font-mono text-[10px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 border-border-strong rounded-full bg-paper/50">
+                <span className="text-accent mr-2">●</span> v1.2.0 is now live
+              </Badge>
             </FadeUp>
 
             <motion.h1
               className="font-display text-[clamp(2.75rem,6vw,5rem)] font-bold leading-[1.05] tracking-[-0.04em] text-ink max-w-[900px] mb-8"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
-              The headless CMS for developers who <em className="italic text-accent not-italic">hate</em> CMS configuration.
+              {"The headless CMS for developers who ".split(" ").map((word, i) => (
+                <motion.span
+                  key={i}
+                  className="inline-block mr-[0.25em]"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: 0.1 + (i * 0.03), 
+                    ease: [0.16, 1, 0.3, 1] 
+                  }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+              <motion.em 
+                className="italic text-accent not-italic inline-block mr-[0.25em]"
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                animate={{ opacity: 1, scale: [0.8, 1.08, 1], y: 0 }}
+                transition={{ 
+                  duration: 0.6, 
+                  delay: 0.1 + (9 * 0.03) + 0.1,
+                  ease: [0.16, 1, 0.3, 1] 
+                }}
+              >
+                hate
+              </motion.em>
+              {" CMS configuration.".split(" ").map((word, i) => (
+                <motion.span
+                  key={i + 10}
+                  className="inline-block mr-[0.25em]"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: 0.1 + ((i + 11) * 0.03), 
+                    ease: [0.16, 1, 0.3, 1] 
+                  }}
+                >
+                  {word}
+                </motion.span>
+              ))}
             </motion.h1>
 
             <motion.p
               className="text-[clamp(1.125rem,2vw,1rem)] font-light leading-[1.6] text-ink-muted max-w-[600px] mb-12"
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.7, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
             >
               Open source headless CMS — REST API, visual block editor, zero configuration. 
               The industrial-editorial bridge for modern development.
@@ -340,7 +420,7 @@ export default function LandingPage() {
               className="flex items-center gap-4 flex-wrap"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.6, delay: 0.8, ease: [0.16, 1, 0.3, 1] }}
             >
               {session ? (
                 <Button asChild size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl">
@@ -372,20 +452,31 @@ export default function LandingPage() {
               className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-24 max-w-[800px] relative pt-8 mb-8 border-t border-border-strong/40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
             >
               <div className="absolute top-0 left-0 w-1/3 h-px bg-gradient-to-r from-accent to-transparent" />
               {[
-                { val: "< 40ms", label: "Median Latency" },
-                { val: "100%", label: "Type-safe" },
+                { prefix: "< ", val: 40, suffix: "ms", label: "Median Latency" },
+                { val: 100, suffix: "%", label: "Type-safe" },
                 { val: "MIT", label: "License" },
                 { val: "Zero", label: "Config required" }
-              ].map((stat, i) => (
-                <div key={i} className="flex flex-col border-l border-border-strong pl-6 py-2">
-                  <span className="font-display text-3xl font-semibold text-ink mb-1">{stat.val}</span>
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink-muted">{stat.label}</span>
-                </div>
-              ))}
+              ].map((stat, i) => {
+                const isNumber = typeof stat.val === "number";
+                return (
+                  <div key={i} className="flex flex-col border-l border-border-strong pl-6 py-2">
+                    <span className="font-display text-3xl font-semibold text-ink mb-1">
+                      {stat.prefix}
+                      {isNumber ? (
+                        <Counter value={stat.val as number} />
+                      ) : (
+                        stat.val
+                      )}
+                      {stat.suffix}
+                    </span>
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink-muted">{stat.label}</span>
+                  </div>
+                );
+              })}
             </motion.div>
           </motion.div>
         </section>
@@ -407,7 +498,7 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border rounded-sm overflow-hidden">
               {FEATURE_LIST.map((f, i) => (
-                <FadeUp key={f.num} delay={i * 0.05} className="group/feature h-full">
+                <DirectionalFade key={f.num} index={i} delay={i * 0.05} className="group/feature h-full">
                   <Card className="h-full bg-paper border-none rounded-none p-10 flex flex-col gap-6 transition-all hover:bg-canvas relative overflow-hidden group-hover/feature:shadow-inner">
                     <div className="absolute top-0 right-0 p-6 font-display text-7xl font-bold text-ink-faint/10 leading-none pointer-events-none select-none">
                       {f.num}
@@ -424,7 +515,7 @@ export default function LandingPage() {
                       </CardDescription>
                     </div>
                   </Card>
-                </FadeUp>
+                </DirectionalFade>
               ))}
             </div>
 
@@ -590,8 +681,9 @@ export default function LandingPage() {
                     )}
                     {tier.featured && (
                       <>
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-accent-bright to-accent" />
-                        <Badge className="w-fit mb-6 bg-accent-bright text-ink rounded-full px-4 py-1 font-mono text-[10px] font-bold uppercase tracking-widest border-none">
+                        <div className="shimmer-border-container opacity-50" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-accent-bright to-accent z-10" />
+                        <Badge className="w-fit mb-6 bg-accent-bright text-ink rounded-full px-4 py-1 font-mono text-[10px] font-bold uppercase tracking-widest border-none relative z-10">
                           Standard
                         </Badge>
                       </>
@@ -614,7 +706,7 @@ export default function LandingPage() {
                       </ul>
                     </CardContent>
                     <Button asChild variant={tier.featured ? "default" : "outline"} className={cn(
-                      "w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong",
+                      "w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong relative z-10",
                       isWaitlistMode && "pointer-events-none opacity-50"
                     )}>
                       <Link href={isWaitlistMode ? "#waitlist-form" : "/register"}>
@@ -631,8 +723,23 @@ export default function LandingPage() {
         <FAQ />
 
         {/* --- CTA --- */}
-        <section className="bg-sidebar py-32 px-8 relative overflow-hidden noise-overlay">
+        <section className="bg-sidebar py-48 px-8 relative overflow-hidden noise-overlay">
           <div className="absolute inset-0 bg-graph-bg opacity-[0.03]" aria-hidden="true" />
+          
+          {/* Parallax Depth Circles */}
+          <motion.div 
+            style={{ y: useTransform(useScroll().scrollYProgress, [0.7, 1], [0, 150]) }} 
+            className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-accent/10 blur-[120px] pointer-events-none" 
+          />
+          <motion.div 
+            style={{ y: useTransform(useScroll().scrollYProgress, [0.7, 1], [0, -250]) }} 
+            className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] rounded-full bg-accent-bright/10 blur-[100px] pointer-events-none" 
+          />
+          <motion.div 
+            style={{ y: useTransform(useScroll().scrollYProgress, [0.7, 1], [0, 300]) }} 
+            className="absolute top-[30%] right-[-10%] w-[300px] h-[300px] rounded-full bg-accent-bright/5 blur-[80px] pointer-events-none" 
+          />
+
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_100%,rgba(202,255,77,0.08)_0%,transparent_70%),radial-gradient(circle_400px_at_10%_20%,rgba(78,124,89,0.1)_0%,transparent_100%)]" aria-hidden="true" />
           
           <div className="max-w-[1200px] mx-auto relative z-10 flex flex-col items-center text-center">
@@ -691,34 +798,30 @@ export default function LandingPage() {
                 </nav>
               </div>
               <div className="space-y-6">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">Resources</h4>
+                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">Company</h4>
                 <nav className="flex flex-col gap-3">
-                  {["Documentation", "API Reference", "Guides", "Support"].map(l => (
+                  {["About", "Blog", "Careers", "Legal"].map(l => (
                     <Link key={l} href="#" className="text-[13px] text-ink-muted hover:text-ink transition-colors no-underline font-light">{l}</Link>
                   ))}
                 </nav>
               </div>
               <div className="space-y-6">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">Legal</h4>
+                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">Resources</h4>
                 <nav className="flex flex-col gap-3">
-                  {APP_CONFIG.footerLinks.map(l => (
+                  {["Documentation", "API Reference", "Status", "Support"].map(l => (
                     <Link key={l} href="#" className="text-[13px] text-ink-muted hover:text-ink transition-colors no-underline font-light">{l}</Link>
                   ))}
                 </nav>
               </div>
             </div>
           </div>
-          
-          <Separator className="mb-12 opacity-50" />
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-accent uppercase tracking-widest bg-accent/5 px-3 py-1.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-              All systems operational
+          <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-8">
+            <p className="text-[11px] text-ink-faint font-mono uppercase tracking-[0.1em]">© 2024 FLOWCMS INFRASTRUCTURE. ALL RIGHTS RESERVED.</p>
+            <div className="flex items-center gap-8">
+              {["Twitter", "GitHub", "Discord"].map(s => (
+                <Link key={s} href="#" className="text-[11px] text-ink-faint hover:text-accent transition-colors no-underline font-mono uppercase tracking-[0.1em]">{s}</Link>
+              ))}
             </div>
-            <p className="font-mono text-[10px] font-bold text-ink-faint uppercase tracking-widest">
-              © {new Date().getFullYear()} {APP_CONFIG.name}. {APP_CONFIG.copyright}
-            </p>
           </div>
         </div>
       </footer>

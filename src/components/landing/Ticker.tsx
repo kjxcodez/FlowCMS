@@ -8,22 +8,20 @@ export const Ticker = () => {
   const items = APP_CONFIG.tickerItems;
   return (
     <div 
-      className="overflow-hidden border-y border-border bg-paper py-3.5" 
+      className="overflow-hidden border-y border-border bg-paper py-3.5 group cursor-default" 
       role="region" 
       aria-label={`FlowCMS features: ${items.join(", ")}`}
     >
-      <motion.div
-        className="flex whitespace-nowrap"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+      <div
+        className="flex whitespace-nowrap animate-ticker group-hover:[animation-play-state:paused]"
       >
         {[...items, ...items].map((item, i) => (
           <span key={i} className="inline-flex items-center gap-2.5 px-7 font-mono text-[11px] text-ink-muted tracking-wide uppercase">
-            <span className="h-1 w-1 rounded-full bg-accent-bright shrink-0" />
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-bright shrink-0 shadow-[0_0_8px_rgba(202,255,77,0.5)]" />
             {item}
           </span>
         ))}
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CheckIcon, XIcon } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const COMPARISON_DATA = [
@@ -84,8 +85,18 @@ export const Comparison = () => {
             </thead>
             <tbody>
               {COMPARISON_DATA.map((row, i) => (
-                <tr key={i} className="group hover:bg-canvas transition-colors">
-                  <td className="p-6 border-b border-border font-ui text-sm font-medium text-ink">{row.feature}</td>
+                <motion.tr 
+                  key={i} 
+                  initial={{ opacity: 0.5 }}
+                  whileInView={{ 
+                    opacity: 1, 
+                    backgroundColor: "rgba(202, 255, 77, 0.04)",
+                  }}
+                  viewport={{ amount: 0.8 }}
+                  transition={{ duration: 0.4 }}
+                  className="group transition-colors"
+                >
+                  <td className="p-6 border-b border-border font-ui text-sm font-medium text-ink transition-colors group-hover:text-accent">{row.feature}</td>
                   <td className="p-6 border-b border-border bg-accent-bright/5 text-center">
                     <Status value={row.flow} />
                   </td>
@@ -98,7 +109,7 @@ export const Comparison = () => {
                   <td className="p-6 border-b border-border text-center">
                     <Status value={row.contentful} />
                   </td>
-                </tr>
+                </motion.tr>
               ))}
             </tbody>
           </table>

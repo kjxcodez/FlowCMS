@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { motion } from "motion/react";
+import React, { useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { 
   BookOpenIcon, 
   CodeIcon, 
@@ -51,6 +51,57 @@ const CASES = [
   }
 ];
 
+const UseCaseCard = ({ item, i }: { item: typeof CASES[0], i: number }) => {
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
+
+  const springConfig = { damping: 25, stiffness: 200 };
+  const rotateX = useSpring(useTransform(mouseY, [0, 1], [6, -6]), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, [0, 1], [-6, 6]), springConfig);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    mouseX.set(x);
+    mouseY.set(y);
+  }
+
+  function handleMouseLeave() {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ 
+        rotateX, 
+        rotateY, 
+        transformStyle: "preserve-3d",
+        perspective: 1000
+      }}
+      className={cn(
+        "p-10 bg-paper border border-border rounded-sm group hover:border-accent transition-all hover:shadow-2xl relative overflow-hidden",
+        item.grid
+      )}
+    >
+      <div style={{ transform: "translateZ(40px)" }} className="relative z-10">
+        <div className="w-12 h-12 bg-accent/5 text-accent border border-accent/10 rounded-sm flex items-center justify-center mb-8 transition-transform group-hover:scale-110 group-hover:bg-accent/10">
+          {item.icon}
+        </div>
+        <h3 className="font-display text-2xl font-semibold text-ink mb-4 transition-colors group-hover:text-accent">{item.title}</h3>
+        <p className="text-sm leading-relaxed text-ink-muted font-light">{item.desc}</p>
+      </div>
+    </motion.div>
+  );
+};
+
 export const UseCases = () => {
   return (
     <section id="use-cases" className="py-32 px-8 bg-canvas ruled-bg">
@@ -68,23 +119,7 @@ export const UseCases = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {CASES.map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={cn(
-                "p-10 bg-paper border border-border rounded-sm group hover:border-accent transition-all hover:shadow-xl hover:-translate-y-1",
-                item.grid
-              )}
-            >
-              <div className="w-12 h-12 bg-accent/5 text-accent border border-accent/10 rounded-sm flex items-center justify-center mb-8 transition-transform group-hover:scale-110">
-                {item.icon}
-              </div>
-              <h3 className="font-display text-2xl font-semibold text-ink mb-4">{item.title}</h3>
-              <p className="text-sm leading-relaxed text-ink-muted font-light">{item.desc}</p>
-            </motion.div>
+            <UseCaseCard key={i} item={item} i={i} />
           ))}
         </div>
       </div>
