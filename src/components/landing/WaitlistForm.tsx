@@ -52,8 +52,9 @@ export function WaitlistForm() {
       });
       setIsSuccess(true);
       toast.success("Successfully joined the waitlist!");
-    } catch (error: any) {
-      toast.error(error.message || "Something went wrong.");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Something went wrong.";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +90,7 @@ export function WaitlistForm() {
                 </div>
               </div>
               <p className="text-sm font-medium text-ink tracking-tight">
-                First 200 developers get 6 months of Pro free.
+                First 30 developers get 1 month of Pro free.
               </p>
               <p className="text-[11px] text-ink-muted uppercase tracking-widest mt-1">
                 Join the queue
