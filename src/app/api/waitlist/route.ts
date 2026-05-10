@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
             },
           });
           break; // Success
-        } catch (error: any) {
+        } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
           attempts++;
           if (error.code === "P2002" && attempts < maxAttempts) {
             continue; // Retry with new referral code
