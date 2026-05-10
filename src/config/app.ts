@@ -9,9 +9,10 @@ export const APP_CONFIG = {
   githubUrl: "https://github.com/kjxcodez/FlowCMS",
   nav: [
     { label: "Features", href: "#features" },
+    { label: "Use Cases", href: "#use-cases" },
     { label: "How it works", href: "#how-it-works" },
-    { label: "API", href: "#api" },
     { label: "Pricing", href: "#pricing" },
+    { label: "FAQ", href: "#faq" },
   ],
   tickerItems: [
     "Open source friendly",

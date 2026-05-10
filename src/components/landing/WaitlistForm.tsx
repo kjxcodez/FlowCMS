@@ -77,6 +77,24 @@ export function WaitlistForm() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
           >
+            <div className="flex flex-col items-center mb-8">
+              <div className="flex -space-x-3 mb-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-paper bg-sidebar-mid flex items-center justify-center text-[10px] font-bold text-accent-bright ring-1 ring-border">
+                    {String.fromCharCode(64 + i)}
+                  </div>
+                ))}
+                <div className="w-10 h-10 rounded-full border-2 border-paper bg-accent-bright flex items-center justify-center text-[10px] font-bold text-ink ring-1 ring-border">
+                  +1k
+                </div>
+              </div>
+              <p className="text-sm font-medium text-ink tracking-tight">
+                First 200 developers get 6 months of Pro free.
+              </p>
+              <p className="text-[11px] text-ink-muted uppercase tracking-widest mt-1">
+                Join the queue
+              </p>
+            </div>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5">
                 <Input

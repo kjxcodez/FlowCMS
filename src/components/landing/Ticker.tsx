@@ -7,7 +7,11 @@ import { APP_CONFIG } from "@/config/app";
 export const Ticker = () => {
   const items = APP_CONFIG.tickerItems;
   return (
-    <div className="overflow-hidden border-y border-border bg-paper py-3.5">
+    <div 
+      className="overflow-hidden border-y border-border bg-paper py-3.5" 
+      role="region" 
+      aria-label={`FlowCMS features: ${items.join(", ")}`}
+    >
       <motion.div
         className="flex whitespace-nowrap"
         animate={{ x: ["0%", "-50%"] }}

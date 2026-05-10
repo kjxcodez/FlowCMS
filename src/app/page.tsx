@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "motion/react";
 import { APP_CONFIG } from "@/config/app";
 import { 
@@ -23,6 +24,9 @@ import {
 } from "lucide-react";
 import { Ticker } from "@/components/landing/Ticker";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { FAQ, FAQS } from "@/components/landing/FAQ";
+import { UseCases } from "@/components/landing/UseCases";
+import { Comparison } from "@/components/landing/Comparison";
 import { useSession } from "@/lib/auth-client";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -120,8 +124,26 @@ export default function LandingPage() {
     { key: "system", icon: <SystemIcon size={16} />, label: "System" },
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": FAQS.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-canvas text-ink selection:bg-accent-bright/30">
+      <Script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* --- HEADER --- */}
       <header 
         className={cn(
@@ -152,7 +174,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-2 md:gap-4">
             {mounted && (
-              <div className="flex items-center bg-black/5 dark:bg-white/5 border border-border rounded-sm p-1 gap-1" role="group" aria-label="Select color theme">
+              <div className="hidden md:flex items-center bg-black/5 dark:bg-white/5 border border-border rounded-sm p-1 gap-1" role="group" aria-label="Select color theme">
                 {themeOptions.map(opt => (
                   <button
                     key={opt.key}
@@ -238,7 +260,30 @@ export default function LandingPage() {
                 </Link>
               ))}
             </nav>
-            <div className="flex flex-col gap-4 mt-auto">
+            <div className="flex flex-col gap-8 mt-auto">
+              {mounted && (
+                <div className="flex flex-col gap-4">
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-muted">Appearance</p>
+                  <div className="flex items-center bg-black/5 dark:bg-white/5 border border-border rounded-sm p-1 gap-1 w-fit" role="group" aria-label="Select color theme">
+                    {themeOptions.map(opt => (
+                      <button
+                        key={opt.key}
+                        className={cn(
+                          "flex items-center gap-2 px-4 py-2 border-none bg-transparent text-ink-muted cursor-pointer rounded-sm transition-all text-xs font-medium uppercase tracking-wider",
+                          theme === opt.key && "bg-paper text-ink shadow-sm dark:bg-sidebar-mid dark:text-white"
+                        )}
+                        onClick={() => setTheme(opt.key)}
+                        aria-label={`${opt.label} theme`}
+                        aria-pressed={theme === opt.key}
+                      >
+                        {opt.icon}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {isWaitlistMode ? (
                 <Button asChild className="w-full h-16 text-sm font-bold uppercase tracking-widest rounded-sm" onClick={() => setMobileMenuOpen(false)}>
                   <Link href="#waitlist-form">Join Waitlist</Link>
@@ -278,7 +323,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
             >
-              Content <em className="italic text-accent not-italic">orchestrated</em> for high-performance teams.
+              The headless CMS for developers who <em className="italic text-accent not-italic">hate</em> CMS configuration.
             </motion.h1>
 
             <motion.p
@@ -287,7 +332,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
-              {APP_CONFIG.tagline}. Build your schema visually, deliver it instantly via REST. 
+              Open source headless CMS — REST API, visual block editor, zero configuration. 
               The industrial-editorial bridge for modern development.
             </motion.p>
 
@@ -317,7 +362,7 @@ export default function LandingPage() {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="lg" className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm border-border-strong bg-transparent hover:bg-paper/50">
-                    <Link href="#demo">Watch Live Demo</Link>
+                    <Link href="#demo">See how it works →</Link>
                   </Button>
                 </>
               )}
@@ -331,10 +376,10 @@ export default function LandingPage() {
             >
               <div className="absolute top-0 left-0 w-1/3 h-px bg-gradient-to-r from-accent to-transparent" />
               {[
-                { val: "< 40ms", label: "Latency" },
+                { val: "< 40ms", label: "Median Latency" },
                 { val: "100%", label: "Type-safe" },
-                { val: "REST", label: "Protocol" },
-                { val: "MIT", label: "License" }
+                { val: "MIT", label: "License" },
+                { val: "Zero", label: "Config required" }
               ].map((stat, i) => (
                 <div key={i} className="flex flex-col border-l border-border-strong pl-6 py-2">
                   <span className="font-display text-3xl font-semibold text-ink mb-1">{stat.val}</span>
@@ -411,31 +456,81 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* --- WORKFLOW --- */}
+        <UseCases />
+
+        <Comparison />
+
+        {/* --- TESTIMONIALS --- */}
+        <section id="testimonials" className="py-32 px-8 bg-paper relative overflow-hidden">
+          <div className="absolute inset-0 graph-bg opacity-[0.03]" aria-hidden="true" />
+          <div className="max-w-[1200px] mx-auto text-center relative z-10">
+            <FadeUp>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-6">Social Proof</p>
+              <h2 className="font-display text-[clamp(2rem,5vw,3.25rem)] font-semibold tracking-[-0.03em] leading-[1.1] text-ink mb-12">
+                What early <em className="italic text-accent not-italic">testers</em> are saying.
+              </h2>
+              
+              <div className="bg-canvas/50 border-2 border-dashed border-border-strong p-16 rounded-sm">
+                <p className="font-display italic text-2xl text-ink-muted mb-4">&ldquo;Testimonials coming soon &mdash; join the waitlist to be featured.&rdquo;</p>
+                <div className="flex items-center justify-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-border-strong/20" />
+                  <div className="text-left">
+                    <div className="w-24 h-4 bg-border-strong/20 rounded-full mb-2" />
+                    <div className="w-16 h-3 bg-border-strong/10 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </FadeUp>
+          </div>
+        </section>
+
+        {/* --- HOW IT WORKS --- */}
         <section id="how-it-works" className="py-32 px-8 bg-canvas">
           <div className="max-w-[1200px] mx-auto">
             <FadeUp className="text-center mb-20">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-6">Execution</p>
+              <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-6">How it works</p>
               <h2 className="font-display text-[clamp(2rem,5vw,3.25rem)] font-semibold tracking-[-0.03em] leading-[1.1] text-ink mx-auto max-w-[700px]">
-                The editorial <em className="italic text-accent not-italic">production bridge</em>.
+                Four steps from <em className="italic text-accent not-italic">schema to screen</em>.
               </h2>
             </FadeUp>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 relative">
-              {/* Connecting line */}
-              <div className="hidden md:block absolute top-[40px] left-[15%] right-[15%] h-px bg-border-strong border-t border-dashed border-border-strong opacity-40 z-0" />
-              
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 relative">
               {[
-                { num: "01", title: "Model", desc: "Define content types visually with industrial-strength validation rules." },
-                { num: "02", title: "Author", desc: "Editors build rich layouts with a clean, focused block-based interface." },
-                { num: "03", title: "Deploy", desc: "Consume predictable JSON via REST and render on any device or platform." }
+                { 
+                  num: "01", 
+                  label: "DEFINE YOUR SCHEMA", 
+                  title: "Model", 
+                  desc: "Build your content structure visually. Fields, types, validations — no migrations, no config files. Every schema change is reflected in your API instantly." 
+                },
+                { 
+                  num: "02", 
+                  label: "WRITE WITH CONTEXT", 
+                  title: "Author", 
+                  desc: "Editors get a clean block-based canvas. No HTML. No Markdown syntax memorisation. Structured blocks map one-to-one to the JSON your frontend receives." 
+                },
+                { 
+                  num: "03", 
+                  label: "CONTROL THE RELEASE", 
+                  title: "Publish", 
+                  desc: "Draft until you're ready. One click publishes — or schedule it. Webhooks fire automatically so your CDN rebuilds and your search index updates without a developer in the loop." 
+                },
+                { 
+                  num: "04", 
+                  label: "CONSUME ANYWHERE", 
+                  title: "Fetch", 
+                  desc: "Your content is a REST endpoint. Fetch it from Next.js, a native app, a static site — anywhere that speaks HTTP. No SDK required." 
+                }
               ].map((step, i) => (
-                <FadeUp key={step.num} delay={i * 0.15} className="relative z-10 flex flex-col items-center text-center group">
-                  <div className="w-20 h-20 bg-paper border border-border-strong rounded-full flex items-center justify-center font-display text-3xl font-bold text-ink mb-8 transition-all group-hover:scale-110 group-hover:border-accent group-hover:shadow-xl">
-                    {step.num}
+                <FadeUp key={step.num} delay={i * 0.1} className="flex flex-col group">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 bg-paper border border-border-strong rounded-sm flex items-center justify-center font-display text-xl font-bold text-ink transition-all group-hover:scale-110 group-hover:border-accent group-hover:shadow-lg">
+                      {step.num}
+                    </div>
+                    <div className="h-px flex-1 bg-border-strong/30" />
                   </div>
+                  <p className="font-mono text-[9px] font-bold uppercase tracking-[0.2em] text-accent mb-2">{step.label}</p>
                   <h3 className="font-display text-2xl font-semibold text-ink mb-4">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-ink-muted font-light max-w-[280px]">{step.desc}</p>
+                  <p className="text-[13px] leading-relaxed text-ink-muted font-light">{step.desc}</p>
                 </FadeUp>
               ))}
             </div>
@@ -471,18 +566,28 @@ export default function LandingPage() {
           <div className="max-w-[1200px] mx-auto">
             <FadeUp className="text-center mb-24">
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-6">Commercial</p>
-              <h2 className="font-display text-[clamp(2rem,5vw,3.25rem)] font-semibold tracking-[-0.03em] leading-[1.1] text-ink">
-                Scaling <em className="italic text-accent not-italic">Infrastructure</em>.
+              <h2 className="font-display text-[clamp(2rem,5vw,3.25rem)] font-semibold tracking-[-0.03em] leading-[1.1] text-ink mb-8">
+                Simple <em className="italic text-accent not-italic">pricing</em>.
               </h2>
+              {isWaitlistMode && (
+                <div className="inline-flex items-center gap-3 bg-accent-bright/10 border border-accent-bright/20 px-6 py-3 rounded-full text-sm font-medium text-ink">
+                  <span className="w-2 h-2 rounded-full bg-accent-bright animate-pulse" />
+                  These are post-launch prices. Early access members get 40% off.
+                </div>
+              )}
             </FadeUp>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {APP_CONFIG.pricing.map((tier, i) => (
                 <FadeUp key={tier.plan} delay={i * 0.1}>
                   <Card className={cn(
-                    "h-full p-10 flex flex-col border rounded-sm transition-all duration-300 hover:-translate-y-2 relative overflow-hidden",
-                    tier.featured ? "border-accent-bright border-2 bg-paper shadow-2xl hover:shadow-[0_20px_60px_rgba(202,255,77,0.15)]" : "border-border bg-paper/50 hover:shadow-xl"
+                    "h-full p-10 flex flex-col border rounded-sm transition-all duration-300 relative overflow-hidden",
+                    tier.featured ? "border-accent-bright border-2 bg-paper shadow-2xl" : "border-border bg-paper/50",
+                    isWaitlistMode && "opacity-80 grayscale-[0.5]"
                   )}>
+                    {isWaitlistMode && (
+                       <div className="absolute inset-0 bg-white/5 z-20 pointer-events-none" />
+                    )}
                     {tier.featured && (
                       <>
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-accent via-accent-bright to-accent" />
@@ -508,8 +613,13 @@ export default function LandingPage() {
                         ))}
                       </ul>
                     </CardContent>
-                    <Button asChild variant={tier.featured ? "default" : "outline"} className="w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong">
-                      <Link href={isWaitlistMode ? "#waitlist-form" : "/register"}>{tier.cta}</Link>
+                    <Button asChild variant={tier.featured ? "default" : "outline"} className={cn(
+                      "w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong",
+                      isWaitlistMode && "pointer-events-none opacity-50"
+                    )}>
+                      <Link href={isWaitlistMode ? "#waitlist-form" : "/register"}>
+                        {isWaitlistMode ? "Coming Soon" : tier.cta}
+                      </Link>
                     </Button>
                   </Card>
                 </FadeUp>
@@ -517,6 +627,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <FAQ />
 
         {/* --- CTA --- */}
         <section className="bg-sidebar py-32 px-8 relative overflow-hidden noise-overlay">
