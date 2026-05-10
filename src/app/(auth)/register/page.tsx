@@ -20,7 +20,9 @@ import { SocialAuth } from "@/components/auth/social-auth";
 
 import { useSearchParams } from "next/navigation";
 
-export default function RegisterPage() {
+import { Suspense } from "react";
+
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("invite");
@@ -252,5 +254,17 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   );
 }
