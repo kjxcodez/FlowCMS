@@ -9,7 +9,7 @@ export function generateReferralCode(name?: string): string {
     ? name.toLowerCase().replace(/[^a-z]/g, "").slice(0, 8)
     : "user";
   const suffix = crypto.randomBytes(3).toString("hex"); // 6 chars
-  return `${prefix}-${suffix}`; // e.g. "kapil-a3f9c2"
+  return `${prefix}-${suffix}`.toLowerCase(); // e.g. "kapil-a3f9c2"
 }
 
 export function signInvitePayload(payload: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any

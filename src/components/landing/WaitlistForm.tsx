@@ -52,13 +52,15 @@ export function WaitlistForm() {
 
   const onSubmit = async (values: WaitlistValues) => {
     setIsSubmitting(true);
-    const source = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("utm_source") ?? "direct" : "direct";
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const source = searchParams?.get("utm_source") ?? "direct";
+    const ref = searchParams?.get("ref") ?? undefined;
 
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, source }),
+        body: JSON.stringify({ ...values, source, ref }),
       });
 
       const data = await res.json();

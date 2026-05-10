@@ -72,9 +72,14 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Handle Referrer
-  const referrer = ref
-    ? await prisma.waitlistEntry.findUnique({ where: { referralCode: ref } })
+  const normalizedRef = ref?.toLowerCase();
+  const referrer = normalizedRef
+    ? await prisma.waitlistEntry.findUnique({ where: { referralCode: normalizedRef } })
     : null;
+
+  if (referrer && referrer.email === email) {
+    return jsonResponse({ error: "You cannot use your own referral code." }, 400);
+  }
 
   try {
     // 5. Create Entry + Referral Logic Atomically
@@ -85,20 +90,37 @@ export async function POST(req: NextRequest) {
       const count = await tx.waitlistEntry.count();
       const position = count + 1;
 
-      const newEntry = await tx.waitlistEntry.create({
-        data: {
-          email,
-          name,
-          role,
-          useCase,
-          source,
-          position,
-          inviteToken,
-          referredBy: referrer?.email ?? null,
-          referralCode: generateReferralCode(name || undefined),
-          priority: derivePriority(role),
-        },
-      });
+      let newEntry;
+      let attempts = 0;
+      const maxAttempts = 3;
+
+      while (attempts < maxAttempts) {
+        try {
+          newEntry = await tx.waitlistEntry.create({
+            data: {
+              email,
+              name,
+              role,
+              useCase,
+              source,
+              position,
+              inviteToken,
+              referredBy: referrer?.email ?? null,
+              referralCode: generateReferralCode(name || undefined),
+              priority: derivePriority(role),
+            },
+          });
+          break; // Success
+        } catch (error: any) {
+          attempts++;
+          if (error.code === "P2002" && attempts < maxAttempts) {
+            continue; // Retry with new referral code
+          }
+          throw error; // Rethrow on final attempt or other error
+        }
+      }
+
+      if (!newEntry) throw new Error("Failed to create waitlist entry after retries");
 
       // Increment referrer count atomically if applicable
       if (referrer) {
