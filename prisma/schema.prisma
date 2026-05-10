@@ -17,6 +17,7 @@ model User {
   onboarded     Boolean  @default(false)
   image         String?
   inviteToken   String? // Temporary field for waitlist validation
+  isSuspended   Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -496,6 +497,9 @@ enum WaitlistStatus {
   INVITED
   JOINED
   REJECTED
+  EXPIRED
+  SUSPENDED
+  REVOKED
 }
 
 enum WaitlistPriority {
@@ -503,5 +507,30 @@ enum WaitlistPriority {
   NORMAL
   HIGH
   IMMEDIATE
+}
+
+// ── Email Logging ──────────────────────────────────────────────────
+model EmailLog {
+  id                String      @id @default(cuid())
+  idempotencyKey    String      @unique // e.g., "invite_{entryId}_{token}"
+  to                String
+  template          String
+  eventType         String      // e.g., "WAITLIST_INVITE"
+  status            EmailStatus @default(PENDING)
+  providerMessageId String?     // ID from Resend
+  error             String?
+  attempts          Int         @default(0)
+  lastAttempt       DateTime?
+  waitlistEntryId   String?
+  createdAt         DateTime    @default(now())
+
+  @@index([to])
+  @@index([idempotencyKey])
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
 }
 
