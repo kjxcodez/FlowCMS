@@ -17,43 +17,17 @@ export async function requireSession() {
   return session;
 }
 
+import { isAdminEmail } from "./admin";
+
 /**
- * Gets the workspace for the current session user.
- * Each user has one workspace created at registration.
+ * Higher-order helper for server actions and routes that require administrative privileges.
+ * Consolidates check to process.env.ADMIN_EMAILS.
  */
-export async function requireWorkspace() {
-  const session = await requireSession();
-  
-  // Get the user from database to check onboarding status
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { onboarded: true }
-  });
-
-  // Redirect to onboarding if not completed
-  // Note: we check if user exists and onboarded is explicitly false
-  if (user && user.onboarded === false) {
-    redirect("/onboarding");
-  }
-
-  const member = await prisma.workspaceMember.findFirst({
-    where: { userId: session.user.id },
-    include: { workspace: true },
-    orderBy: { createdAt: "asc" },
-  });
-  if (!member) redirect("/register");
-  return {
-    session,
-    workspace: member.workspace,
-    role: member.role,
-  };
-}
-
 export async function requireAdmin() {
   const session = await requireSession();
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const isPlatformAdmin = isAdminEmail(session.user.email);
 
-  if (!adminEmail || session.user.email !== adminEmail) {
+  if (!isPlatformAdmin) {
     logger.warn("Unauthorized admin access attempt", { 
         userId: session.user.id, 
         email: session.user.email 
@@ -62,4 +36,41 @@ export async function requireAdmin() {
   }
 
   return session;
+}
+
+/**
+ * Gets the workspace for the current session user.
+ * Each user has one workspace created at registration.
+ * Admins bypass membership checks to facilitate platform management.
+ */
+export async function requireWorkspace() {
+  const session = await requireSession();
+  const isPlatformAdmin = isAdminEmail(session.user.email);
+  
+  // Get the user from database to check onboarding status
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { onboarded: true }
+  });
+
+  // Redirect to onboarding if not completed (unless platform admin)
+  if (!isPlatformAdmin && user && user.onboarded === false) {
+    redirect("/onboarding");
+  }
+
+  const member = await prisma.workspaceMember.findFirst({
+    where: { userId: session.user.id },
+    include: { workspace: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!member && !isPlatformAdmin) {
+    redirect("/register");
+  }
+
+  return {
+    session,
+    workspace: member?.workspace || (isPlatformAdmin ? { id: "admin", name: "Platform Admin", plan: "ENTERPRISE" } as any : null),
+    role: member?.role || (isPlatformAdmin ? "OWNER" : null),
+  };
 }

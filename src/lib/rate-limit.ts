@@ -41,8 +41,20 @@ export interface RateLimitResult {
 
 export async function checkRateLimit(
   key: string,
-  plan: string
+  plan: string,
+  isAdmin = false
 ): Promise<RateLimitResult> {
+  // ADMIN BYPASS: Platform admins skip rate limits for internal dashboard/admin operations.
+  // We explicitly still limit them on PUBLIC endpoints to prevent accidental saturation.
+  if (isAdmin && plan !== "PUBLIC") {
+    return {
+      allowed: true,
+      remaining: 999,
+      resetAt: Date.now() + 60000,
+      limit: 999,
+    };
+  }
+
   const limiter =
     limiters[plan as keyof typeof limiters] ?? limiters.HOBBY;
   const { success, limit, remaining, reset } = await limiter.limit(key);

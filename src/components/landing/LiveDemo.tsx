@@ -817,7 +817,7 @@ export const LiveDemo = () => {
               <div className="flex items-center justify-between mb-2">
                  <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Request Headers</p>
                  <button 
-                   onClick={() => handleCopy(`curl -X GET https://api.getflowcms.com/v1/entries/${slug} \\\n  -H "Authorization: Bearer fl_live_••••••••••••" \\\n  -H "X-FlowCMS-Locale: ${locale.toLowerCase()}"`)}
+                   onClick={() => handleCopy(`curl -X GET https://getflowcms.com/api/v1/entries/${slug} \\\n  -H "Authorization: Bearer fl_live_••••••••••••" \\\n  -H "X-API-Version: 1"`)}
                    className="font-mono text-[9px] text-accent-bright/50 hover:text-accent-bright uppercase tracking-tighter cursor-pointer bg-transparent border-none"
                  >
                     Copy curl
@@ -829,8 +829,8 @@ export const LiveDemo = () => {
                     <span className="text-white/70 italic">Bearer fl_live_••••••••••••</span>
                  </div>
                  <div className="flex items-center justify-between">
-                    <span className="text-white/40">X-FlowCMS-Locale</span>
-                    <span className="text-white/70">{locale.toLowerCase()}</span>
+                    <span className="text-white/40">X-API-Version</span>
+                    <span className="text-white/70">1</span>
                  </div>
               </div>
            </div>

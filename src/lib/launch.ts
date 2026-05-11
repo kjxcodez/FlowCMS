@@ -4,10 +4,26 @@ export const isWaitlistMode    = LAUNCH_MODE === "waitlist";
 export const isEarlyAccessMode = LAUNCH_MODE === "early_access";
 export const isOpenMode        = LAUNCH_MODE === "open";
 
+import { isAdminEmail } from "./admin";
+
 export const FEATURES = {
   enableBilling: false,
   enableCustomDomains: false,
   enableTeamInvites: false,
-  enableApiKeyGeneration: true, // keep on, devs need this
-  enableWebhooks: false,        // not ready yet
-} as const;
+  enableApiKeyGeneration: true,
+  enableWebhooks: false,
+};
+
+/**
+ * Checks if a user has access to a specific feature.
+ * Administrators bypass feature flags for internal testing.
+ */
+export function canAccessFeature(
+  feature: keyof typeof FEATURES,
+  userEmail?: string
+): boolean {
+  if (userEmail && isAdminEmail(userEmail)) {
+    return true;
+  }
+  return FEATURES[feature];
+}

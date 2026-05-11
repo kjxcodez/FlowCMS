@@ -54,8 +54,10 @@ export async function incrementUsage(
 
 export async function checkUsageLimit(
   workspaceId: string,
-  plan: string
+  plan: string,
+  isAdmin = false
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdmin) return { allowed: true, used: 0, limit: -1 };
   const limits = PLAN_LIMITS[plan];
   if (!limits || limits.apiRequestsPerMonth === -1) {
     return { allowed: true, used: 0, limit: -1 };
@@ -94,8 +96,10 @@ export async function checkUsageLimit(
 
 export async function checkContentTypeLimit(
   workspaceId: string,
-  plan: string
+  plan: string,
+  isAdmin = false
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdmin) return { allowed: true, used: 0, limit: -1 };
   const limits = PLAN_LIMITS[plan];
   if (!limits || limits.contentTypes === -1) {
     return { allowed: true, used: 0, limit: -1 };

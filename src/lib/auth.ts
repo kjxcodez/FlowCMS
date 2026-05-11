@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { isWaitlistMode, isEarlyAccessMode } from "@/lib/launch";
 import { logger } from "@/lib/logger";
 import { verifyInvitePayload } from "@/lib/tokens";
+import { isAdminEmail } from "./admin";
+import { headers } from "next/headers";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -45,30 +47,21 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user, ctx) => {
-          // 1. ADMIN BYPASS: Founders skip all gating
-          const adminEmails = (process.env.ADMIN_BYPASS_EMAILS ?? "").split(",").map(e => e.trim());
-          if (adminEmails.includes(user.email)) {
-            logger.info("Registration: Admin bypass granted", { email: user.email });
-            return { data: user };
-          }
+        before: async (user) => {
+          const isPlatformAdmin = isAdminEmail(user.email);
+          if (isPlatformAdmin) return; // Admins bypass waitlist gating
+
+          const inviteToken = (await headers()).get("x-invite-token") || 
+                            (await headers()).get("cookie")?.split("pending_invite=")[1]?.split(";")[0];
 
           if (isWaitlistMode || isEarlyAccessMode) {
-            // Ensure context exists before accessing cookies
-            if (!ctx) {
-              logger.warn("Registration blocked: No request context available", { email: user.email });
+            if (!inviteToken) {
+              logger.warn("Registration blocked: No invite token found", { email: user.email });
               return false;
             }
 
-            const pendingInviteCookie = ctx.getCookie("pending_invite");
-            
-            if (!pendingInviteCookie) {
-              logger.warn("Registration blocked: No pending invite cookie", { email: user.email });
-              return false; // Better Auth will handle this via Layer 1 -> /auth/error
-            }
-
             try {
-              const payload = verifyInvitePayload(pendingInviteCookie);
+              const payload = verifyInvitePayload(inviteToken);
               
               if (!payload) {
                 logger.warn("Registration blocked: Invalid signature or payload", { email: user.email });
@@ -85,15 +78,10 @@ export const auth = betterAuth({
                 return false;
               }
 
-              /**
-               * ATOMIC CONSUMPTION: mark as JOINED using updateMany
-               * This is the ONLY way to prevent race conditions where multiple requests
-               * use the same token simultaneously. prisma.update() is NOT atomic for state checks.
-               */
               const consumed = await prisma.waitlistEntry.updateMany({
                 where: { 
                   inviteToken: token,
-                  status: "INVITED", // Must be exactly INVITED
+                  status: "INVITED",
                   OR: [
                     { inviteExpiresAt: null },
                     { inviteExpiresAt: { gt: new Date() } }
@@ -112,12 +100,10 @@ export const auth = betterAuth({
 
               logger.info("Invite consumed successfully", { email: user.email });
             } catch (err) {
-              logger.error("Failed to process invite cookie", { error: String(err) });
+              logger.error("Failed to process invite token", { error: String(err) });
               return false;
             }
           }
-          
-          return { data: user };
         },
       },
     },
@@ -131,11 +117,12 @@ export const auth = betterAuth({
           if (!user) return false;
 
           if (user.isSuspended) {
+            const isPlatformAdmin = isAdminEmail(user.email);
+            if (isPlatformAdmin) return; // Emergency bypass for admins
+            
             logger.warn("Login blocked: User suspended", { userId: user.id, email: user.email });
             return false;
           }
-
-          return { data: session };
         },
       },
     },

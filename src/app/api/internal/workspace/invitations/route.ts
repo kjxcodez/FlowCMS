@@ -6,12 +6,14 @@ import { nanoid } from "nanoid";
 import { sendEmail } from "@/lib/email";
 import { WorkspaceInviteEmail } from "@/components/emails/workspace-invite";
 import { logAction } from "@/lib/audit";
-import { FEATURES } from "@/lib/launch";
+import { FEATURES, canAccessFeature } from "@/lib/launch";
 
 export async function GET() {
-  if (!FEATURES.enableTeamInvites) return apiError("FORBIDDEN", "This feature is not available yet.");
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, session } = await requireWorkspace();
+    if (!canAccessFeature("enableTeamInvites", session.user.email)) {
+      return apiError("FORBIDDEN", "This feature is not available yet.");
+    }
     
     const invitations = await prisma.invitation.findMany({
       where: { workspaceId: workspace.id },
@@ -25,9 +27,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!FEATURES.enableTeamInvites) return apiError("FORBIDDEN", "This feature is not available yet.");
   try {
     const { workspace, session, role } = await requireWorkspace();
+
+    if (!canAccessFeature("enableTeamInvites", session.user.email)) {
+      return apiError("FORBIDDEN", "This feature is not available yet.");
+    }
 
     if (role !== "OWNER" && role !== "ADMIN") {
       return apiError("FORBIDDEN", "Only owners and admins can invite members.");

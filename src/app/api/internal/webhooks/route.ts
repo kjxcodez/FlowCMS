@@ -6,11 +6,15 @@ import { PLAN_LIMITS } from "@/types/cms";
 import { CreateWebhookSchema } from "@/lib/validations/webhook";
 import crypto from "crypto";
 import { logAction } from "@/lib/audit";
-import { FEATURES } from "@/lib/launch";
+import { FEATURES, canAccessFeature } from "@/lib/launch";
+import { isAdminEmail } from "@/lib/admin";
 
 export async function GET() {
-  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
-  const { workspace } = await requireWorkspace();
+  const { workspace, session } = await requireWorkspace();
+  if (!canAccessFeature("enableWebhooks", session.user.email)) {
+    return apiError("FORBIDDEN", "This feature is not available yet.");
+  }
+  
   const webhooks = await prisma.webhook.findMany({
     where: { workspaceId: workspace.id },
     orderBy: { createdAt: "desc" },
@@ -19,10 +23,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
 
-  if (!PLAN_LIMITS[workspace.plan]?.webhooks) {
+  if (!canAccessFeature("enableWebhooks", session.user.email)) {
+    return apiError("FORBIDDEN", "This feature is not available yet.");
+  }
+
+  const isPlatformAdmin = isAdminEmail(session.user.email);
+  if (!isPlatformAdmin && !PLAN_LIMITS[workspace.plan]?.webhooks) {
     return apiError(
       "PLAN_LIMIT_REACHED",
       "Webhooks require a Pro or Team plan."
@@ -57,8 +65,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!FEATURES.enableWebhooks) return apiError("FORBIDDEN", "This feature is not available yet.");
   const { workspace, session } = await requireWorkspace();
+  
+  if (!canAccessFeature("enableWebhooks", session.user.email)) {
+    return apiError("FORBIDDEN", "This feature is not available yet.");
+  }
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return apiError("INVALID_INPUT", "Webhook ID required.");
 

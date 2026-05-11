@@ -6,6 +6,8 @@ import { apiError, apiSuccess } from "@/types/api";
 import { logger } from "@/lib/logger";
 import { CreateContentTypeSchema } from "@/lib/validations/content-type";
 
+import { isAdminEmail } from "@/lib/admin";
+
 export const runtime = "nodejs";
 
 export async function GET() {
@@ -19,11 +21,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { workspace } = await requireWorkspace();
+  const { workspace, session } = await requireWorkspace();
 
   const limit = await checkContentTypeLimit(
     workspace.id,
-    workspace.plan
+    workspace.plan,
+    isAdminEmail(session.user.email)
   );
   if (!limit.allowed) {
     return apiError(

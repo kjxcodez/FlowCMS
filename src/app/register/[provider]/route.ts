@@ -1,11 +1,12 @@
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { signInvitePayload } from "@/lib/tokens";
+import { isAdminEmail } from "@/lib/admin";
 
-export async function GET(req: Request, { params }: { params: Promise<{ provider: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
   const { provider } = await params;
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = req.nextUrl;
   const token = searchParams.get("invite");
   const email = searchParams.get("email");
 
@@ -13,9 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
     return NextResponse.redirect(new URL("/auth/error?code=INVITE_MISSING", req.url));
   }
 
-  // ADMIN BYPASS: Founders skip all gating
-  const adminEmails = (process.env.ADMIN_BYPASS_EMAILS ?? "").split(",").map(e => e.trim());
-  const isAdmin = adminEmails.includes(email);
+  const isAdmin = isAdminEmail(email);
 
   if (!isAdmin) {
     const entry = await prisma.waitlistEntry.findUnique({
@@ -34,16 +33,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
   }
 
   // Set secure handoff cookie (Checkpoint 1)
-  const cookieStore = await cookies();
-  const cookieValue = signInvitePayload({ token, email, ts: Date.now() });
-  
-  cookieStore.set("pending_invite", cookieValue, {
-    httpOnly: true,
-    secure: true, // Always secure for signed handoff
-    sameSite: "lax",
-    path: "/",
-    maxAge: 600, // 10 minutes
-  });
+  // Admins bypass this as they are handled via ADMIN_EMAILS in databaseHooks
+  if (!isAdmin) {
+    const cookieStore = await cookies();
+    const cookieValue = signInvitePayload({ token: token || "admin-bypass", email, ts: Date.now() });
+    
+    cookieStore.set("pending_invite", cookieValue, {
+      httpOnly: true,
+      secure: true, // Always secure for signed handoff
+      sameSite: "lax",
+      path: "/",
+      maxAge: 600, // 10 minutes
+    });
+  }
 
   // Handoff to Better Auth or Signup UI
   if (provider === "google") {
