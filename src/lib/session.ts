@@ -68,9 +68,15 @@ export async function requireWorkspace() {
     redirect("/register");
   }
 
+  const workspace = member?.workspace || (isPlatformAdmin ? ({ id: "admin", name: "Platform Admin", plan: "ENTERPRISE", slug: "admin" } as { id: string; name: string; plan: string; slug: string }) : null);
+  
+  if (!workspace) {
+    redirect("/register");
+  }
+
   return {
     session,
-    workspace: member?.workspace || (isPlatformAdmin ? { id: "admin", name: "Platform Admin", plan: "ENTERPRISE" } as any : null),
+    workspace,
     role: member?.role || (isPlatformAdmin ? "OWNER" : null),
   };
 }
