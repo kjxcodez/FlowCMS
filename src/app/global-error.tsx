@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 import { APP_CONFIG } from "@/config/app";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function GlobalError({
   error,
@@ -41,7 +42,7 @@ export default function GlobalError({
               asChild
               className="h-12 border-border bg-paper text-ink-muted font-sans font-bold text-[11px] uppercase tracking-[0.2em] rounded-sm hover:bg-canvas transition-all"
             >
-              <a href="/">Return to Home</a>
+              <Link href="/">Return to Home</Link>
             </Button>
           </div>
 
