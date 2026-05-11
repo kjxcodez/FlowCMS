@@ -36,13 +36,25 @@ export function SocialAuth({ inviteToken }: SocialAuthProps) {
   const handleSocialLogin = async (provider: "google") => {
     setLoading(provider);
     try {
+      // Checkpoint 1 Handshake: Only if an inviteToken is present
+      if (inviteToken) {
+        const res = await fetch("/api/auth/prepare", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: inviteToken }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          toast.error(data.error || "Invalid invitation.");
+          setLoading(null);
+          return;
+        }
+      }
+
       await signIn.social({
         provider,
         callbackURL: "/dashboard",
-        // Pass inviteToken to Better Auth so it's available in databaseHooks.user.create.before
-        additionalData: {
-          inviteToken: inviteToken || undefined
-        }
       });
     } catch (err) {
       console.error(err);
@@ -50,6 +62,7 @@ export function SocialAuth({ inviteToken }: SocialAuthProps) {
       setLoading(null);
     }
   };
+
 
   return (
     <div className="space-y-6">
