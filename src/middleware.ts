@@ -79,7 +79,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Set security headers for protected routes
+  if (!isPublicRoute && !pathname.startsWith("/api/auth")) {
+    response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+  }
+
+  return response;
+
 }
 
 export const config = {
