@@ -40,11 +40,22 @@ export async function verifyApiKey(raw: string): Promise<{
 
       if (key.keyHash.startsWith("sha256:")) {
         const hash = crypto.createHash("sha256").update(raw).digest("hex");
-        match = `sha256:${hash}` === key.keyHash;
+        const expectedHash = `sha256:${hash}`;
+        
+        // Timing-safe comparison
+        const a = Buffer.from(expectedHash);
+        const b = Buffer.from(key.keyHash);
+        
+        if (a.length !== b.length) {
+          match = false;
+        } else {
+          match = crypto.timingSafeEqual(a, b);
+        }
       } else {
         // Fallback for legacy bcrypt keys
         match = await bcrypt.compare(raw, key.keyHash);
       }
+
 
       if (match) {
         // Update last used timestamp in the background
