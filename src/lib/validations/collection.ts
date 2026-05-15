@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ContentTypeFieldSchema = z.object({
+export const CollectionFieldSchema = z.object({
   id: z.string(),
   name: z.string(),
   slug: z.string(),
@@ -9,7 +9,7 @@ export const ContentTypeFieldSchema = z.object({
   multiple: z.boolean(),
 });
 
-export const CreateContentTypeSchema = z.object({
+export const CreateCollectionSchema = z.object({
   name: z.string().min(1).max(64),
   slug: z
     .string()
@@ -17,11 +17,11 @@ export const CreateContentTypeSchema = z.object({
     .max(64)
     .regex(/^[a-z0-9-]+$/),
   description: z.string().max(255).optional(),
-  fields: z.array(ContentTypeFieldSchema),
+  fields: z.array(CollectionFieldSchema),
 });
 
-export const UpdateContentTypeSchema = z.object({
+export const UpdateCollectionSchema = z.object({
   name: z.string().min(1).max(64).optional(),
   description: z.string().max(255).optional(),
-  fields: z.array(ContentTypeFieldSchema).optional(),
+  fields: z.array(CollectionFieldSchema).optional(),
 });
