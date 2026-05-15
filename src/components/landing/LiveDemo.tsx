@@ -263,7 +263,7 @@ const TypewriterJson = ({ data, active }: { data: any; active: boolean }) => { /
 };
 
 export const LiveDemo = () => {
-  const [selectedType, setSelectedType] = useState("Blog Post");
+  const [selectedCollection, setSelectedCollection] = useState("Blog Post");
   const [activeTab, setActiveTab] = useState<"content" | "schema">("content");
   const [locale, setLocale] = useState("EN");
   const [showLocaleDropdown, setShowLocaleDropdown] = useState(false);
@@ -321,8 +321,8 @@ export const LiveDemo = () => {
     ]
   };
 
-  const handleTypeChange = (type: string) => {
-    setSelectedType(type);
+  const handleCollectionChange = (collection: string) => {
+    setSelectedCollection(collection);
     setPublished(false);
     
     // Pre-populate blocks based on type
@@ -356,7 +356,7 @@ export const LiveDemo = () => {
       ]
     };
     
-    setBlocks(presets[type] || presets["Blog Post"]);
+    setBlocks(presets[collection] || presets["Blog Post"]);
     triggerPulse();
   };
 
@@ -380,8 +380,8 @@ export const LiveDemo = () => {
     }
   };
 
-  const contentTypes = ["Blog Post", "Product Page", "Docs Article", "Landing Section", "Press Release", "Changelog Entry"];
-  const slug = selectedType.toLowerCase().replace(/\s+/g, "-");
+  const collections = ["Blog Post", "Product Page", "Docs Article", "Landing Section", "Press Release", "Changelog Entry"];
+  const collectionSlug = selectedCollection.toLowerCase().replace(/\s+/g, "-");
 
   const triggerPulse = () => {
     setIsPulsing(true);
@@ -432,7 +432,7 @@ export const LiveDemo = () => {
   };
 
   const generateJson = () => ({
-    type: slug,
+    collection: collectionSlug,
     status: published ? "published" : "draft",
     locale: locale.toLowerCase(),
     blocks: blocks.map(b => {
@@ -446,14 +446,14 @@ export const LiveDemo = () => {
     updatedAt: lastUpdated
   });
 
-  const schemaForType = schemaDefinitions[selectedType] || [];
-  const allowedBlockTypes = new Set(schemaForType.map(f => f.type));
-  const missingRequiredFields = schemaForType
+  const schemaForCollection = schemaDefinitions[selectedCollection] || [];
+  const allowedBlockTypes = new Set(schemaForCollection.map(f => f.type));
+  const missingRequiredFields = schemaForCollection
     .filter(f => f.required && !blocks.some(b => b.type === f.type))
     .map(f => f.name);
 
   const hasValidationErrors = blocks.some(b => {
-    const isRequiredInSchema = schemaForType.some(f => f.type === b.type && f.required);
+    const isRequiredInSchema = schemaForCollection.some(f => f.type === b.type && f.required);
     return isRequiredInSchema && !b.translations[locale] && !b.translations["EN"];
   }) || missingRequiredFields.length > 0;
 
@@ -469,7 +469,7 @@ export const LiveDemo = () => {
               activeTab === "content" ? "bg-accent-bright text-ink font-bold shadow-lg" : "text-white/40 hover:text-white"
             )}
           >
-            Types
+            Collections
           </button>
           <button 
             onClick={() => setActiveTab("schema")}
@@ -484,18 +484,18 @@ export const LiveDemo = () => {
 
         {activeTab === "content" ? (
           <>
-            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-accent-bright/50 mb-2.5">Content Type</p>
+            <p className="font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-accent-bright/50 mb-2.5">Collection</p>
             <div className="flex flex-col gap-0.5 mb-8">
-              {contentTypes.map(t => (
+              {collections.map(t => (
                 <button
                   key={t}
                   className={cn(
                     "flex items-center gap-2 bg-transparent border-none cursor-pointer px-2.5 py-1.5 rounded-[3px] w-full text-left font-ui text-[13px] transition-all",
-                    selectedType === t 
+                    selectedCollection === t 
                       ? "bg-accent-dim text-white border-l-2 border-accent-bright pl-2" 
                       : "text-white/60 hover:bg-sidebar-mid hover:text-white"
                   )}
-                  onClick={() => handleTypeChange(t)}
+                  onClick={() => handleCollectionChange(t)}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 shrink-0" />
                   {t}
@@ -530,11 +530,11 @@ export const LiveDemo = () => {
         ) : (
           <div className="flex flex-col gap-4">
              <div className="pb-3 border-b border-white/10">
-                <p className="font-mono text-[10px] text-accent-bright/50 uppercase tracking-widest mb-1">{selectedType} Schema</p>
+                <p className="font-mono text-[10px] text-accent-bright/50 uppercase tracking-widest mb-1">{selectedCollection} Schema</p>
                 <div className="h-0.5 w-8 bg-accent-bright/30" />
              </div>
              <div className="flex flex-col gap-3">
-                {schemaDefinitions[selectedType].map((field, i) => (
+                {schemaDefinitions[selectedCollection].map((field, i) => (
                   <div key={i} className="group flex flex-col gap-1.5 p-2 rounded-sm border border-white/5 bg-white/5 transition-all hover:border-accent-bright/20">
                      <div className="flex items-center justify-between">
                         <span className="font-mono text-[11px] text-white/80 font-medium">{field.name}</span>
@@ -573,7 +573,7 @@ export const LiveDemo = () => {
           <div className="flex items-center gap-1.5 text-[12px]">
             <span className="text-ink-muted hidden sm:inline">Entries</span>
             <span className="text-ink-faint hidden sm:inline">/</span>
-            <span className="font-medium text-ink">{selectedType}</span>
+            <span className="font-medium text-ink">{selectedCollection}</span>
             <div className="relative ml-2">
               <button 
                 onClick={() => setShowLocaleDropdown(!showLocaleDropdown)}
@@ -738,7 +738,7 @@ export const LiveDemo = () => {
                      <div className="size-2 rounded-full bg-border" />
                      <div className="size-2 rounded-full bg-border" />
                      <div className="ml-4 flex-1 h-5 rounded-sm bg-border/20 flex items-center px-3">
-                        <span className="font-mono text-[9px] text-ink-faint">https://your-site.com/{slug}</span>
+                        <span className="font-mono text-[9px] text-ink-faint">https://your-site.com/{collectionSlug}</span>
                      </div>
                   </div>
                   <div className="p-10 flex flex-col gap-8">
@@ -784,11 +784,11 @@ export const LiveDemo = () => {
           <div className="group flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-sm transition-colors hover:border-white/20">
             <div className="flex items-center gap-2 overflow-hidden">
               <span className="font-mono text-[10px] font-bold bg-accent-bright text-ink px-1.5 py-0.5 rounded-sm shrink-0">GET</span>
-              <code className="font-mono text-[11px] text-white/60 truncate">/v1/entries/{slug}</code>
+              <code className="font-mono text-[11px] text-white/60 truncate">/v1/entries/{collectionSlug}</code>
             </div>
             <div className="flex items-center gap-2 shrink-0">
                <button 
-                 onClick={() => handleCopy(`https://api.getflowcms.com/v1/entries/${slug}`)}
+                 onClick={() => handleCopy(`https://api.getflowcms.com/v1/entries/${collectionSlug}`)}
                  className="p-1 text-white/20 hover:text-accent-bright transition-colors cursor-pointer bg-transparent border-none"
                  title="Copy full URL"
                >
@@ -817,7 +817,7 @@ export const LiveDemo = () => {
               <div className="flex items-center justify-between mb-2">
                  <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-white/30">Request Headers</p>
                  <button 
-                   onClick={() => handleCopy(`curl -X GET https://getflowcms.com/api/v1/entries/${slug} \\\n  -H "Authorization: Bearer fl_live_••••••••••••" \\\n  -H "X-API-Version: 1"`)}
+                   onClick={() => handleCopy(`curl -X GET https://getflowcms.com/api/v1/entries/${collectionSlug} \\\n  -H "Authorization: Bearer fl_live_••••••••••••" \\\n  -H "X-API-Version: 1"`)}
                    className="font-mono text-[9px] text-accent-bright/50 hover:text-accent-bright uppercase tracking-tighter cursor-pointer bg-transparent border-none"
                  >
                     Copy curl

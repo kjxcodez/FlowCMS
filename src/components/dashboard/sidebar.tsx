@@ -20,7 +20,8 @@ import {
   Users,
   ClipboardList,
   CreditCard,
-  Lock
+  Lock,
+  Shield
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -49,8 +50,7 @@ const NAV_GROUPS = [
   {
     label: "Content",
     items: [
-      { href: "/dashboard/content-types", label: "Content Types", icon: Layers },
-      { href: "/dashboard/pages", label: "Pages", icon: FileText },
+      { href: "/dashboard/collections", label: "Collections", icon: Layers },
       { href: "/dashboard/media", label: "Media Library", icon: Image },
     ]
   },
@@ -170,11 +170,11 @@ export function Sidebar() {
 
       <SidebarFooter className="p-4 border-t border-white/5 flex flex-col gap-4">
         <Link 
-          href="/dashboard/content-types/new"
+          href="/dashboard/collections/new"
           className="flex items-center justify-center gap-2 w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-sm text-[11px] font-bold uppercase tracking-widest transition-colors border-none no-underline"
         >
           <Plus className="size-3.5" />
-          Create Type
+          Create Collection
         </Link>
 
         {mounted && (
@@ -197,11 +197,21 @@ export function Sidebar() {
           </div>
         )}
 
+        {workspaceData?.isAdmin && (
+          <Link 
+            href="/admin/operations"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-accent-bright/10 hover:bg-accent-bright/20 text-accent-bright rounded-sm text-[11px] font-bold uppercase tracking-widest transition-colors border border-accent-bright/20 no-underline"
+          >
+            <Shield className="size-3.5" />
+            Admin Portal
+          </Link>
+        )}
+
         <div className="flex items-center justify-between opacity-50 px-2">
-          <span className="font-mono text-[9px] uppercase tracking-tighter text-white/40">
-            FlowCMS v1.0.0
-          </span>
-          <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(58,125,68,0.5)]" />
+           <span className="font-mono text-[9px] uppercase tracking-tighter text-white/40">
+             FlowCMS v1.0.0
+           </span>
+           <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(58,125,68,0.5)]" />
         </div>
       </SidebarFooter>
       <SidebarRail />

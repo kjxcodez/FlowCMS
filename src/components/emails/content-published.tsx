@@ -12,7 +12,7 @@ import {
 
 export interface ContentPublishedEmailProps {
   entryTitle: string;
-  contentType: string;
+  collectionName: string;
   authorName: string;
   workspaceName: string;
   publishedUrl: string;
@@ -21,7 +21,7 @@ export interface ContentPublishedEmailProps {
 
 export function ContentPublishedEmail({
   entryTitle,
-  contentType,
+  collectionName,
   authorName,
   workspaceName,
   publishedUrl,
@@ -74,9 +74,9 @@ export function ContentPublishedEmail({
         <Label>Content Metadata</Label>
         <div style={{ marginTop: "16px" }}>
           <div style={{ marginBottom: "12px" }}>
-            <Label>Type</Label>
+            <Label>Collection</Label>
             <div style={{ marginTop: "4px" }}>
-              <Mono>{contentType}</Mono>
+              <Mono>{collectionName}</Mono>
             </div>
           </div>
           <div>

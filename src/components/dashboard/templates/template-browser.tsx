@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CONTENT_TYPE_TEMPLATES } from "@/config/templates/content-types";
+import { COLLECTION_TEMPLATES } from "@/config/templates/collections";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ export function TemplateBrowser() {
   const handleApply = async (templateId: string) => {
     setApplying(templateId);
     try {
-      const res = await fetch("/api/internal/content-types/apply-template", {
+      const res = await fetch("/api/internal/collections/apply-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ templateId }),
@@ -25,7 +25,7 @@ export function TemplateBrowser() {
       if (!res.ok) throw new Error(result.error);
 
       toast.success("Template applied successfully!");
-      router.push(`/dashboard/content-types/${result.data.id}`);
+      router.push(`/dashboard/collections/${result.data.id}`);
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err.message);
     } finally {
@@ -43,7 +43,7 @@ export function TemplateBrowser() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {CONTENT_TYPE_TEMPLATES.map((t) => (
+        {COLLECTION_TEMPLATES.map((t) => (
           <Card key={t.id} className="rounded-none border-2 border-border hover:border-accent transition-all duration-300 group overflow-hidden bg-paper relative">
             <CardHeader className="pb-4 border-b border-border/30">
               <div className="flex items-center justify-between mb-3">

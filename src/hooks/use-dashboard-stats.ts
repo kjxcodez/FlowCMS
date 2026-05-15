@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface DashboardStats {
-  contentTypes: number;
+  collections: number;
   entries: number;
   pages: number;
   mediaCount: number;

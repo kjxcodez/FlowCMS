@@ -8,12 +8,12 @@ async function fetchJson(url: string) {
   return json.data;
 }
 
-export function useEntries(contentTypeId?: string) {
-  const params = contentTypeId
-    ? `?contentTypeId=${contentTypeId}`
+export function useEntries(collectionId?: string) {
+  const params = collectionId
+    ? `?collectionId=${collectionId}`
     : "";
   return useQuery({
-    queryKey: ["entries", contentTypeId],
+    queryKey: ["entries", collectionId],
     queryFn: () => fetchJson(`/api/internal/entries${params}`),
   });
 }
@@ -65,6 +65,7 @@ export function useDeleteEntry() {
       qc.invalidateQueries({ queryKey: ["entries"] }),
   });
 }
+
 export function usePublishEntry() {
   const qc = useQueryClient();
   return useMutation({

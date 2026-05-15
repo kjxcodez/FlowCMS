@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Layers, CheckCircle2, Zap, ArrowRight } from "lucide-react";
+import { Layers, CheckCircle2, Zap, ArrowRight, Layout } from "lucide-react";
 
 export function TutorialStep({ 
   workspaceName, 
@@ -16,7 +16,7 @@ export function TutorialStep({
 
   const templates = [
     { id: "blog", name: "Blog Engine", desc: "For technical writing and editorial workflows.", icon: Zap },
-    { id: "docs", name: "Internal Docs", desc: "Knowledge management for high-velocity teams.", icon: Layers },
+    { id: "visual", name: "Landing Page", desc: "Block-based visual editor for high-conversion pages.", icon: Layout },
     { id: "custom", name: "Empty Vessel", desc: "Build your own custom orchestration schema.", icon: CheckCircle2 },
   ];
 

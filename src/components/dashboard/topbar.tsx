@@ -54,8 +54,15 @@ export function Topbar() {
       {/* --- Actions --- */}
       <div className="flex items-center gap-6">
         {/* Search Toggle (Industrial style) */}
-        <button className="bg-transparent border-none p-2 text-ink-muted hover:text-ink transition-colors cursor-pointer">
-          <Search className="size-4.5" />
+        <button 
+          onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+          className="flex items-center gap-3 bg-canvas border border-border px-3 py-1.5 rounded-sm text-ink-faint hover:text-ink hover:border-border-strong transition-all cursor-pointer group"
+        >
+          <Search className="size-3.5" />
+          <span className="text-[10px] font-mono uppercase tracking-widest hidden sm:inline">Search</span>
+          <kbd className="hidden md:flex h-4 items-center gap-1 rounded bg-paper px-1.5 font-mono text-[9px] font-medium text-ink-faint group-hover:text-ink transition-colors">
+            <span className="text-[10px]">⌘</span>K
+          </kbd>
         </button>
 
         <button className="bg-transparent border-none relative p-2 text-ink-muted hover:text-ink transition-colors cursor-pointer">
