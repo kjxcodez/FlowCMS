@@ -36,9 +36,10 @@ export async function queueWebhook({
       },
       headers: {
         "X-Flow-Webhook-Id": webhookId,
-        "X-Flow-Signature": "tbd", // We'll implement signing later
+        "X-Flow-Signature": secret, // In production, this should be a signed HMAC
       },
       retries: 3,
+      callback: `${process.env.NEXT_PUBLIC_APP_URL}/api/internal/webhooks/qstash-callback`,
     });
   } catch (err) {
     logger.error("Failed to queue webhook via QStash", { error: String(err), webhookId });

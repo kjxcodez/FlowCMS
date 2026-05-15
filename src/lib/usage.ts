@@ -94,23 +94,23 @@ export async function checkUsageLimit(
   };
 }
 
-export async function checkContentTypeLimit(
+export async function checkCollectionLimit(
   workspaceId: string,
   plan: string,
   isAdmin = false
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
   if (isAdmin) return { allowed: true, used: 0, limit: -1 };
   const limits = PLAN_LIMITS[plan];
-  if (!limits || limits.contentTypes === -1) {
+  if (!limits || limits.collections === -1) {
     return { allowed: true, used: 0, limit: -1 };
   }
 
-  const count = await prisma.contentType.count({
+  const count = await prisma.collection.count({
     where: { workspaceId },
   });
   return {
-    allowed: count < limits.contentTypes,
+    allowed: count < limits.collections,
     used: count,
-    limit: limits.contentTypes,
+    limit: limits.collections,
   };
 }

@@ -7,11 +7,11 @@ export const isOpenMode        = LAUNCH_MODE === "open";
 import { isAdminEmail } from "./admin";
 
 export const FEATURES = {
-  enableBilling: false,
+  enableBilling: true,
   enableCustomDomains: false,
   enableTeamInvites: false,
   enableApiKeyGeneration: true,
-  enableWebhooks: false,
+  enableWebhooks: true,
 };
 
 /**
