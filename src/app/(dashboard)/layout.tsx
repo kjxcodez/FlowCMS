@@ -3,6 +3,8 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Topbar } from "@/components/dashboard/topbar";
 import { requireWorkspace } from "@/lib/session";
 
+import { CommandPalette } from "@/components/dashboard/command-palette";
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -13,6 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <CommandPalette />
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <Sidebar />
         <SidebarInset className="flex flex-1 flex-col overflow-hidden">

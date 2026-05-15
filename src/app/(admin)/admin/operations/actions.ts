@@ -2,56 +2,49 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { razorpay } from "@/lib/razorpay";
 import { revalidatePath } from "next/cache";
-import Razorpay from "razorpay";
+import { logger } from "@/lib/logger";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+/**
+ * Force sync all active subscriptions from Razorpay.
+ * Used for billing recovery when webhooks are missed.
+ */
+export async function syncAllSubscriptions() {
+  const session = await requireAdmin();
 
-export async function syncSubscription(subscriptionId: string) {
-  await requireAdmin();
+  const customers = await prisma.razorpayCustomer.findMany({
+    where: { subscriptionId: { not: null } }
+  });
 
-  try {
-    const sub = await razorpay.subscriptions.fetch(subscriptionId);
-    const workspaceId = sub.notes?.workspaceId;
+  const results = {
+    total: customers.length,
+    updated: 0,
+    failed: 0,
+  };
 
-    if (!workspaceId) throw new Error("No workspaceId in subscription notes");
+  logger.info("Starting manual billing sync", { adminId: session.user.id, count: customers.length });
 
-    // Update DB
-    await prisma.$transaction(async (tx) => {
-      await tx.razorpayCustomer.update({
-        where: { subscriptionId },
+  for (const customer of customers) {
+    try {
+      const sub = await razorpay.subscriptions.fetch(customer.subscriptionId!);
+      
+      await prisma.razorpayCustomer.update({
+        where: { id: customer.id },
         data: {
           subscriptionStatus: sub.status,
-          currentPeriodEnd: sub.current_end ? new Date(sub.current_end * 1000) : undefined,
-          lastEventAt: new Date(), // Manual override sets new baseline
-        },
+          currentPeriodEnd: sub.current_end ? new Date(sub.current_end * 1000) : null,
+          planId: sub.plan_id,
+          lastEventAt: new Date(),
+        }
       });
-
-      let plan: "PRO" | "AGENCY" | "HOBBY" = "PRO";
-      if (sub.status !== "active") {
-        plan = "HOBBY";
-      } else if (
-        sub.plan_id === process.env.RAZORPAY_AGENCY_MONTHLY_PLAN_ID || 
-        sub.plan_id === process.env.RAZORPAY_AGENCY_ANNUAL_PLAN_ID
-      ) {
-        plan = "AGENCY";
-      }
-
-      await tx.workspace.update({
-        where: { id: workspaceId as unknown as string },
-        data: { plan },
-      });
-    });
-
-    revalidatePath("/admin/operations");
-    revalidatePath("/dashboard", "layout");
-
-    return { success: true };
-  } catch (err) {
-    console.error("Manual sync failed", err);
-    throw new Error("Failed to sync subscription");
+      results.updated++;
+    } catch (err) {
+      logger.error(`Failed to sync sub ${customer.subscriptionId}`, { error: String(err) });
+      results.failed++;
+    }
   }
+
+  revalidatePath("/admin/operations");
+  return results;
 }
