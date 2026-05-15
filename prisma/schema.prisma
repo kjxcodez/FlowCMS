@@ -24,6 +24,7 @@ model User {
   sessions         Session[]
   accounts         Account[]
   workspaceMembers WorkspaceMember[]
+  auditLogs        AuditLog[]
 }
 
 model Session {
@@ -75,20 +76,20 @@ model Workspace {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  members        WorkspaceMember[]
-  environments   Environment[]
-  contentTypes   ContentType[]
-  pages          Page[]
-  media          Media[]
-  apiKeys        ApiKey[]
-  webhooks       Webhook[]
-  usageLogs      UsageLog[]
-  monthlyUsage   MonthlyUsage[]
-  auditLogs      AuditLog[]
-  invitations    Invitation[]
-  draftTokens    DraftToken[]
-  customDomains  CustomDomain[]
+  members          WorkspaceMember[]
+  environments     Environment[]
+  collections      Collection[]
+  media            Media[]
+  apiKeys          ApiKey[]
+  webhooks         Webhook[]
+  usageLogs        UsageLog[]
+  monthlyUsage     MonthlyUsage[]
+  auditLogs        AuditLog[]
+  invitations      Invitation[]
+  draftTokens      DraftToken[]
+  customDomains    CustomDomain[]
   razorpayCustomer RazorpayCustomer?
+  notifications    Notification[]
 }
 
 model WorkspaceMember {
@@ -116,21 +117,21 @@ model Environment {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   apiKeys   ApiKey[]
   entries   Entry[]
-  pages     Page[]
 
   @@unique([workspaceId, slug])
 }
 
 // ── Content ────────────────────────────────────────────────────────
-model ContentType {
-  id          String   @id @default(cuid())
+model Collection {
+  id          String         @id @default(cuid())
   workspaceId String
   name        String
   slug        String
   description String?
+  mode        CollectionMode @default(STRUCTURED)
   fields      Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   entries   Entry[]
@@ -138,11 +139,17 @@ model ContentType {
   @@unique([workspaceId, slug])
 }
 
+enum CollectionMode {
+  STRUCTURED
+  VISUAL
+}
+
 model Entry {
   id            String      @id @default(cuid())
-  contentTypeId String
+  collectionId  String
   workspaceId   String
   environmentId String?
+  slug          String
   data          Json
   status        EntryStatus @default(DRAFT)
   version       Int         @default(1)
@@ -151,35 +158,12 @@ model Entry {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  contentType ContentType  @relation(fields: [contentTypeId], references: [id], onDelete: Cascade)
+  collection  Collection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   environment Environment? @relation(fields: [environmentId], references: [id])
 
+  @@unique([collectionId, slug])
   @@index([workspaceId, status])
-  @@index([contentTypeId, status])
-}
-
-model Page {
-  id            String      @id @default(cuid())
-  workspaceId   String
-  environmentId String?
-  title         String
-  slug          String
-  blocks        Json
-  status        EntryStatus @default(DRAFT)
-  publishedAt   DateTime?
-  seoTitle      String?
-  seoDesc       String?
-  ogImage       String?
-  canonicalUrl  String?
-  noIndex       Boolean     @default(false)
-  localeCode    String?     @default("en")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  environment Environment? @relation(fields: [environmentId], references: [id])
-
-  @@unique([workspaceId, slug])
+  @@index([collectionId, status])
 }
 
 // ── Media ──────────────────────────────────────────────────────────
@@ -209,7 +193,7 @@ model ApiKey {
   name          String
   keyHash       String    @unique
   keyPrefix     String
-  scopes        String[]  @default(["read:entries", "read:pages", "read:media"])
+  scopes        String[]  @default(["read:entries", "read:media"])
   lastUsedAt    DateTime?
   expiresAt     DateTime?
   createdAt     DateTime  @default(now())
@@ -272,7 +256,7 @@ model MonthlyUsage {
   month        Int
   apiRequests  Int      @default(0)
   storageBytes Int      @default(0)
-  contentTypes Int      @default(0)
+  collections  Int      @default(0)
   updatedAt    DateTime @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -296,6 +280,7 @@ model AuditLog {
   createdAt    DateTime    @default(now())
 
   workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, createdAt])
   @@index([workspaceId, resourceType, resourceId])
@@ -303,17 +288,17 @@ model AuditLog {
 
 // ── Billing ────────────────────────────────────────────────────────
 model RazorpayCustomer {
-  id                  String    @id @default(cuid())
-  workspaceId         String    @unique
-  razorpayCustomerId  String?
-  subscriptionId      String?   @unique
-  planId              String?
-  subscriptionStatus  String?   // "created" | "authenticated" | "active" | "paused" | "cancelled" | "expired"
-  currentPeriodEnd    DateTime?
-  cancelAtPeriodEnd   Boolean   @default(false)
-  lastEventAt         DateTime? // For event sequencing
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  workspaceId        String    @unique
+  razorpayCustomerId String?
+  subscriptionId     String?   @unique
+  planId             String?
+  subscriptionStatus String? // "created" | "authenticated" | "active" | "paused" | "cancelled" | "expired"
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  lastEventAt        DateTime? // For event sequencing
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 }
@@ -361,7 +346,7 @@ model CustomDomain {
 }
 
 // ── Templates ─────────────────────────────────────────────────────
-model ContentTypeTemplate {
+model CollectionTemplate {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
@@ -450,37 +435,37 @@ enum InvitationStatus {
 
 // ── Waitlist ──────────────────────────────────────────────────────
 model WaitlistEntry {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  name         String?
+  id    String  @id @default(cuid())
+  email String  @unique
+  name  String?
 
   // Segmentation
-  role         WaitlistRole?
-  useCase      String?
-  source       String?
-  referredBy   String?
+  role       WaitlistRole?
+  useCase    String?
+  source     String?
+  referredBy String?
 
   // Position & Priority
-  position     Int
-  priority     WaitlistPriority @default(NORMAL)
+  position Int
+  priority WaitlistPriority @default(NORMAL)
 
   // Approval flow
-  status       WaitlistStatus  @default(PENDING)
-  inviteToken  String?         @unique
-  inviteSentAt DateTime?
-  inviteUsedAt DateTime?
+  status          WaitlistStatus @default(PENDING)
+  inviteToken     String?        @unique
+  inviteSentAt    DateTime?
+  inviteUsedAt    DateTime?
   inviteExpiresAt DateTime?
 
   // Confirmation
-  confirmed    Boolean         @default(false)
-  confirmedAt  DateTime?
+  confirmed   Boolean   @default(false)
+  confirmedAt DateTime?
 
   // Referral
-  referralCode String?         @unique
-  referralCount Int            @default(0)
+  referralCode  String? @unique
+  referralCount Int     @default(0)
 
-  joinedAt     DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status, joinedAt])
   @@index([priority, joinedAt])
@@ -523,9 +508,9 @@ model EmailLog {
   idempotencyKey    String      @unique // e.g., "invite_{entryId}_{token}"
   to                String
   template          String
-  eventType         String      // e.g., "WAITLIST_INVITE"
+  eventType         String // e.g., "WAITLIST_INVITE"
   status            EmailStatus @default(PENDING)
-  providerMessageId String?     // ID from Resend
+  providerMessageId String? // ID from Resend
   error             String?
   attempts          Int         @default(0)
   lastAttempt       DateTime?
@@ -542,3 +527,19 @@ enum EmailStatus {
   FAILED
 }
 
+// ── Notifications ─────────────────────────────────────────────────
+model Notification {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String?
+  title       String
+  message     String
+  type        String // "info", "warning", "error", "success"
+  read        Boolean  @default(false)
+  link        String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, read])
+}
