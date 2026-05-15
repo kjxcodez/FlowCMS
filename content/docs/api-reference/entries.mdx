@@ -7,23 +7,41 @@ description: Fetch and manage content entries.
 
 The Entries API allows you to retrieve the content you have authored within FlowCMS.
 
-## Fetch Entries by Content Type
+## Fetch Entries for a Collection
 
-Retrieve a paginated list of published entries for a specific content type.
+Retrieve a paginated list of published entries for a specific collection.
 
 ### Request
 
 ```http
-GET /api/v1/entries?type={contentTypeSlug}
+GET /api/v1/entries/{collectionSlug}
 Authorization: Bearer <your_api_key>
 X-API-Version: 1
 ```
 
 ### Parameters
 
-- `type` (required): The slug of the Content Type you want to fetch.
+- `collectionSlug` (in path): The slug of the Collection you want to fetch.
 - `limit` (optional): Number of entries to return (default: 10, max: 100).
 - `page` (optional): The page number for pagination.
+
+## Fetch a Single Entry
+
+Retrieve a specific entry by its slug within a collection.
+
+### Request
+
+```http
+GET /api/v1/entries/{collectionSlug}/{entrySlug}
+Authorization: Bearer <your_api_key>
+X-API-Version: 1
+```
+
+### Parameters
+
+- `collectionSlug` (in path): The slug of the Collection.
+- `entrySlug` (in path): The slug of the Entry.
+- `preview` (optional): Set to `true` to include draft content (requires valid API key).
 
 ### Response
 
@@ -33,11 +51,11 @@ X-API-Version: 1
     {
       "id": "cm0a1b2c3d4e5f6g7h8i9j0k",
       "slug": "hello-world",
-      "fields": {
+      "data": {
         "title": "Hello World",
-        "body": "<p>Welcome to my first blog post.</p>",
-        "publishedAt": "2026-05-10T12:00:00Z"
+        "body": "<p>Welcome to my first blog post.</p>"
       },
+      "publishedAt": "2026-05-10T12:00:00Z",
       "createdAt": "2026-05-09T10:00:00Z",
       "updatedAt": "2026-05-10T12:00:00Z"
     }
