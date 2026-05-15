@@ -13,7 +13,7 @@ export async function PATCH(
   const { id } = await params;
 
   const entry = await prisma.entry.findFirst({
-    where: { id, contentType: { workspaceId: workspace.id } },
+    where: { id, collection: { workspaceId: workspace.id } },
   });
 
   if (!entry) return apiError("NOT_FOUND", "Entry not found.");

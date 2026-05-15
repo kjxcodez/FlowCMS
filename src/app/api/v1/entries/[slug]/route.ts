@@ -15,16 +15,16 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
     100
   );
 
-  const contentType = await prisma.contentType.findUnique({
+  const collection = await prisma.collection.findUnique({
     where: { workspaceId_slug: { workspaceId, slug } },
   });
 
-  if (!contentType) {
-    return apiError("NOT_FOUND", `Content type "${slug}" not found.`);
+  if (!collection) {
+    return apiError("NOT_FOUND", `Collection "${slug}" not found.`);
   }
 
   const where = {
-    contentTypeId: contentType.id,
+    collectionId: collection.id,
     ...(status !== "all"
       ? { status: status.toUpperCase() as never }
       : {}),

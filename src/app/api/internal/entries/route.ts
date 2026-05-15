@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const { workspace } = await requireWorkspace();
   const { searchParams } = req.nextUrl;
 
-  const contentTypeId = searchParams.get("contentTypeId");
+  const collectionId = searchParams.get("collectionId");
   const status = searchParams.get("status");
   const page = parseInt(searchParams.get("page") ?? "1");
   const perPage = Math.min(
@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
   );
 
   const where = {
-    ...(contentTypeId ? { contentTypeId } : {}),
+    ...(collectionId ? { collectionId } : {}),
     ...(status ? { status: status as never } : {}),
-    contentType: { workspaceId: workspace.id },
+    collection: { workspaceId: workspace.id },
   };
 
   const [entries, total] = await Promise.all([
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       skip: (page - 1) * perPage,
       take: perPage,
       orderBy: { updatedAt: "desc" },
-      include: { contentType: { select: { name: true, slug: true } } },
+      include: { collection: { select: { name: true, slug: true } } },
     }),
     prisma.entry.count({ where }),
   ]);
@@ -45,19 +45,33 @@ export async function POST(req: NextRequest) {
     return apiError("INVALID_INPUT", parsed.error.issues[0].message);
   }
 
-  // Verify content type belongs to workspace
-  const ct = await prisma.contentType.findFirst({
+  // Verify collection belongs to workspace
+  const collection = await prisma.collection.findFirst({
     where: {
-      id: parsed.data.contentTypeId,
+      id: parsed.data.collectionId,
       workspaceId: workspace.id,
     },
   });
-  if (!ct) return apiError("NOT_FOUND", "Content type not found.");
+  if (!collection) return apiError("NOT_FOUND", "Collection not found.");
+
+  // Check slug uniqueness within collection
+  const existing = await prisma.entry.findUnique({
+    where: {
+      collectionId_slug: {
+        collectionId: parsed.data.collectionId,
+        slug: parsed.data.slug,
+      },
+    },
+  });
+  if (existing) {
+    return apiError("INVALID_INPUT", `Slug "${parsed.data.slug}" already exists in this collection.`);
+  }
 
   const entry = await prisma.entry.create({
     data: {
-      contentTypeId: parsed.data.contentTypeId,
+      collectionId: parsed.data.collectionId,
       workspaceId: workspace.id,
+      slug: parsed.data.slug,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: parsed.data.data as any,
       status: parsed.data.status ?? "DRAFT",

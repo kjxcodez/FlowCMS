@@ -36,40 +36,87 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 4. Create the first content type if a template was selected
+      const workspaceId = membership.workspaceId;
+
+      // 4. Create default Production environment
+      let environmentId: string;
+      const existingEnv = await prisma.environment.findFirst({
+        where: { workspaceId, isDefault: true }
+      });
+
+      if (!existingEnv) {
+        const env = await prisma.environment.create({
+          data: {
+            workspaceId,
+            name: "Production",
+            slug: "production",
+            isDefault: true
+          }
+        });
+        environmentId = env.id;
+      } else {
+        environmentId = existingEnv.id;
+      }
+
+      // 5. Create API Key
+      await prisma.apiKey.create({
+        data: {
+          workspaceId,
+          environmentId,
+          name: "Default Development Key",
+          key: `fl_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+          scopes: ["read:collections", "read:entries"]
+        }
+      });
+
+      // 6. Create the first collection and entry if a template was selected
       if (firstSchemaName && firstSchemaName !== "Empty Vessel") {
+        const isVisual = firstSchemaName === "Landing Page";
         const fields = firstSchemaName === "Blog Engine" 
           ? [
               { id: "1", name: "Title", slug: "title", type: "text", required: true },
               { id: "2", name: "Content", slug: "content", type: "richtext", required: true },
               { id: "3", name: "Cover Image", slug: "cover", type: "media" }
             ]
-          : [
-              { id: "1", name: "Title", slug: "title", type: "text", required: true },
-              { id: "2", name: "Body", slug: "body", type: "richtext" }
-            ];
+          : isVisual 
+            ? [] 
+            : [
+                { id: "1", name: "Title", slug: "title", type: "text", required: true },
+                { id: "2", name: "Body", slug: "body", type: "richtext" }
+              ];
 
-        await prisma.contentType.create({
+        const collection = await prisma.collection.create({
           data: {
-            workspaceId: membership.workspaceId,
+            workspaceId,
             name: firstSchemaName,
             slug: slugify(firstSchemaName),
+            mode: isVisual ? "VISUAL" : "STRUCTURED",
             fields: fields as any // eslint-disable-line @typescript-eslint/no-explicit-any
           }
         });
-      }
-      // 5. Ensure default Production environment exists
-      const existingEnv = await prisma.environment.findFirst({
-        where: { workspaceId: membership.workspaceId, isDefault: true }
-      });
 
-      if (!existingEnv) {
-        await prisma.environment.create({
+        // Create "Hello World" Entry
+        const entryData = isVisual 
+          ? { 
+              title: "Welcome to FlowCMS",
+              blocks: [
+                { id: "b1", type: "heading", props: { text: "Hello World", level: 1 } },
+                { id: "b2", type: "text", props: { text: "This is your first visual page powered by FlowCMS." } }
+              ]
+            }
+          : {
+              title: "Hello World",
+              content: "Welcome to your new FlowCMS collection! This is a starter entry to help you see how the API works.",
+              body: "Welcome to your new FlowCMS collection! This is a starter entry to help you see how the API works."
+            };
+
+        await prisma.entry.create({
           data: {
-            workspaceId: membership.workspaceId,
-            name: "Production",
-            slug: "production",
-            isDefault: true
+            collectionId: collection.id,
+            environmentId,
+            slug: "hello-world",
+            data: entryData,
+            status: "PUBLISHED"
           }
         });
       }
@@ -88,7 +135,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Create default Production environment
-      await prisma.environment.create({
+      const env = await prisma.environment.create({
         data: {
           workspaceId,
           name: "Production",
@@ -97,25 +144,65 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // Create the first content type if a template was selected
+      // Create API Key
+      await prisma.apiKey.create({
+        data: {
+          workspaceId,
+          environmentId: env.id,
+          name: "Default Development Key",
+          key: `fl_${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}`,
+          scopes: ["read:collections", "read:entries"]
+        }
+      });
+
+      // Create the first collection if a template was selected
       if (firstSchemaName && firstSchemaName !== "Empty Vessel") {
+        const isVisual = firstSchemaName === "Landing Page";
         const fields = firstSchemaName === "Blog Engine"
           ? [
               { id: "1", name: "Title", slug: "title", type: "text", required: true },
               { id: "2", name: "Content", slug: "content", type: "richtext", required: true },
               { id: "3", name: "Cover Image", slug: "cover", type: "media" }
             ]
-          : [
-              { id: "1", name: "Title", slug: "title", type: "text", required: true },
-              { id: "2", name: "Body", slug: "body", type: "richtext" }
-            ];
+          : isVisual
+            ? []
+            : [
+                { id: "1", name: "Title", slug: "title", type: "text", required: true },
+                { id: "2", name: "Body", slug: "body", type: "richtext" }
+              ];
 
-        await prisma.contentType.create({
+        const collection = await prisma.collection.create({
           data: {
             workspaceId,
             name: firstSchemaName,
             slug: slugify(firstSchemaName),
+            mode: isVisual ? "VISUAL" : "STRUCTURED",
             fields: fields as any // eslint-disable-line @typescript-eslint/no-explicit-any
+          }
+        });
+
+        // Create "Hello World" Entry
+        const entryData = isVisual 
+          ? { 
+              title: "Welcome to FlowCMS",
+              blocks: [
+                { id: "b1", type: "heading", props: { text: "Hello World", level: 1 } },
+                { id: "b2", type: "text", props: { text: "This is your first visual page powered by FlowCMS." } }
+              ]
+            }
+          : {
+              title: "Hello World",
+              content: "Welcome to your new FlowCMS collection! This is a starter entry to help you see how the API works.",
+              body: "Welcome to your new FlowCMS collection! This is a starter entry to help you see how the API works."
+            };
+
+        await prisma.entry.create({
+          data: {
+            collectionId: collection.id,
+            environmentId: env.id,
+            slug: "hello-world",
+            data: entryData,
+            status: "PUBLISHED"
           }
         });
       }

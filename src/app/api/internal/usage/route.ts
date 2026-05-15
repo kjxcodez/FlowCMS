@@ -28,7 +28,7 @@ export async function GET() {
     limits,
     current: {
       apiRequests: currentMonth?.apiRequests ?? 0,
-      contentTypes: await prisma.contentType.count({
+      collections: await prisma.collection.count({
         where: { workspaceId: workspace.id },
       }),
     },

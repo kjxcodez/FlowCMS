@@ -35,15 +35,15 @@ export async function GET(
     _sum: { size: true }
   });
 
-  // Get content type count
-  const contentTypeCount = await prisma.contentType.count({
+  // Get collection count
+  const collectionCount = await prisma.collection.count({
     where: { workspaceId: workspace.id }
   });
 
   return apiSuccess({
     apiRequests: monthlyUsage?.apiRequests ?? 0,
     storageBytes: storageResult._sum.size ?? 0,
-    contentTypes: contentTypeCount,
+    collections: collectionCount,
     month,
     year,
   });

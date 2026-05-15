@@ -8,18 +8,15 @@ export async function GET() {
   const { workspace } = await requireWorkspace();
 
   const now = new Date();
-  const [contentTypes, entries, pages, mediaCount, usage] =
+  const [collections, entries, mediaCount, usage] =
     await Promise.all([
-      prisma.contentType.count({
+      prisma.collection.count({
         where: { workspaceId: workspace.id },
       }),
       prisma.entry.count({
         where: {
-          contentType: { workspaceId: workspace.id },
+          collection: { workspaceId: workspace.id },
         },
-      }),
-      prisma.page.count({
-        where: { workspaceId: workspace.id },
       }),
       prisma.media.count({
         where: { workspaceId: workspace.id },
@@ -41,9 +38,8 @@ export async function GET() {
   });
 
   return apiSuccess({
-    contentTypes,
+    collections,
     entries,
-    pages,
     mediaCount,
     apiRequests: usage?.apiRequests ?? 0,
     storageBytes: storageResult._sum.size ?? 0,

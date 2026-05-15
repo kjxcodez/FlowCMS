@@ -11,8 +11,12 @@ export async function POST(req: NextRequest) {
     return apiError("INVALID_INPUT", parsed.error.issues[0].message);
   }
 
-  const { workspaceName, userId } = parsed.data;
-  let slug = slugify(workspaceName);
+  const { title, userId } = body; // Frontend sends 'title'
+  if (!title || !userId) {
+    return apiError("INVALID_INPUT", "Missing title or userId");
+  }
+
+  let slug = slugify(title);
 
   // Ensure unique slug
   const existing = await prisma.workspace.findUnique({
@@ -22,14 +26,45 @@ export async function POST(req: NextRequest) {
     slug = `${slug}-${Date.now().toString(36)}`;
   }
 
-  await prisma.workspace.create({
+  const workspace = await prisma.workspace.create({
     data: {
-      name: workspaceName,
+      name: title,
       slug,
       plan: "HOBBY",
       members: {
         create: { userId, role: "OWNER" },
       },
+    },
+  });
+
+  // AHA MOMENT: Create Starter Collection
+  const collection = await prisma.collection.create({
+    data: {
+      workspaceId: workspace.id,
+      name: "Pages",
+      slug: "pages",
+      description: "Static pages for your website.",
+      fields: [
+        { name: "Title", slug: "title", type: "text", required: true },
+        { name: "Content", slug: "content", type: "richtext", required: true },
+        { name: "SEO Description", slug: "seo_description", type: "text", required: false },
+      ] as any,
+    },
+  });
+
+  // Create Starter Entry
+  await prisma.entry.create({
+    data: {
+      workspaceId: workspace.id,
+      collectionId: collection.id,
+      title: "Hello World",
+      slug: "hello-world",
+      status: "DRAFT",
+      data: {
+        title: "Hello World from FlowCMS",
+        content: "<p>Welcome to your new headless CMS. This is a starter entry to help you see how the API works.</p>",
+        seo_description: "My first page created with FlowCMS."
+      } as any,
     },
   });
 
