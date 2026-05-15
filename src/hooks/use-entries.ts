@@ -65,3 +65,16 @@ export function useDeleteEntry() {
       qc.invalidateQueries({ queryKey: ["entries"] }),
   });
 }
+export function usePublishEntry() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      fetch(`/api/internal/entries/${id}/publish`, {
+        method: "PATCH",
+      }).then((r) => r.json()),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ["entries"] });
+      qc.invalidateQueries({ queryKey: ["entries", "detail", id] });
+    },
+  });
+}

@@ -35,11 +35,17 @@ export async function GET() {
       }),
     ]);
 
+  const storageResult = await prisma.media.aggregate({
+    where: { workspaceId: workspace.id },
+    _sum: { size: true }
+  });
+
   return apiSuccess({
     contentTypes,
     entries,
     pages,
     mediaCount,
     apiRequests: usage?.apiRequests ?? 0,
+    storageBytes: storageResult._sum.size ?? 0,
   });
 }

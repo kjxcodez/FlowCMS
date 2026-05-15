@@ -8,6 +8,7 @@ export interface DashboardStats {
   pages: number;
   mediaCount: number;
   apiRequests: number;
+  storageBytes: number;
 }
 
 export function useDashboardStats() {

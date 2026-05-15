@@ -58,6 +58,21 @@ export async function POST(req: NextRequest) {
           }
         });
       }
+      // 5. Ensure default Production environment exists
+      const existingEnv = await prisma.environment.findFirst({
+        where: { workspaceId: membership.workspaceId, isDefault: true }
+      });
+
+      if (!existingEnv) {
+        await prisma.environment.create({
+          data: {
+            workspaceId: membership.workspaceId,
+            name: "Production",
+            slug: "production",
+            isDefault: true
+          }
+        });
+      }
     } else {
       // No workspace found — create one now
       const name = workspaceName || "My Workspace";
@@ -70,6 +85,16 @@ export async function POST(req: NextRequest) {
       const workspaceId = workspace.id;
       await prisma.workspaceMember.create({
         data: { userId: session.user.id, workspaceId, role: "OWNER" }
+      });
+
+      // Create default Production environment
+      await prisma.environment.create({
+        data: {
+          workspaceId,
+          name: "Production",
+          slug: "production",
+          isDefault: true
+        }
       });
 
       // Create the first content type if a template was selected

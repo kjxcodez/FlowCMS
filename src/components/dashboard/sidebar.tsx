@@ -15,7 +15,12 @@ import {
   ChevronDown,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  GitBranch,
+  Users,
+  ClipboardList,
+  CreditCard,
+  Lock
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -54,13 +59,22 @@ const NAV_GROUPS = [
     items: [
       { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
       { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
+      { href: "/dashboard/environments", label: "Environments", icon: GitBranch },
       { href: "/dashboard/usage", label: "Usage & Logs", icon: Activity },
+    ]
+  },
+  {
+    label: "Team",
+    items: [
+      { href: "/dashboard/team", label: "Members", icon: Users },
+      { href: "/dashboard/audit-logs", label: "Audit Logs", icon: ClipboardList },
     ]
   },
   {
     label: "Settings",
     items: [
-      { href: "/dashboard/settings", label: "Workspace Settings", icon: Settings },
+      { href: "/dashboard/settings", label: "Workspace", icon: Settings },
+      { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
     ]
   }
 ];
@@ -108,26 +122,43 @@ export function Sidebar() {
             </SidebarGroupLabel>
             <SidebarMenu className="gap-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const isActive = item.href === "/dashboard" 
+                  ? pathname === "/dashboard"
+                  : pathname.startsWith(item.href);
+                
+                const isAuditLog = item.href === "/dashboard/audit-logs";
+                const plan = workspaceData?.plan ?? "HOBBY";
+                const isLocked = isAuditLog && (plan === "HOBBY" || plan === "PRO");
+
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
+                      disabled={isLocked}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-sm text-[13px] font-medium transition-all duration-200",
                         isActive 
                           ? "bg-accent-dim text-accent-bright border-l-2 border-accent-bright rounded-none -ml-[8px] pl-[10px] hover:bg-accent-dim hover:text-accent-bright" 
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
+                          : "text-white/60 hover:bg-white/5 hover:text-white",
+                        isLocked && "opacity-50 cursor-not-allowed hover:bg-transparent hover:text-white/60"
                       )}
                     >
-                      <Link href={item.href}>
-                        <item.icon className={cn(
-                          "size-4 transition-colors",
-                          isActive ? "text-accent-bright" : "text-white/30 group-hover:text-white/50"
-                        )} />
-                        <span>{item.label}</span>
-                      </Link>
+                      {isLocked ? (
+                        <div className="flex items-center gap-3 w-full">
+                          <item.icon className="size-4 text-white/30" />
+                          <span>{item.label}</span>
+                          <Lock className="size-3 ml-auto text-white/20" />
+                        </div>
+                      ) : (
+                        <Link href={item.href}>
+                          <item.icon className={cn(
+                            "size-4 transition-colors",
+                            isActive ? "text-accent-bright" : "text-white/30 group-hover:text-white/50"
+                          )} />
+                          <span>{item.label}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

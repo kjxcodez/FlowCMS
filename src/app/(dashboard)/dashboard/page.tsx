@@ -157,8 +157,17 @@ export default function DashboardOverview() {
             </CardHeader>
             <div className="space-y-10">
               <UsageBar label="Content Types" current={stats?.contentTypes ?? 0} max={10} />
-              <UsageBar label="Media Storage" current={0.4} max={5} unit="GB" />
-              <UsageBar label="API Bandwidth" current={12.5} max={100} unit="GB" />
+              <UsageBar 
+                label="Media Storage" 
+                current={Number(((stats?.storageBytes ?? 0) / (1024 * 1024 * 1024)).toFixed(2))} 
+                max={5} 
+                unit="GB" 
+              />
+              <UsageBar 
+                label="API Requests" 
+                current={stats?.apiRequests ?? 0} 
+                max={5000} 
+              />
               <div className="pt-8 mt-4 border-t border-border">
                 <Link href="/dashboard/usage" className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent hover:opacity-80 transition-all no-underline flex items-center gap-2 group">
                   Detailed analytics <ArrowUpRight className="size-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />

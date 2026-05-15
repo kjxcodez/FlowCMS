@@ -20,6 +20,36 @@ export async function GET(
   return apiSuccess(entry);
 }
 
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { workspace } = await requireWorkspace();
+  const { id } = await params;
+
+  const body = await req.json();
+  const parsed = UpdateEntrySchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError("INVALID_INPUT", parsed.error.issues[0].message);
+  }
+
+  const existing = await prisma.entry.findFirst({
+    where: { id, contentType: { workspaceId: workspace.id } },
+  });
+  if (!existing) return apiError("NOT_FOUND", "Entry not found.");
+
+  const entry = await prisma.entry.update({
+    where: { id },
+    data: {
+      ...parsed.data,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: parsed.data.data ? (parsed.data.data as any) : undefined,
+    },
+  });
+
+  return apiSuccess(entry);
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

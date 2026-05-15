@@ -8,13 +8,15 @@ import {
   Clock,
   ArrowUpRight
 } from "lucide-react";
-import { useUsage } from "@/hooks/use-usage";
+import { useUsage, useUsageRequests } from "@/hooks/use-usage";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { format } from "date-fns";
 
 interface MetricCardProps {
   label: string;
@@ -60,7 +62,21 @@ const MetricCard = ({ label, current, max, unit = "", icon: Icon }: MetricCardPr
 };
 
 export default function UsagePage() {
-  const { data: usage } = useUsage();
+  const { data: workspace } = useWorkspace();
+  const { data: usage } = useUsage(workspace?.id);
+  const { data: requestsData } = useUsageRequests(workspace?.id);
+
+  // Helper for MB/GB
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 GB";
+    const k = 1024;
+    const dm = 2;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+  };
+
+  const storageGB = (usage?.storageBytes || 0) / (1024 * 1024 * 1024);
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-1000 pb-32">
@@ -75,7 +91,7 @@ export default function UsagePage() {
         </div>
         <Badge variant="outline" className="h-9 px-4 font-mono text-[10px] font-bold uppercase tracking-widest text-ink-muted bg-paper border-border rounded-sm">
           <Clock className="size-3.5 mr-2 text-ink-faint" />
-          Resetting in 12 days
+          Resetting in {30 - new Date().getDate()} days
         </Badge>
       </header>
 
@@ -83,13 +99,13 @@ export default function UsagePage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <MetricCard 
           label="API Requests" 
-          current={usage?.apiRequests || 1250} 
+          current={usage?.apiRequests ?? 0} 
           max={5000} 
           icon={Zap} 
         />
         <MetricCard 
           label="Asset Storage" 
-          current={0.8} 
+          current={Number(storageGB.toFixed(2))} 
           max={5} 
           unit=" GB" 
           icon={Database} 
@@ -121,29 +137,32 @@ export default function UsagePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {[
-                    { time: "10:42:05", path: "/v1/entries/blog-post", status: 200, latency: "24ms" },
-                    { time: "10:38:12", path: "/v1/pages/home", status: 200, latency: "18ms" },
-                    { time: "10:35:55", path: "/v1/media", status: 200, latency: "42ms" },
-                    { time: "10:30:21", path: "/v1/entries/product", status: 404, latency: "12ms" },
-                  ].map((log, i) => (
-                    <tr key={i} className="text-[11px] font-mono text-ink-muted group hover:bg-canvas transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">{log.time}</td>
-                      <td className="px-6 py-4 text-ink font-medium whitespace-nowrap">{log.path}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge 
-                          variant="secondary"
-                          className={cn(
-                            "px-2 py-0.5 rounded-sm font-bold text-[9px] uppercase tracking-wider",
-                            log.status === 200 ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20"
-                          )}
-                        >
-                          {log.status}
-                        </Badge>
+                  {requestsData?.logs?.length ? (
+                    requestsData.logs.map((log: any, i: number) => (
+                      <tr key={log.id || i} className="text-[11px] font-mono text-ink-muted group hover:bg-canvas transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">{format(new Date(log.createdAt), "HH:mm:ss")}</td>
+                        <td className="px-6 py-4 text-ink font-medium whitespace-nowrap">{log.endpoint}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge 
+                            variant="secondary"
+                            className={cn(
+                              "px-2 py-0.5 rounded-sm font-bold text-[9px] uppercase tracking-wider",
+                              log.statusCode >= 200 && log.statusCode < 300 ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20"
+                            )}
+                          >
+                            {log.statusCode}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-ink-faint">{log.duration}ms</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-[11px] font-mono text-ink-faint">
+                        No requests logged yet.
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-ink-faint">{log.latency}</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
