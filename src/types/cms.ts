@@ -27,7 +27,7 @@ export interface Block {
 }
 
 export interface PlanLimits {
-  contentTypes: number;
+  collections: number;
   apiRequestsPerMonth: number;
   environments: number;
   webhooks: boolean;
@@ -37,7 +37,7 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<string, PlanLimits> = {
   HOBBY: {
-    contentTypes: 3,
+    collections: 3,
     apiRequestsPerMonth: 5_000,
     environments: 1,
     webhooks: false,
@@ -45,7 +45,7 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
     sso: false,
   },
   PRO: {
-    contentTypes: -1,
+    collections: -1,
     apiRequestsPerMonth: 250_000,
     environments: 2,
     webhooks: true,
@@ -53,7 +53,7 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
     sso: false,
   },
   AGENCY: {
-    contentTypes: -1,
+    collections: -1,
     apiRequestsPerMonth: 1_000_000,
     environments: 5,
     webhooks: true,
@@ -61,7 +61,7 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
     sso: false,
   },
   ENTERPRISE: {
-    contentTypes: -1,
+    collections: -1,
     apiRequestsPerMonth: -1,
     environments: -1,
     webhooks: true,
