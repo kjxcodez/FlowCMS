@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 
 interface StatCardProps {
@@ -87,7 +88,7 @@ export default function DashboardOverview() {
   const { data: session } = useSession();
   const { data: stats, isLoading } = useDashboardStats();
 
-  const isNewUser = !isLoading && (stats?.entries === 0);
+  const isNewUser = !isLoading && stats && (stats.entries === 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000 ease-out">
@@ -201,14 +202,14 @@ export default function DashboardOverview() {
                     <div className="size-14 rounded-sm bg-paper border border-border flex items-center justify-center group-hover:scale-105 group-hover:border-accent transition-all shadow-sm">
                       <Layers className="size-6 text-accent" />
                     </div>
-                    {stats?.collections > 0 && <CheckCircle2 className="size-5 text-success" />}
+                    {(stats?.collections ?? 0) > 0 && <CheckCircle2 className="size-5 text-success" />}
                   </div>
                   <h4 className="font-display text-xl font-semibold text-ink mb-4">Define your schema</h4>
                   <p className="text-sm text-ink-muted leading-relaxed mb-8 font-light">
                     Start by creating a Collection. This defines the structured fields that editors will use.
                   </p>
                   <Link href="/dashboard/collections/new" className="text-[11px] font-mono font-bold uppercase tracking-widest text-ink flex items-center gap-2 no-underline group-hover:text-accent transition-colors">
-                    {stats?.collections > 0 ? "Add Another" : "Get Started"} <ArrowUpRight className="size-3.5" />
+                    {(stats?.collections ?? 0) > 0 ? "Add Another" : "Get Started"} <ArrowUpRight className="size-3.5" />
                   </Link>
                 </div>
 
@@ -217,7 +218,7 @@ export default function DashboardOverview() {
                     <div className="size-14 rounded-sm bg-paper border border-border flex items-center justify-center group-hover:scale-105 group-hover:border-accent transition-all shadow-sm">
                       <FileText className="size-6 text-accent" />
                     </div>
-                    {stats?.entries > 0 && <CheckCircle2 className="size-5 text-success" />}
+                    {(stats?.entries ?? 0) > 0 && <CheckCircle2 className="size-5 text-success" />}
                   </div>
                   <h4 className="font-display text-xl font-semibold text-ink mb-4">Create your first entry</h4>
                   <p className="text-sm text-ink-muted leading-relaxed mb-8 font-light">

@@ -14,7 +14,8 @@ import {
   Sparkles,
   Trash2,
   Link as LinkIcon,
-  ImageIcon
+  ImageIcon,
+  Check
 } from "lucide-react";
 import Link from "next/link";
 import { SandboxPreview } from "@/components/dashboard/entries/sandbox-preview";

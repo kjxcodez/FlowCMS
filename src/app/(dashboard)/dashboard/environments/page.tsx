@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 export default function EnvironmentsPage() {
   const { data: workspace } = useWorkspace();
-  const { data: environments, isLoading } = useEnvironments(workspace?.id);
+  const { data: environments, isLoading } = useEnvironments();
   const plan = workspace?.plan ?? "HOBBY";
   const isHobby = plan === "HOBBY";
 

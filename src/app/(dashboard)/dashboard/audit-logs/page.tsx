@@ -59,7 +59,11 @@ const getActionStyle = (action: string) => {
 export default function AuditLogsPage() {
   const { data: workspace } = useWorkspace();
   const [dateRange, setDateRange] = useState(7);
-  const { data: logs, isLoading } = useAuditLogs(workspace?.id, { days: dateRange });
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: logs, isLoading } = useAuditLogs(workspace?.id, { 
+    days: dateRange,
+    query: searchQuery 
+  });
   const [diffLog, setDiffLog] = useState<any>(null);
   
   const plan = workspace?.plan ?? "HOBBY";
@@ -139,6 +143,8 @@ export default function AuditLogsPage() {
               <input 
                 placeholder="Search logs by action, resource, or user..." 
                 className="w-full bg-transparent border-none py-2 text-sm text-ink outline-none"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="h-8 w-px bg-border/50" />

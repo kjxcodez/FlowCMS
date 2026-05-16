@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useWebhooks } from "@/hooks/use-webhooks";
+import { Webhook } from "@/generated/prisma";
 import { 
   Dialog, 
   DialogContent, 
@@ -216,7 +217,7 @@ export default function WebhooksPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6">
-          {webhooks?.map((webhook) => (
+          {webhooks?.map((webhook: Webhook) => (
             <Card key={webhook.id} className="group bg-paper border-border hover:border-accent hover:shadow-2xl transition-all duration-300 overflow-hidden relative">
               <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button 
