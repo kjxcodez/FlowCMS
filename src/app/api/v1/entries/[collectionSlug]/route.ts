@@ -29,9 +29,7 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
 
   const where = {
     collectionId: collection.id,
-    ...(status !== "all"
-      ? { status: status.toUpperCase() as never }
-      : {}),
+    status: "PUBLISHED" as const, // Strictly enforce published only for public API
   };
 
   const [entries, total] = await Promise.all([

@@ -30,6 +30,38 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 1.1 Dual-State Validation: Verify remote Razorpay state if we have a local ID
+    if (customerRecord.subscriptionId) {
+      try {
+        const remoteSub = await razorpay.subscriptions.fetch(customerRecord.subscriptionId);
+        
+        // Active/Authenticated = Definitely subscribed
+        // Created = Already has a pending checkout session
+        const isBlocked = ["active", "authenticated", "created"].includes(remoteSub.status);
+
+        // Auto-repair local state if mismatch found
+        if (remoteSub.status !== customerRecord.subscriptionStatus) {
+          await prisma.razorpayCustomer.update({
+            where: { workspaceId: workspace.id },
+            data: { subscriptionStatus: remoteSub.status }
+          });
+        }
+
+        if (isBlocked) {
+          return apiError(
+            "ALREADY_SUBSCRIBED", 
+            `Workspace already has a ${remoteSub.status} subscription. Please manage it in Settings.`
+          );
+        }
+      } catch (err: any) {
+        // If not found in Razorpay, we can proceed with a new one
+        if (err.statusCode !== 404) {
+          console.error("[RAZORPAY_VERIFICATION_ERROR]", err);
+          return apiError("INTERNAL_ERROR", "Could not verify subscription status.");
+        }
+      }
+    }
+
     // 2. Create subscription in Razorpay
     // Note: total_count is set to a high number for ongoing subscriptions
     const subscription = await razorpay.subscriptions.create({

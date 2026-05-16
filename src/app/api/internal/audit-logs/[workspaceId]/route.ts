@@ -11,6 +11,9 @@ export async function GET(
   const { workspaceId } = await params;
   const { searchParams } = new URL(req.url);
   const days = parseInt(searchParams.get("days") || "7");
+  const action = searchParams.get("action");
+  const resourceType = searchParams.get("resourceType");
+  const query = searchParams.get("query");
   
   if (workspace.id !== workspaceId) {
     return apiError("FORBIDDEN", "Access denied");
@@ -19,11 +22,23 @@ export async function GET(
   const from = new Date();
   from.setDate(from.getDate() - days);
 
+  const where: any = { 
+    workspaceId,
+    createdAt: { gte: from }
+  };
+
+  if (action) where.action = action;
+  if (resourceType) where.resourceType = resourceType;
+  if (query) {
+    where.OR = [
+      { action: { contains: query, mode: 'insensitive' } },
+      { resourceType: { contains: query, mode: 'insensitive' } },
+      { resourceId: { contains: query, mode: 'insensitive' } },
+    ];
+  }
+
   const logs = await prisma.auditLog.findMany({
-    where: { 
-      workspaceId,
-      createdAt: { gte: from }
-    },
+    where,
     orderBy: { createdAt: "desc" },
     take: 100,
   });

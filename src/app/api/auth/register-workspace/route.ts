@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
     data: {
       workspaceId: workspace.id,
       collectionId: collection.id,
-      title: "Hello World",
       slug: "hello-world",
       status: "DRAFT",
       data: {

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { qstashReceiver } from "@/lib/qstash";
 
 /**
  * QStash Callback Endpoint
@@ -8,17 +9,27 @@ import { logger } from "@/lib/logger";
  * It persists the delivery result to our database for visibility.
  */
 export async function POST(req: Request) {
-  try {
-    // QStash Callback Request Body Structure:
-    // {
-    //   "messageId": "msg_...",
-    //   "url": "https://customer-site.com/webhook",
-    //   "status": "success" | "failed",
-    //   "statusCode": 200,
-    //   "body": "...", (base64 encoded original body)
-    //   "header": { "x-flow-webhook-id": ["..."], ... }
-    // }
-    const data = await req.json();
+  try{
+    // 1. Verify Signature
+    const bodyText = await req.text();
+    const signature = req.headers.get("upstash-signature");
+
+    if (!signature) {
+      return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+    }
+
+    const isValid = await qstashReceiver.verify({
+      body: bodyText,
+      signature,
+      url: req.url,
+    }).catch(() => false);
+
+    if (!isValid) {
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    // 2. Parse verified body
+    const data = JSON.parse(bodyText);
     
     const { 
       statusCode, 
