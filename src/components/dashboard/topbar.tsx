@@ -6,11 +6,17 @@ import { signOut, useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { useSearchParams } from "next/navigation";
 
 export function Topbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
+
+  const env = searchParams.get("env") || "Production";
+  const isProd = env.toLowerCase() === "production";
 
   const handleSignOut = async () => {
     await signOut();
@@ -49,6 +55,19 @@ export function Topbar() {
             );
           })}
         </div>
+        <div className="h-4 w-[1px] bg-border mx-2 md:block hidden" />
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "h-6 px-2 text-[9px] font-mono font-bold uppercase tracking-widest flex items-center gap-1.5 rounded-sm",
+            isProd 
+              ? "bg-success/5 border-success/20 text-success" 
+              : "bg-amber-500/5 border-amber-500/20 text-amber-500"
+          )}
+        >
+          <div className={cn("size-1 rounded-full animate-pulse", isProd ? "bg-success" : "bg-amber-500")} />
+          {env}
+        </Badge>
       </div>
 
       {/* --- Actions --- */}

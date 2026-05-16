@@ -51,7 +51,7 @@ function renderBlock(block: Block) {
             <div className="rounded-sm overflow-hidden border border-border-strong/10 bg-canvas shadow-2xl">
               <img src={props.url as string} alt={props.alt as string} className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
             </div>
-            {props.alt && (
+            {Boolean(props.alt) && (
               <figcaption className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-ink-faint">
                 // {props.alt as string}
               </figcaption>
@@ -77,7 +77,7 @@ function renderBlock(block: Block) {
             <p className="text-2xl md:text-3xl font-display font-medium text-ink leading-relaxed mb-6">
               {props.text as string}
             </p>
-            {props.author && (
+            {Boolean(props.author) && (
               <cite className="not-italic font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
                 — {props.author as string}
               </cite>

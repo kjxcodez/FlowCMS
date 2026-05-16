@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useCollections } from "@/hooks/use-collections";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function QuickstartGuide() {
   const { data: apiKeys } = useApiKeys();
