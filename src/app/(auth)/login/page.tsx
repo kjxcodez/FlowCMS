@@ -138,7 +138,7 @@ export default function LoginPage() {
         <SocialAuth />
       </div>
 
-      <div className="mt-16 pt-10 border-t border-border">
+      <div className="my-16 py-10 border-t border-border">
         <p className="text-ink-muted text-xs font-light">
           New to FlowCMS?{" "}
           <Link

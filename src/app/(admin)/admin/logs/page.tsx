@@ -145,7 +145,7 @@ export default async function AdminLogsPage() {
                     <TableCell>
                        <div className="flex flex-col">
                           <span className="text-[11px] font-bold text-white">{log.action.replace(/_/g, ' ')}</span>
-                          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest">{log.entityType}</span>
+                          <span className="text-[9px] font-mono text-white/30 uppercase tracking-widest">{log.resourceType}</span>
                        </div>
                     </TableCell>
                     <TableCell>
@@ -158,8 +158,8 @@ export default async function AdminLogsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-[11px] text-white/40 truncate max-w-[100px]">{log.workspace.name}</span>
-                        <span className="text-[9px] font-mono text-white/20">{log.entityId.substring(0, 8)}...</span>
+                        <span className="text-[11px] text-white/40 truncate max-w-[100px]">{log.workspace?.name || "Global"}</span>
+                        <span className="text-[9px] font-mono text-white/20">{log.resourceId.substring(0, 8)}...</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">

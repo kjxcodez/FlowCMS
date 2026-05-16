@@ -28,7 +28,9 @@ export default async function AdminOperationsPage() {
     collectionCount,
     entryCount,
     waitlistCount,
-    lastUsers
+    lastUsers,
+    activeSubsCount,
+    failedHooksCount
   ] = await Promise.all([
     prisma.user.count(),
     prisma.workspace.count(),
@@ -39,14 +41,22 @@ export default async function AdminOperationsPage() {
       take: 5,
       orderBy: { createdAt: "desc" },
       select: { id: true, email: true, name: true, createdAt: true }
+    }),
+    prisma.razorpayCustomer.count({
+      where: { subscriptionStatus: "active" }
+    }),
+    prisma.webhookDelivery.count({
+      where: { success: false }
     })
-  ]);
+  ] as unknown as [number, number, number, number, number, any[], number, number]);
+
+  const conversionRate = userCount > 0 ? ((userCount / (userCount + waitlistCount)) * 100).toFixed(1) : "0.0";
 
   const stats = [
     { label: "Total Users", value: userCount, icon: Users, color: "text-blue-500" },
     { label: "Workspaces", value: workspaceCount, icon: Building2, color: "text-purple-500" },
-    { label: "Collections", value: collectionCount, icon: Layers, color: "text-amber-500" },
-    { label: "Total Entries", value: entryCount, icon: FileText, color: "text-emerald-500" },
+    { label: "Active Subs", value: activeSubsCount, icon: ShieldCheck, color: "text-emerald-500" },
+    { label: "Failed Hooks", value: failedHooksCount, icon: Activity, color: "text-red-500" },
   ];
 
   return (
@@ -147,13 +157,13 @@ export default async function AdminOperationsPage() {
 
                <Separator className="bg-white/5" />
 
-               <div className="space-y-6">
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <TrendingUp className="size-4 text-emerald-500" />
                       <span className="text-xs font-medium text-white/60">Conversion Rate</span>
                     </div>
-                    <span className="text-xs font-bold text-white">12.4%</span>
+                    <span className="text-xs font-bold text-white">{conversionRate}%</span>
                   </div>
                   <div className="flex items-center justify-between">
                      <div className="flex items-center gap-3">
@@ -165,9 +175,11 @@ export default async function AdminOperationsPage() {
                   <div className="flex items-center justify-between">
                      <div className="flex items-center gap-3">
                        <Database className="size-4 text-purple-500" />
-                       <span className="text-xs font-medium text-white/60">System Load</span>
+                       <span className="text-xs font-medium text-white/60">System Status</span>
                      </div>
-                     <span className="text-xs font-bold text-white">Low</span>
+                     <span className={`text-xs font-bold ${failedHooksCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>
+                       {failedHooksCount > 0 ? `${failedHooksCount} Failures` : "Healthy"}
+                     </span>
                   </div>
                </div>
              </CardContent>

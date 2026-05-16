@@ -43,6 +43,7 @@ import { Comparison } from "@/components/landing/Comparison";
 import { FAQ, FAQS } from "@/components/landing/FAQ";
 import { isWaitlistMode } from "@/lib/launch";
 import { WaitlistForm } from "@/components/landing/WaitlistForm";
+import Image from "next/image";
 
 // --- Counter animation component ---
 const Counter = ({ value }: { value: number }) => {
@@ -170,10 +171,7 @@ export default function Home() {
       >
         <div className="max-w-[1200px] mx-auto px-8 h-[64px] flex items-center justify-between">
           <Link href="/" className="font-display text-xl font-semibold text-ink flex items-center gap-3 no-underline group" aria-label={`${APP_CONFIG.name} home`}>
-            <div className="w-8 h-8 bg-sidebar rounded-[4px] flex items-center justify-center transition-transform group-hover:scale-105" aria-hidden="true">
-              <div className="w-3.5 h-3.5 bg-accent-bright rounded-[1px]" />
-            </div>
-            {APP_CONFIG.name}
+            <Image src="/full-logo.png" alt="FlowCms" width={200} height={200} unoptimized />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
