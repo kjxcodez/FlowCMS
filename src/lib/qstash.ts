@@ -1,4 +1,4 @@
-import { Client } from "@upstash/qstash";
+import { Client, Receiver } from "@upstash/qstash";
 import { logger } from "./logger";
 
 if (!process.env.QSTASH_TOKEN) {
@@ -7,6 +7,11 @@ if (!process.env.QSTASH_TOKEN) {
 
 export const qstash = new Client({
   token: process.env.QSTASH_TOKEN || "",
+});
+
+export const qstashReceiver = new Receiver({
+  currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || "",
+  nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || "",
 });
 
 interface QueueWebhookOptions {
@@ -36,7 +41,6 @@ export async function queueWebhook({
       },
       headers: {
         "X-Flow-Webhook-Id": webhookId,
-        "X-Flow-Signature": secret, // In production, this should be a signed HMAC
       },
       retries: 3,
       callback: `${process.env.NEXT_PUBLIC_APP_URL}/api/internal/webhooks/qstash-callback`,

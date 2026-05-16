@@ -20,6 +20,9 @@ export const API_ERRORS = {
   RATE_LIMITED: { code: "RATE_LIMITED", status: 429 },
   PLAN_LIMIT_REACHED: { code: "PLAN_LIMIT_REACHED", status: 402 },
   INVALID_INPUT: { code: "INVALID_INPUT", status: 400 },
+  CONFLICT: { code: "CONFLICT", status: 409 },
+  INVALID_ACTION: { code: "INVALID_ACTION", status: 400 },
+  ALREADY_SUBSCRIBED: { code: "ALREADY_SUBSCRIBED", status: 409 },
   INTERNAL_ERROR: { code: "INTERNAL_ERROR", status: 500 },
 } as const;
 
