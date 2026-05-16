@@ -45,6 +45,51 @@ export async function syncAllSubscriptions() {
     }
   }
 
+  // Audit Log the sync event
+  await prisma.auditLog.create({
+    data: {
+      userId: session.user.id,
+      action: "UPDATE",
+      resourceType: "SYSTEM",
+      resourceId: "RAZORPAY_SYNC_ALL",
+      resourceName: `Manual Sync All: ${results.updated} updated, ${results.failed} failed`
+    }
+  });
+
   revalidatePath("/admin/operations");
   return results;
+}
+
+export async function syncSubscription(subscriptionId: string) {
+  const session = await requireAdmin();
+  
+  try {
+    const sub = await razorpay.subscriptions.fetch(subscriptionId);
+    
+    await prisma.razorpayCustomer.updateMany({
+      where: { subscriptionId },
+      data: {
+        subscriptionStatus: sub.status,
+        currentPeriodEnd: sub.current_end ? new Date(sub.current_end * 1000) : null,
+        planId: sub.plan_id,
+        lastEventAt: new Date(),
+      }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: session.user.id,
+        action: "UPDATE",
+        resourceType: "BILLING",
+        resourceId: subscriptionId,
+        resourceName: `Manual Sync: ${subscriptionId}`
+      }
+    });
+
+    revalidatePath("/admin/operations");
+    return { success: true };
+  } catch (err) {
+    logger.error(`Failed to sync sub ${subscriptionId}`, { error: String(err) });
+    throw new Error("Failed to sync subscription");
+  }
 }

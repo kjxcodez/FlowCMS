@@ -8,10 +8,9 @@ async function fetchJson(url: string) {
   return json.data;
 }
 
-export function useEnvironments(workspaceId?: string) {
+export function useEnvironments() {
   return useQuery({
-    queryKey: ["environments", workspaceId],
-    queryFn: () => fetchJson(`/api/internal/environments/${workspaceId}`),
-    enabled: !!workspaceId,
+    queryKey: ["environments"],
+    queryFn: () => fetchJson(`/api/internal/environments`),
   });
 }

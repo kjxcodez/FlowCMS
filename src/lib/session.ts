@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "./prisma";
 import { redirect } from "next/navigation";
 import { logger } from "./logger";
+import { isAdminEmail } from "./admin";
 
 export async function getSession() {
   const session = await auth.api.getSession({
@@ -16,8 +17,6 @@ export async function requireSession() {
   if (!session) redirect("/login");
   return session;
 }
-
-import { isAdminEmail } from "./admin";
 
 /**
  * Higher-order helper for server actions and routes that require administrative privileges.
@@ -41,7 +40,7 @@ export async function requireAdmin() {
 /**
  * Gets the workspace for the current session user.
  * Each user has one workspace created at registration.
- * Admins bypass membership checks to facilitate platform management.
+ * Membership is strictly enforced. No mock "admin" workspaces allowed.
  */
 export async function requireWorkspace() {
   const session = await requireSession();
@@ -53,8 +52,9 @@ export async function requireWorkspace() {
     select: { onboarded: true }
   });
 
-  // Redirect to onboarding if not completed (unless platform admin)
-  if (!isPlatformAdmin && user && user.onboarded === false) {
+  // Redirect to onboarding if not completed
+  // Admins are NOT exempt from onboarding if they want to use a workspace
+  if (user && user.onboarded === false) {
     redirect("/onboarding");
   }
 
@@ -64,19 +64,18 @@ export async function requireWorkspace() {
     orderBy: { createdAt: "asc" },
   });
 
-  if (!member && !isPlatformAdmin) {
-    redirect("/register");
-  }
-
-  const workspace = member?.workspace || (isPlatformAdmin ? ({ id: "admin", name: "Platform Admin", plan: "ENTERPRISE", slug: "admin" } as { id: string; name: string; plan: string; slug: string }) : null);
-  
-  if (!workspace) {
+  // If not a member, redirect. No "admin" shadow membership.
+  if (!member) {
+    if (isPlatformAdmin) {
+        // Admins without a workspace go to a safe spot, but they can't perform workspace actions
+        redirect("/onboarding");
+    }
     redirect("/register");
   }
 
   return {
     session,
-    workspace,
-    role: member?.role || (isPlatformAdmin ? "OWNER" : null),
+    workspace: member.workspace,
+    role: member.role,
   };
 }
