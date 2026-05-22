@@ -7,7 +7,6 @@ import { NextRequest, NextResponse } from "next/server";
  */
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const launchMode = process.env.NEXT_PUBLIC_LAUNCH_MODE || "waitlist";
 
   /**
    * 1. STATIC & INTERNAL ASSETS
@@ -30,36 +29,31 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  /**
-   * 3. LAUNCH GATING (Waitlist/Early Access)
-   */
-  if (launchMode === "waitlist" || launchMode === "early_access") {
-    const isAuthRoute = pathname === "/signup" || pathname.startsWith("/register/");
-    
-    if (isAuthRoute) {
-      const pendingInvite = request.cookies.get("pending_invite")?.value;
-      const hasTokenInUrl = searchParams.has("invite");
 
-      // Rule: /register/provider REQUIRES an invite token in the URL
-      if (pathname.startsWith("/register/") && !hasTokenInUrl) {
-        return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
-      }
+  const isAuthRoute = pathname === "/signup" || pathname.startsWith("/register/");
 
-      // Rule: /signup REQUIRES the handoff cookie from Checkpoint 1
-      if (pathname === "/signup" && !pendingInvite) {
-        return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
-      }
+  if (isAuthRoute) {
+    const pendingInvite = request.cookies.get("pending_invite")?.value;
+    const hasTokenInUrl = searchParams.has("invite");
+
+    // Rule: /register/provider REQUIRES an invite token in the URL
+    if (pathname.startsWith("/register/") && !hasTokenInUrl) {
+      return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
+    }
+
+    // Rule: /signup REQUIRES the handoff cookie from Checkpoint 1
+    if (pathname === "/signup" && !pendingInvite) {
+      return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
     }
   }
 
   /**
-   * 4. PUBLIC ROUTES
+   * 3. PUBLIC ROUTES
    */
-  const isPublicRoute = 
+  const isPublicRoute =
     pathname === "/" ||
     pathname === "/login" ||
     pathname.startsWith("/docs") ||
-    pathname.startsWith("/api/waitlist") ||
     pathname.startsWith("/api/v1");
 
   if (isPublicRoute) {
@@ -67,7 +61,7 @@ export async function middleware(request: NextRequest) {
   }
 
   /**
-   * 5. PROTECTED ROUTES (Dashboard / Admin)
+   * 4. PROTECTED ROUTES (Dashboard / Admin)
    */
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value ||
@@ -80,7 +74,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
-  
+
   // Set security headers for protected routes
   if (!isPublicRoute && !pathname.startsWith("/api/auth")) {
     response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
