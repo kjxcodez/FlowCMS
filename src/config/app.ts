@@ -1,82 +1,147 @@
 export const APP_CONFIG = {
   name: "FlowCMS",
-  tagline: "Structured content for modern teams",
+
+  tagline: "The headless CMS for developers who hate configuration",
+
   description:
-    "FlowCMS is an open-source headless CMS with a visual block editor and predictable REST APIs.",
-  url: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? "https://getflowcms.com/api",
-  docsUrl: "https://getflowcms.com/docs",
-  githubUrl: "https://github.com/kjxcodez/FlowCMS",
+    "Open-source headless CMS with predictable APIs, visual content modeling, draft previews, and zero setup friction.",
+
+  version: "Early Access Beta",
+
+  url:
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000",
+
+  apiUrl:
+    process.env.NEXT_PUBLIC_API_URL ??
+    "https://getflowcms.com/api",
+
+  docsUrl:
+    "https://getflowcms.com/docs",
+
+  githubUrl:
+    "https://github.com/kjxcodez/FlowCMS",
+
   nav: [
-    { label: "Docs", href: "/docs" },
-    { label: "Features", href: "#features" },
-    { label: "Use Cases", href: "#use-cases" },
-    { label: "How it works", href: "#how-it-works" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+    {
+      label:"Docs",
+      href:"/docs"
+    },
+    {
+      label:"Features",
+      href:"#features"
+    },
+    {
+      label:"Use Cases",
+      href:"#use-cases"
+    },
+    {
+      label:"How it works",
+      href:"#how-it-works"
+    },
+    {
+      label:"Pricing",
+      href:"#pricing"
+    },
+    {
+      label:"FAQ",
+      href:"#faq"
+    }
   ],
+
   tickerItems: [
-    "Open source friendly",
+    "Open source",
     "REST API",
-    "Type-safe with Prisma",
     "Next.js ready",
-    "Block-based editor",
-    "Multi-environment",
-    "Webhook support",
-    "Role-based access",
-    "Image optimization",
+    "Predictable JSON",
     "Draft previews",
-    "SEO metadata fields",
-    "JSON schema",
+    "Webhook support",
+    "Multi-environment",
+    "API keys",
+    "Media library",
+    "Content modeling",
+    "Workspace support",
+    "Developer-first"
   ],
+
   pricing: [
     {
-      plan: "Hobby",
-      planKey: "HOBBY",
-      price: "₹0",
-      period: "Free forever",
-      featured: false,
-      cta: "Current Plan",
-      features: [
+      plan:"Hobby",
+
+      planKey:"HOBBY",
+
+      price:"₹0",
+
+      period:"Free during beta",
+
+      featured:false,
+
+      cta:"Start Free",
+
+      features:[
         "3 content types",
         "5,000 API requests/mo",
-        "3 AI generations/day",
-        "1 environment (Prod)",
-      ],
+        "1 environment",
+        "Basic webhooks"
+      ]
     },
+
     {
-      plan: "Pro",
-      planKey: "PRO_MONTHLY",
-      price: "₹1,999",
-      period: "per month",
-      featured: true,
-      cta: "Upgrade to Pro",
-      features: [
+      plan:"Pro",
+
+      planKey:"PRO_MONTHLY",
+
+      price:"₹1,999",
+
+      period:"Coming Soon",
+
+      featured:true,
+
+      cta:"Coming Soon",
+
+      features:[
         "Unlimited content types",
         "250,000 API requests/mo",
-        "20 AI generations/day",
-        "2 environments (Staging/Prod)",
         "Draft previews",
-        "Webhooks",
-      ],
+        "Multiple environments",
+        "Advanced webhooks",
+        "Priority support"
+      ]
     },
+
     {
-      plan: "Agency",
-      planKey: "AGENCY_MONTHLY",
-      price: "₹6,499",
-      period: "per month",
-      featured: false,
-      cta: "Upgrade to Agency",
-      features: [
+      plan:"Agency",
+
+      planKey:"AGENCY_MONTHLY",
+
+      price:"₹6,499",
+
+      period:"Coming Soon",
+
+      featured:false,
+
+      cta:"Coming Soon",
+
+      features:[
         "1,000,000 API requests/mo",
-        "50 AI generations/day",
-        "5 environments",
+        "Multiple workspaces",
         "Custom roles",
-        "White-label support",
-        "Priority assistance",
-      ],
-    },
+        "White-label dashboard",
+        "Advanced permissions",
+        "Agency tools"
+      ]
+    }
   ],
-  footerLinks: ["Docs", "API Reference", "Changelog", "GitHub", "Privacy", "Terms"],
-  copyright: "All rights reserved.",
+
+  footerLinks:[
+    "Docs",
+    "API Reference",
+    "Changelog",
+    "GitHub",
+    "Privacy",
+    "Terms"
+  ],
+
+  copyright:
+    "© FlowCMS"
 } as const;
