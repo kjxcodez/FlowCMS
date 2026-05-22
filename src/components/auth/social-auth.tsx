@@ -26,32 +26,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
-interface SocialAuthProps {
-  inviteToken?: string | null;
-}
-
-export function SocialAuth({ inviteToken }: SocialAuthProps) {
+export function SocialAuth() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSocialLogin = async (provider: "google") => {
     setLoading(provider);
     try {
-      // Checkpoint 1 Handshake: Only if an inviteToken is present
-      if (inviteToken) {
-        const res = await fetch("/api/auth/prepare", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: inviteToken }),
-        });
-
-        if (!res.ok) {
-          const data = await res.json();
-          toast.error(data.error || "Invalid invitation.");
-          setLoading(null);
-          return;
-        }
-      }
-
       await signIn.social({
         provider,
         callbackURL: "/dashboard",

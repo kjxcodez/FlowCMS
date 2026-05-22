@@ -1,12 +1,6 @@
 export { EmailLayout, tokens, styles } from "./email-layout";
 export type { } from "./email-layout";
 
-export { WaitlistConfirmationEmail } from "./waitlist-confirmation";
-export type { WaitlistConfirmationEmailProps } from "./waitlist-confirmation";
-
-export { EarlyAccessInviteEmail } from "./early-access-invite";
-export type { EarlyAccessInviteEmailProps } from "./early-access-invite";
-
 export { VerificationEmail } from "./verification-email";
 export type { VerificationEmailProps } from "./verification-email";
 
@@ -42,9 +36,6 @@ export type { ApiKeyNotificationEmailProps, ApiKeyAction } from "./api-key-notif
 
 export { WorkspaceExportReadyEmail } from "./workspace-export-ready";
 export type { WorkspaceExportReadyEmailProps } from "./workspace-export-ready";
-
-export { ReferralMilestoneEmail } from "./referral-milestone";
-export type { ReferralMilestoneEmailProps } from "./referral-milestone";
 
 export { ReEngagementEmail } from "./re-engagement";
 export type { ReEngagementEmailProps } from "./re-engagement";

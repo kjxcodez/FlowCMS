@@ -11,7 +11,6 @@ export async function GET() {
       totalUsers,
       totalWorkspaces,
       activeSubscriptions,
-      pendingWaitlist,
       failedWebhooks,
       recentAuditLogs
     ] = await Promise.all([
@@ -19,9 +18,6 @@ export async function GET() {
       prisma.workspace.count(),
       prisma.razorpayCustomer.count({
         where: { subscriptionStatus: "active" }
-      }),
-      prisma.waitlistEntry.count({
-        where: { status: "PENDING" }
       }),
       prisma.webhookDelivery.count({
         where: { success: false }
@@ -41,7 +37,6 @@ export async function GET() {
         totalUsers,
         totalWorkspaces,
         activeSubscriptions,
-        pendingWaitlist,
         failedWebhooks,
         recentAuditLogs,
         timestamp: new Date().toISOString()

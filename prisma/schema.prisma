@@ -16,7 +16,6 @@ model User {
   emailVerified Boolean  @default(false)
   onboarded     Boolean  @default(false)
   image         String?
-  inviteToken   String? // Temporary field for waitlist validation
   isSuspended   Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -419,11 +418,6 @@ enum AuditAction {
   PLAN_CHANGED
   WEBHOOK_CREATED
   WEBHOOK_DELETED
-  WAITLIST_APPROVED
-  WAITLIST_INVITED
-  WAITLIST_REVOKED
-  WAITLIST_SUSPENDED
-  WAITLIST_RESTORED
 }
 
 enum InvitationStatus {
@@ -431,75 +425,6 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
-}
-
-// ── Waitlist ──────────────────────────────────────────────────────
-model WaitlistEntry {
-  id    String  @id @default(cuid())
-  email String  @unique
-  name  String?
-
-  // Segmentation
-  role       WaitlistRole?
-  useCase    String?
-  source     String?
-  referredBy String?
-
-  // Position & Priority
-  position Int
-  priority WaitlistPriority @default(NORMAL)
-
-  // Approval flow
-  status          WaitlistStatus @default(PENDING)
-  inviteToken     String?        @unique
-  inviteSentAt    DateTime?
-  inviteUsedAt    DateTime?
-  inviteExpiresAt DateTime?
-
-  // Confirmation
-  confirmed   Boolean   @default(false)
-  confirmedAt DateTime?
-
-  // Referral
-  referralCode  String? @unique
-  referralCount Int     @default(0)
-
-  joinedAt  DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status, joinedAt])
-  @@index([priority, joinedAt])
-  @@index([inviteToken])
-  @@index([referralCode])
-  @@index([referredBy])
-}
-
-enum WaitlistRole {
-  SOLO_DEV
-  TEAM_DEV
-  AGENCY
-  FOUNDER
-  STUDENT
-  OPEN_SOURCE_MAINTAINER
-}
-
-enum WaitlistStatus {
-  PENDING
-  CONFIRMED
-  APPROVED
-  INVITED
-  JOINED
-  REJECTED
-  EXPIRED
-  SUSPENDED
-  REVOKED
-}
-
-enum WaitlistPriority {
-  LOW
-  NORMAL
-  HIGH
-  IMMEDIATE
 }
 
 // ── Email Logging ──────────────────────────────────────────────────
@@ -514,7 +439,6 @@ model EmailLog {
   error             String?
   attempts          Int         @default(0)
   lastAttempt       DateTime?
-  waitlistEntryId   String?
   createdAt         DateTime    @default(now())
 
   @@index([to])

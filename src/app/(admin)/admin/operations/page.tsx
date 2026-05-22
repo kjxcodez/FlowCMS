@@ -8,7 +8,6 @@ import {
   FileText, 
   Database, 
   ShieldCheck,
-  TrendingUp,
   Activity,
   ArrowUpRight
 } from "lucide-react";
@@ -27,7 +26,6 @@ export default async function AdminOperationsPage() {
     workspaceCount,
     collectionCount,
     entryCount,
-    waitlistCount,
     lastUsers,
     activeSubsCount,
     failedHooksCount
@@ -36,7 +34,6 @@ export default async function AdminOperationsPage() {
     prisma.workspace.count(),
     prisma.collection.count(),
     prisma.entry.count(),
-    prisma.waitlistEntry.count(),
     prisma.user.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -48,9 +45,7 @@ export default async function AdminOperationsPage() {
     prisma.webhookDelivery.count({
       where: { success: false }
     })
-  ] as unknown as [number, number, number, number, number, any[], number, number]);
-
-  const conversionRate = userCount > 0 ? ((userCount / (userCount + waitlistCount)) * 100).toFixed(1) : "0.0";
+  ] as unknown as [number, number, number, number, any[], number, number]);
 
   const stats = [
     { label: "Total Users", value: userCount, icon: Users, color: "text-blue-500" },
@@ -106,7 +101,7 @@ export default async function AdminOperationsPage() {
            <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-6">
              <div>
                <CardTitle className="text-xl font-display font-semibold text-white">Recent Signups</CardTitle>
-               <p className="text-xs text-white/40 mt-1">Latest users who bypassed the registry.</p>
+               <p className="text-xs text-white/40 mt-1">Latest users registered on the platform.</p>
              </div>
              <Activity className="size-4 text-accent-bright" />
            </CardHeader>
@@ -138,21 +133,22 @@ export default async function AdminOperationsPage() {
           <Card className="bg-sidebar border-white/5 shadow-2xl relative overflow-hidden">
              <div className="absolute top-0 left-0 w-1 h-full bg-accent-bright" />
              <CardHeader>
-               <CardTitle className="text-xl font-display font-semibold text-white">Registry Status</CardTitle>
-               <p className="text-xs text-white/40 mt-1">Waitlist conversion and capacity.</p>
+               <CardTitle className="text-xl font-display font-semibold text-white">Platform Content</CardTitle>
+               <p className="text-xs text-white/40 mt-1">Collections and entries created.</p>
              </CardHeader>
              <CardContent className="space-y-8 py-4">
                <div className="space-y-2">
                   <div className="flex justify-between items-end mb-1">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/40">Backlog Capacity</span>
-                    <span className="text-xs font-bold text-white">{waitlistCount} / 5000</span>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/40">Total Database Entries</span>
+                    <span className="text-xs font-bold text-white">{entryCount}</span>
                   </div>
                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-accent-bright shadow-[0_0_10px_rgba(var(--accent-bright-rgb),0.5)]" 
-                      style={{ width: `${(waitlistCount / 5000) * 100}%` }} 
+                      style={{ width: `${Math.min((entryCount / 10000) * 100, 100)}%` }} 
                     />
                   </div>
+                  <p className="text-[9px] font-mono text-white/30 mt-1">Scale: 0 - 10,000 items</p>
                </div>
 
                <Separator className="bg-white/5" />
@@ -160,25 +156,25 @@ export default async function AdminOperationsPage() {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <TrendingUp className="size-4 text-emerald-500" />
-                      <span className="text-xs font-medium text-white/60">Conversion Rate</span>
+                      <Layers className="size-4 text-purple-500" />
+                      <span className="text-xs font-medium text-white/60">Total Collections</span>
                     </div>
-                    <span className="text-xs font-bold text-white">{conversionRate}%</span>
+                    <span className="text-xs font-bold text-white">{collectionCount}</span>
                   </div>
                   <div className="flex items-center justify-between">
                      <div className="flex items-center gap-3">
-                       <Users className="size-4 text-blue-500" />
-                       <span className="text-xs font-medium text-white/60">Waitlist Size</span>
+                       <FileText className="size-4 text-blue-500" />
+                       <span className="text-xs font-medium text-white/60">Total Entries</span>
                      </div>
-                     <span className="text-xs font-bold text-white">{waitlistCount}</span>
+                     <span className="text-xs font-bold text-white">{entryCount}</span>
                   </div>
                   <div className="flex items-center justify-between">
                      <div className="flex items-center gap-3">
-                       <Database className="size-4 text-purple-500" />
+                       <Database className="size-4 text-emerald-500" />
                        <span className="text-xs font-medium text-white/60">System Status</span>
                      </div>
                      <span className={`text-xs font-bold ${failedHooksCount > 0 ? "text-amber-500" : "text-emerald-500"}`}>
-                       {failedHooksCount > 0 ? `${failedHooksCount} Failures` : "Healthy"}
+                       {failedHooksCount > 0 ? `${failedHooksCount} Webhook Failures` : "Healthy"}
                      </span>
                   </div>
                </div>

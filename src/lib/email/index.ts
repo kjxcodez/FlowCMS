@@ -8,8 +8,6 @@ import * as React from "react";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import {
-  WaitlistConfirmationEmail,
-  EarlyAccessInviteEmail,
   VerificationEmail,
   PasswordResetEmail,
   WorkspaceInviteEmail,
@@ -21,7 +19,6 @@ import {
   ContentPublishedEmail,
   ApiKeyNotificationEmail,
   WorkspaceExportReadyEmail,
-  ReferralMilestoneEmail,
   ReEngagementEmail,
 } from "@/components/emails";
 import type {
@@ -34,7 +31,6 @@ import type {
   ContentPublishedEmailProps,
   ApiKeyNotificationEmailProps,
   WorkspaceExportReadyEmailProps,
-  ReferralMilestoneEmailProps,
   ReEngagementEmailProps,
 } from "@/components/emails";
 
@@ -53,25 +49,15 @@ interface SendResult {
   error?: unknown;
 }
 
-// Typed shape for waitlist entries passed into send helpers.
-// Keeps callers from using `any` while staying flexible for Prisma models.
-interface WaitlistEntryPayload {
-  id: string;
-  email: string;
-  name?: string | null;
-  position: number;
-  inviteToken?: string | null;
-  referralCode?: string | null;
-  referralCount?: number;
-  inviteExpiresAt?: Date | null;
-}
-
-export type WaitlistEmailEvent = 
-  | "WAITLIST_CONFIRMATION"
-  | "WAITLIST_APPROVAL"
-  | "WAITLIST_INVITE"
-  | "WAITLIST_REVOKED"
-  | "WAITLIST_SUSPENDED";
+export type EmailEvent = 
+  | "ONBOARDING_WELCOME"
+  | "ONBOARDING_FEATURE"
+  | "ONBOARDING_CHECKIN"
+  | "PLAN_NOTIFICATION"
+  | "USAGE_ALERT"
+  | "PASSWORD_RESET"
+  | "VERIFICATION"
+  | "TEAM_INVITE";
 
 interface WorkspaceInvitePayload {
   email: string;
@@ -126,8 +112,7 @@ interface OrchestrateOptions {
   subject: string;
   react: React.ReactElement;
   idempotencyKey: string;
-  eventType: WaitlistEmailEvent;
-  waitlistEntryId?: string;
+  eventType: EmailEvent;
 }
 
 export async function orchestrateEmail({
@@ -136,7 +121,6 @@ export async function orchestrateEmail({
   react,
   idempotencyKey,
   eventType,
-  waitlistEntryId,
 }: OrchestrateOptions): Promise<SendResult> {
   // 1. Check for existing SENT log
   const existing = await prisma.emailLog.findUnique({
@@ -160,7 +144,6 @@ export async function orchestrateEmail({
       to,
       template: templateName,
       eventType,
-      waitlistEntryId,
       status: "PENDING",
       attempts: 1,
       lastAttempt: new Date(),
@@ -183,111 +166,6 @@ export async function orchestrateEmail({
       providerMessageId: result.data ? (result.data as any).id : null, // eslint-disable-line @typescript-eslint/no-explicit-any
       error: result.error ? JSON.stringify(result.error) : null,
     },
-  });
-
-  return result;
-}
-
-// ── Waitlist emails ──────────────────────────────────────────────
-
-export async function sendWaitlistConfirmation(
-  entry: WaitlistEntryPayload
-): Promise<SendResult> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!appUrl) {
-    logger.error("NEXT_PUBLIC_APP_URL is not set");
-    return { success: false, error: "Missing NEXT_PUBLIC_APP_URL" };
-  }
-
-  if (!entry.inviteToken) {
-    logger.error("sendWaitlistConfirmation: missing inviteToken", {
-      id: entry.id,
-    });
-    return { success: false, error: "Missing inviteToken" };
-  }
-
-  const confirmUrl = `${appUrl}/api/waitlist/verify?token=${entry.inviteToken}`;
-  const referralUrl = entry.referralCode
-    ? `${appUrl}/?ref=${entry.referralCode}`
-    : appUrl;
-
-  return orchestrateEmail({
-    to: entry.email,
-    subject: `You're #${entry.position} on the FlowCMS waitlist`,
-    idempotencyKey: `confirm_${entry.id}`,
-    eventType: "WAITLIST_CONFIRMATION",
-    waitlistEntryId: entry.id,
-    react: React.createElement(WaitlistConfirmationEmail, {
-      position: entry.position,
-      referralUrl,
-      confirmUrl,
-      name: entry.name ?? undefined,
-      referralCount: entry.referralCount ?? 0,
-    }),
-  });
-}
-
-export async function sendApprovalEmail(
-  entry: WaitlistEntryPayload
-): Promise<SendResult> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  // Repurpose EarlyAccessInviteEmail as an "Approval" notice if no specific template exists,
-  // or use a placeholder if we want to be strict. For now, let's assume we have it.
-  // We'll use the EarlyAccessInviteEmail but without the registration CTA if possible,
-  // or just notify them that an invite is coming.
-  
-  return orchestrateEmail({
-    to: entry.email,
-    subject: "Good news: You've been approved for FlowCMS",
-    idempotencyKey: `approve_${entry.id}`,
-    eventType: "WAITLIST_APPROVAL",
-    waitlistEntryId: entry.id,
-    react: React.createElement(WaitlistConfirmationEmail, {
-        position: entry.position,
-        name: entry.name ?? undefined,
-        confirmUrl: `${appUrl}/waitlist`, // Redirect to waitlist status page
-        referralUrl: `${appUrl}/?ref=${entry.referralCode}`,
-        referralCount: entry.referralCount ?? 0,
-    }),
-  });
-}
-
-export async function sendInviteEmail(
-  entry: WaitlistEntryPayload
-): Promise<SendResult> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!appUrl) {
-    logger.error("NEXT_PUBLIC_APP_URL is not set");
-    return { success: false, error: "Missing NEXT_PUBLIC_APP_URL" };
-  }
-
-  if (!entry.inviteToken) {
-    logger.error("sendInviteEmail: missing inviteToken", { id: entry.id });
-    return { success: false, error: "Missing inviteToken" };
-  }
-
-  const acceptUrl = `${appUrl}/api/waitlist/accept-invite?token=${entry.inviteToken}`;
-
-  // Determine expiry — default to 7 days from now if not supplied
-  const expiresAt = entry.inviteExpiresAt
-    ? entry.inviteExpiresAt.toISOString()
-    : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-  const result = await orchestrateEmail({
-    to: entry.email,
-    subject: "Your FlowCMS early access is ready",
-    idempotencyKey: `invite_${entry.id}_${entry.inviteToken}`,
-    eventType: "WAITLIST_INVITE",
-    waitlistEntryId: entry.id,
-    react: React.createElement(EarlyAccessInviteEmail, {
-      acceptUrl,
-      name: entry.name ?? undefined,
-      expiresAt,
-      position: entry.position,
-    }),
   });
 
   return result;
@@ -427,11 +305,17 @@ export async function sendOnboardingEmail(
     check_in: "How's your FlowCMS setup going?",
   };
 
+  const EVENT_MAP: Record<OnboardingEmailProps["step"], EmailEvent> = {
+    welcome: "ONBOARDING_WELCOME",
+    feature_spotlight: "ONBOARDING_FEATURE",
+    check_in: "ONBOARDING_CHECKIN",
+  };
+
   return orchestrateEmail({
     to,
     subject: SUBJECT_MAP[props.step],
     idempotencyKey: `onboarding_${props.step}_${to}`,
-    eventType: "WAITLIST_CONFIRMATION", // Repurposing type or add new one
+    eventType: EVENT_MAP[props.step],
     react: React.createElement(OnboardingEmail, props),
   });
 }
@@ -484,18 +368,7 @@ export async function sendWorkspaceExportReady(
   });
 }
 
-// ── Waitlist Engagement ──────────────────────────────────────────
-
-export async function sendReferralMilestone(
-  to: string,
-  props: ReferralMilestoneEmailProps
-): Promise<SendResult> {
-  return sendEmail({
-    to,
-    subject: `Milestone reached: ${props.milestone} referrals!`,
-    react: React.createElement(ReferralMilestoneEmail, props),
-  });
-}
+// ── Lifecycle / Re-Engagement ────────────────────────────────────
 
 export async function sendReEngagementEmail(
   to: string,

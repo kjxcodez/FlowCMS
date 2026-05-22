@@ -15,7 +15,7 @@ export const FAQ_GROUPS = [
       },
       {
         question: "How do I get early access?",
-        answer: "Join the waitlist on the home page. We are inviting developers in small batches based on use case fit. Sharing your referral link moves your position up in the queue."
+        answer: "Simply create an account on the sign up page! FlowCMS is currently in Early Access Beta, meaning you can register and start building immediately."
       },
       {
         question: "How long does it take to set up FlowCMS?",
@@ -102,7 +102,7 @@ export const FAQ_GROUPS = [
     faqs: [
       {
         question: "What does it cost?",
-        answer: "FlowCMS core is MIT-licensed and free to self-host forever. Our managed cloud starts with a generous free Hobby tier. Pro is ₹1,999/month. The first 30 developers on the waitlist get one month of Pro free."
+        answer: "FlowCMS core is MIT-licensed and free to self-host forever. Our managed cloud starts with a generous free Hobby tier. Pro is ₹1,999/month."
       },
       {
         question: "Can I start free and upgrade later?",
@@ -110,7 +110,7 @@ export const FAQ_GROUPS = [
       },
       {
         question: "Is there an annual plan with a discount?",
-        answer: "Annual billing with a 20% discount is coming soon. Pro billed annually will be ₹19,190/year versus ₹23,988 monthly. Agency annually will be ₹62,390/year. Join the waitlist to be notified when annual plans go live."
+        answer: "Annual billing with a 20% discount is coming soon. Pro billed annually will be ₹19,190/year versus ₹23,988 monthly. Agency annually will be ₹62,390/year. Early access users will be notified as soon as annual plans go live."
       },
       {
         question: "Do you offer refunds?",

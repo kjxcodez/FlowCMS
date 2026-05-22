@@ -11,29 +11,9 @@ function AuthErrorContent() {
   const code = searchParams.get("code") || searchParams.get("error");
 
   const errorDetails = {
-    INVITE_REQUIRED: {
-      title: "Invite Required",
-      message: "You need a valid invitation to register for FlowCMS during early access.",
-      icon: <ShieldAlert className="w-12 h-12 text-destructive" />,
-    },
-    INVITE_INVALID: {
-      title: "Invalid Invite",
-      message: "The invitation link you followed is invalid or has already been used.",
-      icon: <ShieldAlert className="w-12 h-12 text-destructive" />,
-    },
-    INVITE_EXPIRED: {
-      title: "Invite Expired",
-      message: "This invitation has expired. Invitations are typically valid for 7 days.",
-      icon: <AlertCircle className="w-12 h-12 text-warning" />,
-    },
-    INVITE_MISSING: {
-      title: "Broken Link",
-      message: "The registration link is missing required security tokens.",
-      icon: <AlertCircle className="w-12 h-12 text-ink-muted" />,
-    },
     unable_to_create_user: {
       title: "Signup Failed",
-      message: "We couldn't create your account. This usually happens if the invite was revoked or a session already exists.",
+      message: "We couldn't create your account. This usually happens if an account already exists with this email. Try signing in instead.",
       icon: <ShieldAlert className="w-12 h-12 text-destructive" />,
     },
   };
@@ -67,7 +47,7 @@ function AuthErrorContent() {
             <Button asChild className="w-full bg-accent-bright hover:bg-[#D6FF6A] text-ink font-sans font-medium uppercase tracking-widest text-xs h-12 border-none">
               <Link href="/">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Waitlist
+                Back to Home
               </Link>
             </Button>
             

@@ -39,6 +39,7 @@ import { Comparison } from "@/components/landing/Comparison";
 import { FAQ, FAQS } from "@/components/landing/FAQ";
 
 import Navbar from "@/components/landing/Navbar";
+import Footer from "@/components/landing/footer";
 
 // --- Counter animation component ---
 const Counter = ({ value }: { value: number }) => {
@@ -745,96 +746,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* --- FOOTER --- */}
-      <footer className="bg-paper border-t border-border pt-24 pb-12 px-8">
-        <div className="max-w-[1200px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-            <div className="col-span-1 md:col-span-1 space-y-6">
-              <Link
-                href="/"
-                className="font-display text-2xl font-semibold text-ink flex items-center gap-3 no-underline"
-              >
-                <div className="w-8 h-8 bg-sidebar rounded-[4px] flex items-center justify-center">
-                  <div className="w-3.5 h-3.5 bg-accent-bright rounded-[1px]" />
-                </div>
-                {APP_CONFIG.name}
-              </Link>
-              <p className="text-sm text-ink-muted leading-relaxed font-light">
-                The industrial-editorial headless CMS built for performance and
-                precision.
-              </p>
-            </div>
-            <div className="col-span-1 md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-12">
-              <div className="space-y-6">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">
-                  Product
-                </h4>
-                <nav className="flex flex-col gap-3">
-                  {["Features", "Demo", "Pricing", "Roadmap"].map((l) => (
-                    <Link
-                      key={l}
-                      href={`#${l.toLowerCase()}`}
-                      className="text-[13px] text-ink-muted hover:text-ink transition-colors no-underline font-light"
-                    >
-                      {l}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-              <div className="space-y-6">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">
-                  Company
-                </h4>
-                <nav className="flex flex-col gap-3">
-                  {["About", "Blog", "Careers", "Legal"].map((l) => (
-                    <Link
-                      key={l}
-                      href="#"
-                      className="text-[13px] text-ink-muted hover:text-ink transition-colors no-underline font-light"
-                    >
-                      {l}
-                    </Link>
-                  ))}
-                </nav>
-              </div>
-              <div className="space-y-6">
-                <h4 className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink">
-                  Resources
-                </h4>
-                <nav className="flex flex-col gap-3">
-                  {["Documentation", "API Reference", "Status", "Support"].map(
-                    (l) => (
-                      <Link
-                        key={l}
-                        href="#"
-                        className="text-[13px] text-ink-muted hover:text-ink transition-colors no-underline font-light"
-                      >
-                        {l}
-                      </Link>
-                    ),
-                  )}
-                </nav>
-              </div>
-            </div>
-          </div>
-          <div className="pt-12 border-t border-border flex flex-col md:flex-row justify-between items-center gap-8">
-            <p className="text-[11px] text-ink-faint font-mono uppercase tracking-[0.1em]">
-              © 2024 FLOWCMS INFRASTRUCTURE. ALL RIGHTS RESERVED.
-            </p>
-            <div className="flex items-center gap-8">
-              {["Twitter", "GitHub", "Discord"].map((s) => (
-                <Link
-                  key={s}
-                  href="#"
-                  className="text-[11px] text-ink-faint hover:text-accent transition-colors no-underline font-mono uppercase tracking-[0.1em]"
-                >
-                  {s}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -24,8 +24,6 @@ import { Suspense } from "react";
 
 function RegisterForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const inviteToken = searchParams.get("invite");
   
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -50,22 +48,7 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      // 1. Prepare signup (Checkpoint 1): Set pending_invite cookie
-      if (inviteToken) {
-        const prepareResult = await fetch("/api/auth/prepare", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: inviteToken, email: values.email }),
-        });
-
-        if (!prepareResult.ok) {
-          const data = await prepareResult.json();
-          router.push(`/auth/error?code=INVITE_INVALID&message=${encodeURIComponent(data.error || "Invalid invite")}`);
-          return;
-        }
-      }
-
-      // 2. Sign up user
+      // 1. Sign up user
       const result = await signUp.email({
         name: values.name,
         email: values.email,
@@ -85,7 +68,7 @@ function RegisterForm() {
         return;
       }
 
-      // 3. Register workspace
+      // 2. Register workspace
       const wsResult = await fetch("/api/auth/register-workspace", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,7 +79,7 @@ function RegisterForm() {
         console.error("Failed to create workspace");
       }
 
-      // 4. Final Handoff: Force session refresh and navigation
+      // 3. Final Handoff: Force session refresh and navigation
       router.refresh(); // Refresh server components
       router.push("/dashboard");
     } catch (err) {
@@ -239,7 +222,7 @@ function RegisterForm() {
       </form>
 
       <div className="mt-10">
-        <SocialAuth inviteToken={inviteToken} />
+        <SocialAuth />
       </div>
 
       <div className="my-16 py-10 border-t border-border">

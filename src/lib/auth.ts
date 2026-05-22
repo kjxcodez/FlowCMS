@@ -1,11 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
-import { isWaitlistMode, isEarlyAccessMode } from "@/lib/launch";
 import { logger } from "@/lib/logger";
-import { verifyInvitePayload } from "@/lib/tokens";
 import { isAdminEmail } from "./admin";
-import { headers } from "next/headers";
+
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
@@ -29,84 +27,10 @@ export const auth = betterAuth({
     // cookieCache is removed to ensure freshness
   },
   /**
-   * ISSUE 1: Correct Better Auth hook architecture using databaseHooks.
-   * Validates waitlist status at the database level before user creation.
+   * Correct Better Auth hook architecture using databaseHooks.
+   * Validates login state (e.g., checks if user is suspended) before session creation.
    */
-  /**
-   * ISSUE 1: Correct Better Auth hook architecture using databaseHooks.
-   * Validates waitlist status at the database level before user creation.
-   */
-  user: {
-    additionalFields: {
-      inviteToken: {
-        type: "string",
-        required: false,
-      },
-    },
-  },
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const isPlatformAdmin = isAdminEmail(user.email);
-          if (isPlatformAdmin) return; // Admins bypass waitlist gating
-
-          const inviteToken = (await headers()).get("x-invite-token") || 
-                            (await headers()).get("cookie")?.split("pending_invite=")[1]?.split(";")[0];
-
-          if (isWaitlistMode || isEarlyAccessMode) {
-            if (!inviteToken) {
-              logger.warn("Registration blocked: No invite token found", { email: user.email });
-              return false;
-            }
-
-            try {
-              const payload = verifyInvitePayload(inviteToken);
-              
-              if (!payload) {
-                logger.warn("Registration blocked: Invalid signature or payload", { email: user.email });
-                return false;
-              }
-
-              const { token, email } = payload;
-              
-              if (email !== user.email) {
-                logger.warn("Registration blocked: Email mismatch", { 
-                  userEmail: user.email, 
-                  inviteEmail: email 
-                });
-                return false;
-              }
-
-              const consumed = await prisma.waitlistEntry.updateMany({
-                where: { 
-                  inviteToken: token,
-                  status: "INVITED",
-                  OR: [
-                    { inviteExpiresAt: null },
-                    { inviteExpiresAt: { gt: new Date() } }
-                  ]
-                },
-                data: {
-                  status: "JOINED",
-                  inviteUsedAt: new Date(),
-                },
-              });
-
-              if (consumed.count !== 1) {
-                logger.warn("Registration blocked: Token already consumed or invalid", { token });
-                return false;
-              }
-
-              logger.info("Invite consumed successfully", { email: user.email });
-            } catch (err) {
-              logger.error("Failed to process invite token", { error: String(err) });
-              return false;
-            }
-          }
-        },
-      },
-    },
+    databaseHooks: {
     session: {
       create: {
         before: async (session) => {

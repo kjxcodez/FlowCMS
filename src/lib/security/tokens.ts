@@ -4,15 +4,7 @@ export function generateSecureToken(): string {
   return crypto.randomBytes(32).toString("hex"); // 64 chars
 }
 
-export function generateReferralCode(name?: string): string {
-  const prefix = name
-    ? name.toLowerCase().replace(/[^a-z]/g, "").slice(0, 8)
-    : "user";
-  const suffix = crypto.randomBytes(3).toString("hex"); // 6 chars
-  return `${prefix}-${suffix}`.toLowerCase(); // e.g. "kapil-a3f9c2"
-}
-
-export function signInvitePayload(payload: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any
+export function signPayload(payload: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any
   const secret = process.env.BETTER_AUTH_SECRET!;
   const data = JSON.stringify(payload);
   const signature = crypto
@@ -23,11 +15,11 @@ export function signInvitePayload(payload: any): string { // eslint-disable-line
   return Buffer.from(JSON.stringify({ data, signature })).toString("base64");
 }
 
-export function verifyInvitePayload(cookieValue: string): any | null { // eslint-disable-line @typescript-eslint/no-explicit-any
+export function verifyPayload(tokenValue: string): any | null { // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     const secret = process.env.BETTER_AUTH_SECRET!;
     const { data, signature } = JSON.parse(
-      Buffer.from(cookieValue, "base64").toString()
+      Buffer.from(tokenValue, "base64").toString()
     );
     
     const expectedSignature = crypto

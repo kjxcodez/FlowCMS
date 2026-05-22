@@ -179,7 +179,7 @@ export function MarketingUpdateEmail({
               textAlign: "center",
             }}
           >
-            You&apos;re receiving this because you&apos;re on the FlowCMS waitlist or
+            You&apos;re receiving this because you signed up for FlowCMS early access or
             have an account.{" "}
             <a
               href={unsubscribeUrl}

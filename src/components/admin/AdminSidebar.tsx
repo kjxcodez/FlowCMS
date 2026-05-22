@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Shield,
   Activity,
-  Users,
   Database,
   Lock,
   ArrowLeft,
@@ -30,7 +29,6 @@ const ADMIN_NAV = [
     label: "Operations",
     items: [
       { href: "/admin/operations", label: "System Health", icon: Activity },
-      { href: "/admin/waitlist", label: "Waitlist Manager", icon: Users },
       { href: "/admin/logs", label: "Platform Logs", icon: Database },
     ]
   },
