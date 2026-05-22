@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Key, 
   Plus, 
@@ -10,15 +10,14 @@ import {
   Shield, 
   Clock,
   Eye,
-  EyeOff
+  EyeOff,
 } from "lucide-react";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-// import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-// import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ApiKey {
   id: string;
@@ -35,10 +34,18 @@ export default function ApiKeysPage() {
   const [showKeyId, setShowKeyId] = useState<string | null>(null);
   const [newKeyLabel, setNewKeyLabel] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [originUrl, setOriginUrl] = useState("http://localhost:3000");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOriginUrl(window.location.origin);
+    }
+  }, []);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
+    toast.success("API key copied to clipboard!");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -48,13 +55,45 @@ export default function ApiKeysPage() {
     try {
       await createMutation.mutateAsync(newKeyLabel);
       setNewKeyLabel("");
+      toast.success("New API key generated successfully!");
+    } catch {
+      toast.error("Failed to generate API key.");
     } finally {
       setIsCreating(false);
     }
   };
 
+  const [activeTab, setActiveTab] = useState<"curl" | "fetch" | "axios">("curl");
+
+  const activeKeyVal = keys?.[0]?.key || "fcms_dev_key_sample1234567890abcdef";
+
+  const codeSnippets = {
+    curl: `curl -X GET "${originUrl}/api/v1/entries/blog" \\
+  -H "Authorization: Bearer ${activeKeyVal}"`,
+    fetch: `fetch('${originUrl}/api/v1/entries/blog', {
+  headers: {
+    'Authorization': 'Bearer ${activeKeyVal}'
+  }
+})
+  .then(res => res.json())
+  .then(data => console.log(data));`,
+    axios: `import axios from 'axios';
+
+axios.get('${originUrl}/api/v1/entries/blog', {
+  headers: {
+    'Authorization': 'Bearer ${activeKeyVal}'
+  }
+})
+  .then(res => console.log(res.data));`
+  };
+
+  const copyGuideSnippet = () => {
+    navigator.clipboard.writeText(codeSnippets[activeTab]);
+    toast.success(`${activeTab.toUpperCase()} code snippet copied!`);
+  };
+
   return (
-    <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700 pb-20">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="font-display text-4xl font-semibold text-ink mb-2">
@@ -102,10 +141,35 @@ export default function ApiKeysPage() {
             <Skeleton key={i} className="h-32 rounded-sm" />
           ))
         ) : keys?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-paper border border-border border-dashed rounded-sm graph-bg">
-            <Key className="size-10 text-ink-faint mb-5 opacity-20" />
-            <h3 className="font-display text-xl font-medium text-ink mb-2">No API keys found</h3>
-            <p className="text-ink-muted text-sm font-light">Generate your first key to start accessing the API.</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-paper border border-border border-dashed rounded-sm graph-bg relative overflow-hidden text-center max-w-2xl mx-auto">
+            <div className="absolute inset-0 graph-bg opacity-[0.03]" />
+            <div className="relative z-10 space-y-6 max-w-sm">
+              <div className="size-16 rounded-full bg-canvas border border-border flex items-center justify-center mx-auto">
+                <Key className="size-6 text-ink-faint" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-display text-xl font-semibold text-ink">No API keys active</h3>
+                <p className="text-xs text-ink-muted font-light leading-relaxed">
+                  Generate your first key to start accessing the headless content delivery REST endpoints.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-center">
+                <Input
+                  type="text"
+                  value={newKeyLabel}
+                  onChange={(e) => setNewKeyLabel(e.target.value)}
+                  placeholder="Key label (e.g. Development)"
+                  className="h-10 bg-canvas border-border text-xs rounded-sm w-44"
+                />
+                <Button
+                  onClick={handleCreate}
+                  disabled={isCreating || !newKeyLabel}
+                  className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-sm shrink-0"
+                >
+                  Create Key
+                </Button>
+              </div>
+            </div>
           </div>
         ) : (
           keys?.map((key) => (
@@ -172,13 +236,33 @@ export default function ApiKeysPage() {
       {/* Integration Guide */}
       <section className="bg-paper border border-border rounded-sm overflow-hidden">
         <div className="p-8 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-1.5 h-6 bg-accent-bright" />
-            <h3 className="font-display text-2xl font-semibold text-ink">Integration Guide</h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-1.5 h-6 bg-accent-bright" />
+              <h3 className="font-display text-2xl font-semibold text-ink">Integration Guide</h3>
+            </div>
+            
+            {/* Lang switcher */}
+            <div className="flex bg-canvas border border-border rounded-sm p-0.5">
+              {(["curl", "fetch", "axios"] as const).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setActiveTab(lang)}
+                  className={`px-3 py-1.5 font-mono text-[9px] font-bold uppercase tracking-widest rounded-sm border-none cursor-pointer transition-all ${
+                    activeTab === lang
+                      ? "bg-accent text-sidebar font-black"
+                      : "text-ink-muted hover:text-ink bg-transparent"
+                  }`}
+                >
+                  {lang === "curl" ? "cURL" : lang === "fetch" ? "Fetch" : "Axios"}
+                </button>
+              ))}
+            </div>
           </div>
+
           <div className="space-y-4">
             <p className="text-sm text-ink-muted leading-relaxed font-light">
-              Include your API key in the <code className="bg-canvas px-1.5 py-0.5 rounded text-accent font-mono text-[13px]">x-api-key</code> header of your requests to access content.
+              Include your active API key inside the HTTP <code className="bg-canvas px-1.5 py-0.5 rounded text-accent font-mono text-[13px]">Authorization: Bearer YOUR_API_KEY</code> header of your content retrieval requests.
             </p>
             <div className="p-6 bg-sidebar rounded-sm font-mono text-[11px] text-accent-bright/90 overflow-x-auto relative group">
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -186,14 +270,12 @@ export default function ApiKeysPage() {
                    variant="ghost" 
                    size="icon-xs" 
                    className="text-white/40 hover:text-white"
-                   onClick={() => handleCopy(`curl -X GET "https://api.flowcms.io/v1/entries/blog-post" -H "x-api-key: YOUR_API_KEY"`, "curl")}
+                   onClick={copyGuideSnippet}
                  >
                    <Copy className="size-3" />
                  </Button>
               </div>
-              <span className="text-white/40"># Fetch entries using cURL</span><br/>
-              <span className="text-accent-bright">curl</span> -X GET <span className="text-white">&quot;https://api.flowcms.io/v1/entries/blog-post&quot;</span> \<br/>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-H <span className="text-white">&quot;x-api-key: YOUR_API_KEY&quot;</span>
+              {codeSnippets[activeTab]}
             </div>
           </div>
         </div>

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface MediaPickerModalProps {
   isOpen: boolean;
@@ -118,7 +119,7 @@ export function MediaPickerModal({
                       )}
                     >
                       {file.type === "image" ? (
-                        <img src={file.url} alt={file.name} className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                        <Image src={file.url} alt={file.name} className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                       ) : (
                         <div className="size-full flex items-center justify-center bg-accent/5">
                            <File className="size-8 text-accent/20 group-hover:text-accent transition-colors" />
@@ -150,7 +151,7 @@ export function MediaPickerModal({
                      >
                         <div className="size-10 bg-canvas rounded-sm flex items-center justify-center shrink-0">
                            {file.type === "image" ? (
-                             <img src={file.url} alt={file.name} className="size-8 object-cover grayscale rounded-[1px]" />
+                             <Image src={file.url} alt={file.name} className="size-8 object-cover grayscale rounded-[1px]" />
                            ) : (
                              <File className="size-5 text-accent/40" />
                            )}

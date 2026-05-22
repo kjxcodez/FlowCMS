@@ -17,12 +17,13 @@ import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface SandboxPreviewProps {
   isOpen: boolean;
   onClose: () => void;
-  data: any;
-  fields?: any[];
+  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  fields?: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   collectionSlug: string;
   entrySlug: string;
 }
@@ -198,7 +199,7 @@ export function SandboxPreview({
                                    </div>
                                  ) : typeof value === "string" ? (
                                    value.startsWith("http") ? (
-                                     <img src={value} alt={key} className="max-w-full rounded-sm border border-border grayscale" />
+                                     <Image src={value} alt={key} className="max-w-full rounded-sm border border-border grayscale" />
                                    ) : (
                                      <div dangerouslySetInnerHTML={{ __html: value }} />
                                    )

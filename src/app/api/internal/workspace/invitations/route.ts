@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 import { sendEmail } from "@/lib/email";
 import { WorkspaceInviteEmail } from "@/components/emails/workspace-invite";
 import { logAction } from "@/lib/audit";
-import { FEATURES, canAccessFeature } from "@/lib/launch";
+import { canAccessFeature } from "@/lib/launch";
 
 export async function GET() {
   try {
@@ -21,7 +21,7 @@ export async function GET() {
     });
 
     return apiSuccess(invitations);
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to fetch invitations.");
   }
 }

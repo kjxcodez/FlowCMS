@@ -22,6 +22,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Image from "next/image";
 
 interface DemoBlock {
   id: string;
@@ -758,7 +759,7 @@ export const LiveDemo = () => {
                              )}
                              {block.type === "Image" && (
                                 <div className="aspect-video w-full bg-accent/5 rounded-sm overflow-hidden border border-accent/10 relative">
-                                   <img src={content} alt={content} className="size-full object-cover grayscale" />
+                                   <Image src={content} alt={content} className="size-full object-cover grayscale" />
                                 </div>
                              )}
                              {block.type === "CTA" && (

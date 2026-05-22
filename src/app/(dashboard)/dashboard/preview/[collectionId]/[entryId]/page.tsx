@@ -8,7 +8,6 @@ import { BlockRenderer } from "@/components/preview/BlockRenderer";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Monitor, Smartphone, Globe, Shield, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export default function EntryPreviewPage() {
@@ -29,7 +28,7 @@ export default function EntryPreviewPage() {
 
   if (!entry) return <div className="p-20 text-center">Entry not found</div>;
 
-  const data = entry.data as any;
+  const data = entry.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
   const blocks = data.blocks || [];
 
   return (

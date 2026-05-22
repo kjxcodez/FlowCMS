@@ -6,7 +6,7 @@ import { PLAN_LIMITS } from "@/types/cms";
 import { CreateWebhookSchema } from "@/lib/validations/webhook";
 import crypto from "crypto";
 import { logAction } from "@/lib/audit";
-import { FEATURES, canAccessFeature } from "@/lib/launch";
+import { canAccessFeature } from "@/lib/launch";
 import { isAdminEmail } from "@/lib/admin";
 
 export async function GET() {
@@ -31,10 +31,16 @@ export async function POST(req: NextRequest) {
 
   const isPlatformAdmin = isAdminEmail(session.user.email);
   if (!isPlatformAdmin && !PLAN_LIMITS[workspace.plan]?.webhooks) {
-    return apiError(
-      "PLAN_LIMIT_REACHED",
-      "Webhooks require a Pro or Team plan."
-    );
+    // For Early Access Beta, allow Hobby tier users to create at least 1 active webhook
+    const existingWebhooksCount = await prisma.webhook.count({
+      where: { workspaceId: workspace.id },
+    });
+    if (existingWebhooksCount >= 1) {
+      return apiError(
+        "PLAN_LIMIT_REACHED",
+        "Hobby plan is limited to 1 active webhook. Please upgrade to Pro for unlimited endpoints."
+      );
+    }
   }
 
   const body = await req.json();

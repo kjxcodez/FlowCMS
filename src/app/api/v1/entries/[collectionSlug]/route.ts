@@ -6,13 +6,13 @@ export const runtime = "nodejs";
 
 export const GET = withApiAuth(async (req, { workspaceId }) => {
   // Use the param from the URL
-  const { collectionSlug } = (req as any).params || {}; 
+  const { collectionSlug } = (req as any).params || {};  // eslint-disable-line @typescript-eslint/no-explicit-any
   // In Next.js App Router with withApiAuth, we might need to handle params differently if it's wrapped.
   // Actually, req.nextUrl.pathname works too.
   const slug = collectionSlug || req.nextUrl.pathname.split("/").at(-1)!;
 
   const { searchParams } = req.nextUrl;
-  const status = searchParams.get("status") ?? "published";
+  // const status = searchParams.get("status") ?? "published";
   const page = parseInt(searchParams.get("page") ?? "1");
   const perPage = Math.min(
     parseInt(searchParams.get("perPage") ?? "20"),
@@ -47,14 +47,14 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
   
   if (expand && entries.length > 0) {
     // 1. Identify reference fields
-    const fields = (collection.fields as any[]) || [];
+    const fields = (collection.fields as any[]) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
     const referenceFields = fields.filter(f => f.type === "reference").map(f => f.slug);
 
     if (referenceFields.length > 0) {
       // 2. Collect all referenced IDs
       const allRefIds = new Set<string>();
       entries.forEach(entry => {
-        const data = entry.data as any;
+        const data = entry.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         referenceFields.forEach(slug => {
           if (data[slug] && typeof data[slug] === "string") {
             allRefIds.add(data[slug]);
@@ -72,7 +72,7 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
 
         // 4. Inject referenced entries back into data
         entries.forEach(entry => {
-          const data = entry.data as any;
+          const data = entry.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
           referenceFields.forEach(slug => {
             if (data[slug] && refMap.has(data[slug])) {
               data[`_${slug}_expanded`] = refMap.get(data[slug]);

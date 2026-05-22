@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
             `Workspace already has a ${remoteSub.status} subscription. Please manage it in Settings.`
           );
         }
-      } catch (err: any) {
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         // If not found in Razorpay, we can proceed with a new one
         if (err.statusCode !== 404) {
           console.error("[RAZORPAY_VERIFICATION_ERROR]", err);
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       userEmail: session.user.email,
       userName: session.user.name,
     });
-  } catch (err) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("[RAZORPAY_CHECKOUT_ERROR]", err);
     return apiError("INTERNAL_ERROR", "Failed to initialize subscription checkout.");
   }

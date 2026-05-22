@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Webhook } from "@/generated/prisma";
 
 async function fetchJson(url: string) {
   const r = await fetch(url);

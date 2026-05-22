@@ -67,7 +67,7 @@ export default function UsagePage() {
   const { data: requestsData } = useUsageRequests(workspace?.id);
 
   // Helper for MB/GB
-  const formatBytes = (bytes: number) => {
+  const formatBytes = (bytes: number) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     if (bytes === 0) return "0 GB";
     const k = 1024;
     const dm = 2;
@@ -138,7 +138,7 @@ export default function UsagePage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {requestsData?.logs?.length ? (
-                    requestsData.logs.map((log: any, i: number) => (
+                    requestsData.logs.map((log: any, i: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                       <tr key={log.id || i} className="text-[11px] font-mono text-ink-muted group hover:bg-canvas transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">{format(new Date(log.createdAt), "HH:mm:ss")}</td>
                         <td className="px-6 py-4 text-ink font-medium whitespace-nowrap">{log.endpoint}</td>

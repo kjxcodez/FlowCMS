@@ -10,7 +10,6 @@ import {
   Lock,
   Eye,
   History,
-  Info,
   Sparkles,
   Trash2,
   Link as LinkIcon,
@@ -33,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import Image from "next/image";
 
 interface Field {
   id: string;
@@ -232,7 +232,7 @@ export default function EditEntryPage() {
           >
              {value ? (
                <div className="relative w-full aspect-video rounded-sm overflow-hidden border border-accent/20">
-                  <img src={value} alt="Selected" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  <Image src={value} alt="Selected" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                      <Button variant="outline" size="sm" className="bg-paper text-[10px] font-bold uppercase tracking-widest h-8">Change Media</Button>
                   </div>
@@ -524,7 +524,7 @@ export default function EditEntryPage() {
       <ReferencePicker 
         isOpen={isReferencePickerOpen}
         onClose={() => setIsReferencePickerOpen(false)}
-        onSelect={(id, title) => {
+        onSelect={(id) => {
           if (activePickerField) {
             setContent(prev => ({ ...prev, [activePickerField]: id }));
           }
@@ -537,7 +537,7 @@ export default function EditEntryPage() {
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         data={content}
-        fields={collection?.fields as any}
+        fields={collection?.fields as any} // eslint-disable-line @typescript-eslint/no-explicit-any
         collectionSlug={collection?.slug || ""}
         entrySlug={entry?.slug || ""}
       />

@@ -22,7 +22,7 @@ export async function GET(
   const from = new Date();
   from.setDate(from.getDate() - days);
 
-  const where: any = { 
+  const where: any = {  // eslint-disable-line @typescript-eslint/no-explicit-any
     workspaceId,
     createdAt: { gte: from }
   };

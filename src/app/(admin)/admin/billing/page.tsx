@@ -3,12 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { 
   CreditCard, 
-  Search, 
-  Filter, 
-  ArrowUpRight,
-  TrendingUp,
-  AlertCircle,
-  Activity
 } from "lucide-react";
 import { 
   Table, 
@@ -20,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { OperationsTools } from "@/components/admin/operations-tools";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +94,3 @@ export default async function AdminBillingPage() {
   );
 }
 
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
-}

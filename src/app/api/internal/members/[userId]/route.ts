@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
@@ -68,7 +68,7 @@ export async function DELETE(
     });
 
     return apiSuccess({ ok: true });
-  } catch (err) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Member removal error:", err);
     return apiError("INTERNAL_ERROR", "Failed to remove member.");
   }

@@ -18,6 +18,7 @@ export async function GET(
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   // Use $queryRaw for date truncation as requested
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dailyStats: any[] = await prisma.$queryRaw`
     SELECT 
       DATE_TRUNC('day', "createdAt") as date,

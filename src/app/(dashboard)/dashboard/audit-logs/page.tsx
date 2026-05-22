@@ -2,16 +2,9 @@
 
 import React, { useState } from "react";
 import { 
-  ClipboardList, 
   Search, 
   Filter, 
-  ArrowUpRight,
-  Info,
-  Lock,
   User as UserIcon,
-  Globe,
-  Database,
-  Key,
   ShieldCheck,
   ChevronDown
 } from "lucide-react";
@@ -64,7 +57,7 @@ export default function AuditLogsPage() {
     days: dateRange,
     query: searchQuery 
   });
-  const [diffLog, setDiffLog] = useState<any>(null);
+  const [diffLog, setDiffLog] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   
   const plan = workspace?.plan ?? "HOBBY";
   const isLocked = plan === "HOBBY" || plan === "PRO";
@@ -182,7 +175,7 @@ export default function AuditLogsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {logs?.map((log: any, i: number) => (
+                  {logs?.map((log: any, i: number) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                     <tr key={log.id || i} className="text-[11px] font-mono text-ink-muted group hover:bg-canvas transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-ink-faint">
                         {format(new Date(log.createdAt), "MMM dd, HH:mm:ss")}

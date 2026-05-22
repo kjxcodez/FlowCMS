@@ -10,7 +10,7 @@ export default async function AdminLayout({
 }) {
   try {
     await requireAdmin();
-  } catch (error) {
+  } catch {
     redirect("/dashboard");
   }
 

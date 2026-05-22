@@ -17,7 +17,7 @@ export async function GET() {
         },
       }
     );
-  } catch (err) {
+  } catch {
     return Response.json(
       { status: "error", db: "unreachable" },
       {

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       });
 
       // 2. Resolve Workspace (Find existing from registration or create if missing)
-      let membership = await tx.workspaceMember.findFirst({
+      const membership = await tx.workspaceMember.findFirst({
         where: { userId: session.user.id },
         include: { workspace: true }
       });

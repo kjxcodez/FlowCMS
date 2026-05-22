@@ -64,14 +64,14 @@ export async function POST(req: Request) {
       data: {
         webhookId,
         event,
-        payload: payload as any,
+        payload: payload as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         statusCode: statusCode || (qstashStatus === "success" ? 200 : 500),
         success: qstashStatus === "success",
       }
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     logger.error("Error in QStash webhook callback", { error: String(err) });
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

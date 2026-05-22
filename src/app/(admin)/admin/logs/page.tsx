@@ -2,14 +2,9 @@ import React from "react";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { 
-  Database, 
   Terminal, 
-  Clock, 
   Zap, 
-  Activity,
   History,
-  AlertCircle,
-  ExternalLink
 } from "lucide-react";
 import { 
   Table, 

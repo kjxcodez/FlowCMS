@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { 
-  Command, 
   CommandDialog, 
   CommandEmpty, 
   CommandGroup, 
@@ -15,18 +14,14 @@ import {
   Search, 
   Plus, 
   Layout, 
-  FileText, 
   Settings, 
   HelpCircle,
   ArrowRight,
   Database,
   Globe,
-  User,
-  LogOut
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCollections } from "@/hooks/use-collections";
-import { cn } from "@/lib/utils";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -91,7 +86,7 @@ export function CommandPalette() {
         
         {collections && collections.length > 0 && (
           <CommandGroup heading="Collections" className="px-2 py-3 text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-faint">
-            {collections.map((collection: any) => (
+            {collections.map((collection: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
               <CommandItem
                 key={collection.id}
                 onSelect={() => runCommand(() => router.push(`/dashboard/collections/${collection.id}/entries`))}

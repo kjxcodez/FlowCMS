@@ -30,6 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { ImageIcon } from "lucide-react";
+import Image from "next/image";
 
 interface Field {
   id: string;
@@ -210,7 +211,7 @@ export default function NewEntryPage() {
           >
              {value ? (
                <div className="relative w-full aspect-video rounded-sm overflow-hidden border border-accent/20">
-                  <img src={value} alt="Selected" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  <Image src={value} alt="Selected" className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                      <Button variant="outline" size="sm" className="bg-paper text-[10px] font-bold uppercase tracking-widest h-8">Change Media</Button>
                   </div>

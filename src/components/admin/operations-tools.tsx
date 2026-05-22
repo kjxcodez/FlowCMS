@@ -42,7 +42,7 @@ export function OperationsTools() {
         <div className="flex items-start gap-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-sm">
           <AlertCircle className="size-4 text-amber-500 mt-0.5" />
           <p className="text-[10px] text-amber-500/80 font-medium leading-relaxed uppercase tracking-wider">
-            Use "Sync Subscriptions" only if webhooks are delayed or a workspace is reporting an incorrect plan status after payment.
+            Use &quot;Sync Subscriptions&quot; only if webhooks are delayed or a workspace is reporting an incorrect plan status after payment.
           </p>
         </div>
 

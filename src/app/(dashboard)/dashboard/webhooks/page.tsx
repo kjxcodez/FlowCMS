@@ -5,19 +5,17 @@ import {
   Webhook as WebhookIcon, 
   Plus, 
   Trash2, 
-  ExternalLink, 
   Activity, 
-  Shield, 
-  Key,
   Globe,
   AlertTriangle,
   CheckCircle2,
-  XCircle,
   Copy,
-  Check
+  Check,
+  Lock,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useWebhooks } from "@/hooks/use-webhooks";
 import { Webhook } from "@/generated/prisma";
@@ -36,6 +34,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { toast } from "sonner";
 
 const AVAILABLE_EVENTS = [
   { id: "entry.created", label: "Entry Created", desc: "Triggered when a new entry is created." },
@@ -63,6 +62,9 @@ export default function WebhooksPage() {
       setIsCreateOpen(false);
       setNewUrl("");
       setSelectedEvents(["entry.published"]);
+      toast.success("Webhook endpoint registered successfully!");
+    } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(e?.message || "Failed to create webhook.");
     } finally {
       setIsSubmitting(false);
     }
@@ -71,44 +73,17 @@ export default function WebhooksPage() {
   const copySecret = (secret: string, id: string) => {
     navigator.clipboard.writeText(secret);
     setCopiedId(id);
+    toast.success("Webhook signing secret copied!");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   const plan = workspace?.plan || "HOBBY";
-  const canAccess = plan === "PRO" || plan === "TEAM" || workspace?.isAdmin;
-
-  if (!canAccess) {
-    return (
-      <div className="p-12 max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-        <header className="space-y-2">
-          <h1 className="font-display text-4xl font-bold text-ink">Webhooks</h1>
-          <p className="text-ink-muted font-light">Trigger external workflows when content changes.</p>
-        </header>
-
-        <Card className="border-accent/20 bg-accent/5 overflow-hidden relative">
-          <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
-          <CardHeader className="p-10 pb-6">
-            <div className="size-12 rounded-sm bg-accent/10 flex items-center justify-center mb-6">
-              <Shield className="size-6 text-accent" />
-            </div>
-            <CardTitle className="text-2xl font-display font-semibold">Pro Feature</CardTitle>
-            <CardDescription className="text-base text-ink-muted leading-relaxed">
-              Webhooks are available on <span className="text-accent font-bold">Pro</span> and <span className="text-accent font-bold">Team</span> plans. 
-              Upgrade to automate your CI/CD pipelines, trigger Slack notifications, or clear your frontend cache.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-10 pt-0">
-             <Button asChild className="h-12 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg">
-               <a href="/dashboard/billing">View Plans</a>
-             </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const isHobby = plan === "HOBBY" && !workspace?.isAdmin;
+  const webhookCount = webhooks?.length || 0;
+  const isLimitReached = isHobby && webhookCount >= 1;
 
   return (
-    <div className="p-12 max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="p-4 max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-border">
         <div className="space-y-2">
           <div className="flex items-center gap-2 font-mono text-[10px] font-bold text-accent uppercase tracking-widest mb-2">
@@ -118,102 +93,126 @@ export default function WebhooksPage() {
           <h1 className="font-display text-4xl font-bold text-ink tracking-tight">
             Webhooks <em className="italic text-accent not-italic">& Callbacks</em>
           </h1>
-          <p className="text-ink-muted font-light max-w-xl">
+          <p className="text-ink-muted font-light max-w-xl text-sm leading-relaxed">
             Register HTTP endpoints to receive real-time event notifications from your FlowCMS infrastructure.
           </p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="h-12 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-xl">
-              <Plus className="size-4 mr-2" />
-              Add Webhook
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl bg-paper border-border rounded-sm p-0 overflow-hidden">
-            <DialogHeader className="p-10 pb-6 bg-canvas border-b border-border">
-              <DialogTitle className="font-display text-2xl font-semibold">New Webhook</DialogTitle>
-              <DialogDescription className="text-ink-muted">Configure a new destination for your content events.</DialogDescription>
-            </DialogHeader>
-            <div className="p-10 space-y-8">
-              <div className="space-y-2">
-                <Label className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted">Payload URL</Label>
-                <Input 
-                  placeholder="https://your-api.com/webhooks/flowcms" 
-                  className="bg-canvas border-border h-12"
-                  value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
-                />
-              </div>
+        
+        <div className="flex items-center gap-4">
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                disabled={isLimitReached}
+                className="h-12 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-xl"
+              >
+                {isLimitReached ? <Lock className="size-3.5 mr-2" /> : <Plus className="size-4 mr-2" />}
+                Add Webhook
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl bg-paper border-border rounded-sm p-0 overflow-hidden">
+              <DialogHeader className="p-10 pb-6 bg-canvas border-b border-border">
+                <DialogTitle className="font-display text-2xl font-semibold">New Webhook</DialogTitle>
+                <DialogDescription className="text-ink-muted">Configure a new destination for your content events.</DialogDescription>
+              </DialogHeader>
+              <div className="p-10 space-y-8">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted">Payload URL</Label>
+                  <Input 
+                    placeholder="https://your-api.com/webhooks/flowcms" 
+                    className="bg-canvas border-border h-12"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                  />
+                </div>
 
-              <div className="space-y-4">
-                <Label className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted">Event Selection</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {AVAILABLE_EVENTS.map((event) => (
-                    <div 
-                      key={event.id}
-                      className={cn(
-                        "p-4 rounded-sm border transition-all cursor-pointer flex items-start gap-3",
-                        selectedEvents.includes(event.id) 
-                          ? "bg-accent/5 border-accent shadow-sm" 
-                          : "bg-canvas border-border hover:border-accent/30"
-                      )}
-                      onClick={() => {
-                        setSelectedEvents(prev => 
-                          prev.includes(event.id) 
-                            ? prev.filter(e => e !== event.id) 
-                            : [...prev, event.id]
-                        );
-                      }}
-                    >
-                      <Checkbox 
-                        checked={selectedEvents.includes(event.id)}
-                        className="mt-1"
-                      />
-                      <div>
-                        <p className="text-[12px] font-bold text-ink">{event.label}</p>
-                        <p className="text-[10px] text-ink-muted font-light mt-0.5">{event.desc}</p>
+                <div className="space-y-4">
+                  <Label className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted">Event Selection</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {AVAILABLE_EVENTS.map((event) => (
+                      <div 
+                        key={event.id}
+                        className={cn(
+                          "p-4 rounded-sm border transition-all cursor-pointer flex items-start gap-3",
+                          selectedEvents.includes(event.id) 
+                            ? "bg-accent/5 border-accent shadow-sm" 
+                            : "bg-canvas border-border hover:border-accent/30"
+                        )}
+                        onClick={() => {
+                          setSelectedEvents(prev => 
+                            prev.includes(event.id) 
+                              ? prev.filter(e => e !== event.id) 
+                              : [...prev, event.id]
+                          );
+                        }}
+                      >
+                        <Checkbox 
+                          checked={selectedEvents.includes(event.id)}
+                          className="mt-1"
+                        />
+                        <div>
+                          <p className="text-[12px] font-bold text-ink">{event.label}</p>
+                          <p className="text-[10px] text-ink-muted font-light mt-0.5">{event.desc}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter className="p-10 pt-0">
-              <Button 
-                variant="ghost" 
-                onClick={() => setIsCreateOpen(false)}
-                className="text-[11px] font-bold uppercase tracking-widest"
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreate} 
-                disabled={isSubmitting || !newUrl}
-                className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
-              >
-                {isSubmitting ? "Creating..." : "Initialize Webhook"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter className="p-10 pt-0">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsCreateOpen(false)}
+                  className="text-[11px] font-bold uppercase tracking-widest"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleCreate} 
+                  disabled={isSubmitting || !newUrl}
+                  className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
+                >
+                  {isSubmitting ? "Creating..." : "Initialize Webhook"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
+
+      {/* Warning Box for Hobby users who reached limit */}
+      {isLimitReached && (
+        <section className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-sm flex gap-4 relative overflow-hidden">
+          <AlertTriangle className="size-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1.5 relative z-10">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500">Hobby Plan Limitation</h4>
+            <p className="text-xs text-ink-muted leading-relaxed font-light">
+              Your workspace is currently using the 1 allocated webhook under the Hobby plan. Upgrade to a Pro plan to connect unlimited endpoints.
+            </p>
+          </div>
+        </section>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-6">
           {[1, 2].map(i => <div key={i} className="h-32 bg-paper animate-pulse border border-border rounded-sm" />)}
         </div>
       ) : webhooks?.length === 0 ? (
-        <Card className="bg-canvas border-dashed border-2 border-border py-24 flex flex-col items-center justify-center text-center">
-           <div className="size-16 rounded-full bg-paper border border-border flex items-center justify-center mb-8">
-             <WebhookIcon className="size-8 text-ink-faint" />
+        <Card className="bg-canvas border-dashed border-2 border-border py-24 flex flex-col items-center justify-center text-center max-w-2xl mx-auto relative overflow-hidden">
+           <div className="absolute inset-0 graph-bg opacity-[0.03]" />
+           <div className="relative z-10 space-y-6 max-w-sm">
+             <div className="size-16 rounded-full bg-paper border border-border flex items-center justify-center mx-auto">
+               <WebhookIcon className="size-8 text-ink-faint" />
+             </div>
+             <div className="space-y-2">
+               <h3 className="font-display text-2xl font-semibold text-ink">Connect Outbound Webhooks</h3>
+               <p className="text-xs text-ink-muted font-light leading-relaxed">
+                 Trigger static page rebuilds (Vercel ISR), deploy hooks, or chat integrations (Slack/Discord) automatically when document state advances.
+               </p>
+             </div>
+             <Button onClick={() => setIsCreateOpen(true)} className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm">
+               Register First Endpoint
+             </Button>
            </div>
-           <h3 className="font-display text-2xl font-semibold text-ink mb-2">No Webhooks Found</h3>
-           <p className="text-ink-muted font-light max-w-sm mb-8">
-             Connect your content to external services like Vercel, Slack, or GitHub Actions.
-           </p>
-           <Button onClick={() => setIsCreateOpen(true)} variant="outline" className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm">
-             Register First Endpoint
-           </Button>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6">
@@ -223,7 +222,11 @@ export default function WebhooksPage() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  onClick={() => deleteWebhook(webhook.id)}
+                  onClick={() => {
+                    if (confirm("Are you sure you want to delete this webhook callback?")) {
+                      deleteWebhook(webhook.id);
+                    }
+                  }}
                   className="size-10 rounded-full hover:bg-red-500/10 hover:text-red-500 transition-colors"
                 >
                   <Trash2 className="size-4" />
@@ -268,20 +271,15 @@ export default function WebhooksPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-8 px-8 border-l border-border h-full">
+                <div className="flex items-center gap-8 px-8 border-l border-border h-full md:min-w-[280px] justify-end">
                    <div className="text-center">
                       <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink-faint mb-1">Deliveries</p>
-                      <p className="text-xl font-display font-bold text-ink">24</p>
+                      <p className="text-sm font-mono text-ink-muted">No fires logged</p>
                    </div>
-                   <div className="text-center">
-                      <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink-faint mb-1">Avg. Latency</p>
-                      <p className="text-xl font-display font-bold text-success">142ms</p>
+                   <div className="text-center ml-4">
+                      <p className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink-faint mb-1">Latency</p>
+                      <p className="text-sm font-mono text-ink-muted">—</p>
                    </div>
-                   <Button variant="ghost" size="icon" asChild>
-                      <a href={`/dashboard/webhooks/${webhook.id}`} className="size-10 rounded-full hover:bg-accent/10 hover:text-accent transition-all">
-                        <ExternalLink className="size-4" />
-                      </a>
-                   </Button>
                 </div>
               </CardContent>
             </Card>
@@ -290,7 +288,7 @@ export default function WebhooksPage() {
       )}
 
       {/* Info Panel */}
-      <section className="pt-12">
+      <section className="pt-6">
          <Card className="bg-canvas border-border-strong/10 rounded-sm p-8 shadow-sm">
             <div className="flex flex-col md:flex-row gap-8">
                <div className="flex-1 space-y-4">
@@ -317,6 +315,27 @@ export default function WebhooksPage() {
             </div>
          </Card>
       </section>
+
+      {/* Upgrade Callout */}
+      {isHobby && (
+        <Card className="bg-sidebar border-none rounded-sm p-10 relative overflow-hidden group">
+          <div className="absolute inset-0 noise-overlay opacity-20" />
+          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 max-w-xl">
+               <h3 className="font-display text-2xl font-semibold text-white flex items-center gap-2">
+                 Need multiple webhooks?
+                 <Sparkles className="size-5 text-accent-bright animate-pulse" />
+               </h3>
+               <p className="text-sm text-white/50 leading-relaxed font-light">
+                 Hobby tier is configured for a single destination callback endpoint. Upgrade to Pro or Team plans to unlock unlimited webhooks and multi-server CDNs.
+               </p>
+            </div>
+            <Button asChild className="h-12 px-8 bg-white text-sidebar text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent-bright transition-all shadow-xl whitespace-nowrap">
+              <a href="/dashboard/billing">Upgrade Plan</a>
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import React from "react";
 import { Block } from "@/types/cms";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export function BlockRenderer({ blocks }: { blocks: Block[] }) {
   if (!blocks || blocks.length === 0) return null;
@@ -49,11 +50,11 @@ function renderBlock(block: Block) {
         <div className="max-w-5xl mx-auto">
           <figure className="space-y-4">
             <div className="rounded-sm overflow-hidden border border-border-strong/10 bg-canvas shadow-2xl">
-              <img src={props.url as string} alt={props.alt as string} className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+              <Image src={props.url as string} alt={props.alt as string} className="w-full h-auto object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
             </div>
             {Boolean(props.alt) && (
               <figcaption className="text-center font-mono text-[10px] uppercase tracking-[0.3em] text-ink-faint">
-                // {props.alt as string}
+                {"// "}{props.alt as string}
               </figcaption>
             )}
           </figure>

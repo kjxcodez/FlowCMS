@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
             { id: "1", name: "Title", slug: "title", type: "text", required: true },
             { id: "2", name: "Content", slug: "content", type: "richtext", required: true },
             { id: "3", name: "Cover Image", slug: "cover", type: "media", required: false },
-          ] as any,
+          ] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         },
       });
 
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
             { id: "1", name: "Title", slug: "title", type: "text", required: true },
             { id: "2", name: "Content", slug: "content", type: "richtext", required: true },
             { id: "3", name: "SEO Description", slug: "seo_description", type: "text", required: false },
-          ] as any,
+          ] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         },
       });
 
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
             title: "Home",
             content: "<p>Welcome to your home page! This content is managed through FlowCMS.</p>",
             seo_description: "The main landing page content for my website.",
-          } as any,
+          } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         },
       });
 
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
             title: "My First Post",
             content: "<p>This is my very first blog post managed via FlowCMS. Start customizing your schemas and entries to build your dream site!</p>",
             cover: null,
-          } as any,
+          } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         },
       });
 
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
       workspaceId: result.workspaceId,
       apiKey: result.rawKey,
     });
-  } catch (err: any) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     console.error("Workspace registration and onboarding failure:", err);
     return apiError("INTERNAL_ERROR", "Failed to register workspace and provision resources.");
   }

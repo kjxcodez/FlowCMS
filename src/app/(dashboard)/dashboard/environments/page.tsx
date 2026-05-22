@@ -4,7 +4,6 @@ import React from "react";
 import { 
   GitBranch, 
   Plus, 
-  CheckCircle2, 
   ChevronRight,
   Info,
   Lock,
@@ -55,7 +54,7 @@ export default function EnvironmentsPage() {
 
       {/* Environments List */}
       <div className="space-y-6">
-        {environments?.map((env: any) => (
+        {environments?.map((env: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
           <Card key={env.id} className="bg-paper border-border rounded-sm overflow-hidden group hover:border-accent transition-all duration-300">
             <CardContent className="p-0">
               <div className="flex items-center p-8 gap-8">

@@ -27,7 +27,8 @@ export async function queueWebhook({
   url,
   event,
   payload,
-  secret: _secret, // prefixed with _ to avoid unused var warning until signing is implemented
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  secret: _secret, // prefixed with _ to avoid unused var warning until signing is implemented 
 }: QueueWebhookOptions) {
   try {
     // We send the webhook request THROUGH QStash to the destination URL

@@ -45,7 +45,7 @@ export default async function AdminOperationsPage() {
     prisma.webhookDelivery.count({
       where: { success: false }
     })
-  ] as unknown as [number, number, number, number, any[], number, number]);
+  ] as unknown as [number, number, number, number, any[], number, number]); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   const stats = [
     { label: "Total Users", value: userCount, icon: Users, color: "text-blue-500" },

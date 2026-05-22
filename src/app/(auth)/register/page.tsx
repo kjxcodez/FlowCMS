@@ -18,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SocialAuth } from "@/components/auth/social-auth";
 
-import { useSearchParams } from "next/navigation";
 
 import { Suspense } from "react";
 

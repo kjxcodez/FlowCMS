@@ -33,7 +33,7 @@ export function ReferencePicker({
   const [search, setSearch] = useState("");
   const { data: entries, isLoading } = useEntries();
 
-  const filteredEntries = (entries || []).filter((e: any) => 
+  const filteredEntries = (entries || []).filter((e: any) =>  // eslint-disable-line @typescript-eslint/no-explicit-any
     (e.data?.title || e.slug || "").toLowerCase().includes(search.toLowerCase()) || 
     e.slug.toLowerCase().includes(search.toLowerCase())
   );
@@ -86,7 +86,7 @@ export function ReferencePicker({
                      <div className="py-20 text-center animate-pulse opacity-30">
                         <p className="text-xs font-mono uppercase tracking-[0.3em]">Syncing Entries...</p>
                      </div>
-                   ) : filteredEntries.map((entry: any) => (
+                   ) : filteredEntries.map((entry: any) => ( // eslint-disable-line @typescript-eslint/no-explicit-any
                      <div 
                        key={entry.id}
                        onClick={() => onSelect(entry.id, entry.data?.title || entry.slug)}
