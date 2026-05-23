@@ -5,9 +5,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const withMDX = createMDX();
 
 
-const nextConfig: NextConfig = {
-  output: "standalone",
-};
+const nextConfig: NextConfig = {};
 
 export default withSentryConfig(withMDX(nextConfig), {
   // For all available options, see:
