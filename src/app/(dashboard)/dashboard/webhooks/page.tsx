@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { 
-  Webhook as WebhookIcon, 
   Plus, 
   Trash2, 
   Activity, 
@@ -197,22 +196,94 @@ export default function WebhooksPage() {
           {[1, 2].map(i => <div key={i} className="h-32 bg-paper animate-pulse border border-border rounded-sm" />)}
         </div>
       ) : webhooks?.length === 0 ? (
-        <Card className="bg-canvas border-dashed border-2 border-border py-24 flex flex-col items-center justify-center text-center max-w-2xl mx-auto relative overflow-hidden">
-           <div className="absolute inset-0 graph-bg opacity-[0.03]" />
-           <div className="relative z-10 space-y-6 max-w-sm">
-             <div className="size-16 rounded-full bg-paper border border-border flex items-center justify-center mx-auto">
-               <WebhookIcon className="size-8 text-ink-faint" />
-             </div>
-             <div className="space-y-2">
-               <h3 className="font-display text-2xl font-semibold text-ink">Connect Outbound Webhooks</h3>
-               <p className="text-xs text-ink-muted font-light leading-relaxed">
-                 Trigger static page rebuilds (Vercel ISR), deploy hooks, or chat integrations (Slack/Discord) automatically when document state advances.
-               </p>
-             </div>
-             <Button onClick={() => setIsCreateOpen(true)} className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm">
-               Register First Endpoint
-             </Button>
-           </div>
+        <Card className="bg-paper border border-border shadow-xl rounded-sm max-w-4xl mx-auto overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 graph-bg opacity-[0.04]" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-12 relative z-10">
+            {/* Left side: Guide & Action */}
+            <div className="md:col-span-7 p-10 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-accent text-[10px] font-mono font-bold uppercase tracking-wider">
+                  <Sparkles className="size-3 animate-pulse" />
+                  Real-time synchronization
+                </div>
+                
+                <div className="space-y-3">
+                  <h3 className="font-display text-2xl font-bold text-ink">
+                    Automate Outbound <em className="italic text-accent not-italic">Workflows</em>
+                  </h3>
+                  <p className="text-ink-muted text-sm font-light leading-relaxed">
+                    Trigger headless page rebuilds, sync elastic indexes, deploy serverless callbacks, or trigger custom notification scripts instantly when your content schemas or document entries are modified.
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">1</div>
+                    <div>
+                      <h4 className="text-[12px] font-bold text-ink">Register Your Destination URL</h4>
+                      <p className="text-[10px] text-ink-muted font-light mt-0.5">Provide any standard secure HTTPS callback endpoint.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">2</div>
+                    <div>
+                      <h4 className="text-[12px] font-bold text-ink">HMAC-SHA256 Integrity Verification</h4>
+                      <p className="text-[10px] text-ink-muted font-light mt-0.5">Cryptographically verify headers to protect against endpoint spoofing.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="w-5 h-5 rounded-full bg-accent/10 text-accent flex items-center justify-center font-mono text-[10px] font-bold shrink-0 mt-0.5">3</div>
+                    <div>
+                      <h4 className="text-[12px] font-bold text-ink">Track Callback Deliveries & Latency</h4>
+                      <p className="text-[10px] text-ink-muted font-light mt-0.5">View real-time attempt statuses, HTTP response logs, and failures.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-10">
+                <Button 
+                  onClick={() => setIsCreateOpen(true)} 
+                  className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-xl"
+                >
+                  <Plus className="size-4 mr-2" />
+                  Register First Endpoint
+                </Button>
+              </div>
+            </div>
+
+            {/* Right side: visual depiction of event streaming */}
+            <div className="md:col-span-5 bg-canvas/40 p-10 flex flex-col justify-center relative overflow-hidden">
+              <div className="space-y-6 relative z-10">
+                <h4 className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-faint">
+                  Active Webhook Streams
+                </h4>
+                
+                {/* Visual nodes showing a publish event going to a destination */}
+                <div className="space-y-4 font-mono text-[10px]">
+                  <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all">
+                    <span className="text-accent font-bold">entry.published</span>
+                    <span className="text-ink-faint">&rarr; Vercel ISR Hook</span>
+                  </div>
+                  <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all opacity-70">
+                    <span className="text-accent font-bold">media.uploaded</span>
+                    <span className="text-ink-faint">&rarr; Algolia Sync</span>
+                  </div>
+                  <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all opacity-45">
+                    <span className="text-accent font-bold">collection.created</span>
+                    <span className="text-ink-faint">&rarr; Discord Alert</span>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-sm text-[10px] text-ink-muted leading-relaxed font-light">
+                  <Activity className="size-3.5 text-amber-500 mb-1 inline mr-1" />
+                  QStash-backed queues automatically retry failed endpoints up to 3 times with exponential backoff.
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-6">
