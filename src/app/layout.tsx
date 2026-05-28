@@ -6,6 +6,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import Script from "next/script";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Analytics } from "@vercel/analytics/next"
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -47,6 +48,7 @@ export default function RootLayout({
           <QueryProvider>{children}</QueryProvider>
         </ThemeProvider>
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+        <Analytics />
       </body>
     </html>
   );
