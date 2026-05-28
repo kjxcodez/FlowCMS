@@ -4,6 +4,7 @@ import { Topbar } from "@/components/dashboard/topbar";
 import { requireWorkspace } from "@/lib/session";
 
 import { CommandPalette } from "@/components/dashboard/command-palette";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function DashboardLayout({
   children,
@@ -23,6 +24,7 @@ export default async function DashboardLayout({
           <main className="flex-1 overflow-y-auto p-6">{children}</main>
         </SidebarInset>
       </div>
+      <Toaster />
     </SidebarProvider>
   );
 }
