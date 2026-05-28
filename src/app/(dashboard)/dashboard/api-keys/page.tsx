@@ -9,8 +9,7 @@ import {
   Check, 
   Shield, 
   Clock,
-  Eye,
-  EyeOff,
+  Lock,
 } from "lucide-react";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { Button } from "@/components/ui/button";
@@ -18,23 +17,35 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface ApiKey {
   id: string;
-  title: string;
-  key: string;
+  name: string;
+  keyPrefix: string;
   createdAt: string;
   lastUsedAt?: string;
 }
 
 export default function ApiKeysPage() {
   const { data, isLoading, createMutation, deleteMutation } = useApiKeys();
-  const keys = data as ApiKey[];
+  const keys = (data || []) as ApiKey[];
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showKeyId, setShowKeyId] = useState<string | null>(null);
   const [newKeyLabel, setNewKeyLabel] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [originUrl, setOriginUrl] = useState("http://localhost:3000");
+
+  // One-Time Reveal Dialog State
+  const [generatedKey, setGeneratedKey] = useState<string | null>(null);
+  const [isRevealOpen, setIsRevealOpen] = useState(false);
+  const [copiedGeneratedKey, setCopiedGeneratedKey] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -45,17 +56,31 @@ export default function ApiKeysPage() {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    toast.success("API key copied to clipboard!");
+    toast.success("API key prefix copied!");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleCopyGenerated = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedGeneratedKey(true);
+    toast.success("Raw API key copied successfully!");
+    setTimeout(() => setCopiedGeneratedKey(false), 2000);
+  };
+
   const handleCreate = async () => {
-    if (!newKeyLabel) return;
+    if (!newKeyLabel.trim()) return;
     setIsCreating(true);
     try {
-      await createMutation.mutateAsync(newKeyLabel);
-      setNewKeyLabel("");
-      toast.success("New API key generated successfully!");
+      const response = await createMutation.mutateAsync(newKeyLabel);
+      
+      // Standardized response shape: { success: true, data: { key: "flw_..." } }
+      if (response.success && response.data?.key) {
+        setGeneratedKey(response.data.key);
+        setIsRevealOpen(true);
+        setNewKeyLabel("");
+      } else {
+        toast.error("Failed to generate API key.");
+      }
     } catch {
       toast.error("Failed to generate API key.");
     } finally {
@@ -65,23 +90,21 @@ export default function ApiKeysPage() {
 
   const [activeTab, setActiveTab] = useState<"curl" | "fetch" | "axios">("curl");
 
-  const activeKeyVal = keys?.[0]?.key || "fcms_dev_key_sample1234567890abcdef";
-
   const codeSnippets = {
-    curl: `curl -X GET "${originUrl}/api/v1/entries/blog" \\
-  -H "Authorization: Bearer ${activeKeyVal}"`,
-    fetch: `fetch('${originUrl}/api/v1/entries/blog', {
+    curl: `curl -X GET "${originUrl}/api/v1/entries/blog-posts" \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
+    fetch: `fetch('${originUrl}/api/v1/entries/blog-posts', {
   headers: {
-    'Authorization': 'Bearer ${activeKeyVal}'
+    'Authorization': 'Bearer YOUR_API_KEY'
   }
 })
   .then(res => res.json())
   .then(data => console.log(data));`,
     axios: `import axios from 'axios';
 
-axios.get('${originUrl}/api/v1/entries/blog', {
+axios.get('${originUrl}/api/v1/entries/blog-posts', {
   headers: {
-    'Authorization': 'Bearer ${activeKeyVal}'
+    'Authorization': 'Bearer YOUR_API_KEY'
   }
 })
   .then(res => console.log(res.data));`
@@ -100,7 +123,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
             API <em className="italic text-accent not-italic">Keys</em>
           </h1>
           <p className="text-ink-muted text-sm max-w-md font-light leading-relaxed">
-            Manage authentication keys to access your content via the public REST API.
+            Manage authentication keys to access your structured content endpoints.
           </p>
         </div>
         <div className="flex gap-3">
@@ -113,7 +136,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
           />
           <Button 
             onClick={handleCreate}
-            disabled={isCreating || !newKeyLabel}
+            disabled={isCreating || !newKeyLabel.trim()}
             className="h-10 px-6 text-[11px] font-bold uppercase tracking-widest rounded-sm"
           >
             <Plus className="size-3.5 mr-2" />
@@ -129,7 +152,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
         <div className="space-y-1.5 relative z-10">
           <h4 className="text-[10px] font-bold uppercase tracking-[0.12em] text-ink">Security Best Practices</h4>
           <p className="text-xs text-ink-muted leading-relaxed font-light">
-            Never share your API keys or commit them to version control. Use environment variables to manage them in your application.
+            Never share your API keys or commit them directly to version control. Keys are one-way hashed inside our vault database and can only be revealed once during creation.
           </p>
         </div>
       </section>
@@ -140,7 +163,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
           [1, 2].map(i => (
             <Skeleton key={i} className="h-32 rounded-sm" />
           ))
-        ) : keys?.length === 0 ? (
+        ) : keys.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 bg-paper border border-border border-dashed rounded-sm graph-bg relative overflow-hidden text-center max-w-2xl mx-auto">
             <div className="absolute inset-0 graph-bg opacity-[0.03]" />
             <div className="relative z-10 space-y-6 max-w-sm">
@@ -163,7 +186,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
                 />
                 <Button
                   onClick={handleCreate}
-                  disabled={isCreating || !newKeyLabel}
+                  disabled={isCreating || !newKeyLabel.trim()}
                   className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-sm shrink-0"
                 >
                   Create Key
@@ -172,7 +195,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
             </div>
           </div>
         ) : (
-          keys?.map((key) => (
+          keys.map((key) => (
             <Card key={key.id} className="bg-paper border-border rounded-sm overflow-hidden hover:border-border-strong transition-all group">
               <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div className="space-y-5 flex-1 min-w-0">
@@ -181,31 +204,24 @@ axios.get('${originUrl}/api/v1/entries/blog', {
                       <Key className="size-4.5" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-ink leading-tight">{key.title}</p>
+                      <p className="text-[13px] font-semibold text-ink leading-tight">{key.name}</p>
                       <p className="text-[10px] font-mono text-ink-faint uppercase tracking-widest mt-1">
                         Created {new Date(key.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
 
-                  {/* The Key Value */}
+                  {/* Masked Key Display (Secure approach) */}
                   <div className="flex items-center gap-2 max-w-lg">
                     <div className="flex-1 h-10 flex items-center px-4 bg-canvas/50 rounded-sm font-mono text-[11px] text-ink-muted border border-border truncate group-hover:bg-canvas transition-colors">
-                      {showKeyId === key.id ? key.key : "••••••••••••••••••••••••••••••••"}
+                      {key.keyPrefix}••••••••••••••••••••••••
                     </div>
                     <Button 
                       variant="ghost"
                       size="icon"
-                      onClick={() => setShowKeyId(showKeyId === key.id ? null : key.id)}
-                      className="size-10 text-ink-muted hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 border border-border rounded-sm"
-                    >
-                      {showKeyId === key.id ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </Button>
-                    <Button 
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleCopy(key.key, key.id)}
+                      onClick={() => handleCopy(key.keyPrefix, key.id)}
                       className="size-10 text-ink-muted hover:text-accent hover:bg-accent/5 border border-border rounded-sm transition-all"
+                      title="Copy Key Prefix"
                     >
                       {copiedId === key.id ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                     </Button>
@@ -220,7 +236,7 @@ axios.get('${originUrl}/api/v1/entries/blog', {
                   <Button 
                     variant="ghost"
                     size="sm"
-                    onClick={() => { if(confirm("Are you sure? This will break any app using this key.")) deleteMutation.mutate(key.id) }}
+                    onClick={() => { if(confirm("Are you sure? This will break any application utilizing this key.")) deleteMutation.mutate(key.id) }}
                     className="text-[10px] font-bold uppercase tracking-widest text-destructive hover:bg-destructive/5 hover:text-destructive rounded-sm"
                   >
                     <Trash2 className="size-3.5 mr-2" />
@@ -280,6 +296,52 @@ axios.get('${originUrl}/api/v1/entries/blog', {
           </div>
         </div>
       </section>
+
+      <Dialog open={isRevealOpen} onOpenChange={setIsRevealOpen}>
+        <DialogContent className="max-w-md bg-paper border-border rounded-sm p-8">
+          <DialogHeader className="space-y-3">
+            <div className="size-12 rounded-full bg-accent/10 flex items-center justify-center text-accent mb-2">
+              <Shield className="size-6 animate-pulse" />
+            </div>
+            <DialogTitle className="font-display text-2xl font-semibold">One-Time API Key Reveal</DialogTitle>
+            <DialogDescription className="text-xs text-ink-muted font-light leading-relaxed">
+              This is the only time your API key will be displayed raw. Store it immediately in your secure `.env` properties. If you lose this key, you must revoke it and generate a new one.
+            </DialogDescription>
+          </DialogHeader>
+
+          {generatedKey && (
+            <div className="space-y-6 pt-4">
+              <div className="relative group">
+                <div className="h-14 flex items-center px-4 bg-canvas font-mono text-xs text-accent select-all rounded-sm border border-border break-all pr-14 leading-normal">
+                  {generatedKey}
+                </div>
+                <Button 
+                  size="icon" 
+                  onClick={() => handleCopyGenerated(generatedKey)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 rounded-sm"
+                  title="Copy Raw Key"
+                >
+                  {copiedGeneratedKey ? <Check className="size-4" /> : <Copy className="size-4" />}
+                </Button>
+              </div>
+
+              <div className="p-4 bg-amber-500/5 border border-amber-500/20 text-amber-500 text-[10px] font-bold uppercase tracking-wider rounded-sm flex items-start gap-3">
+                <Lock className="size-3.5 shrink-0 mt-0.5" />
+                <span>Once this window closes, the key is permanently obfuscated and hashed.</span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="pt-6">
+            <Button 
+              onClick={() => setIsRevealOpen(false)}
+              className="w-full h-11 text-[11px] font-bold uppercase tracking-widest rounded-sm"
+            >
+              I Have Saved This Key
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
