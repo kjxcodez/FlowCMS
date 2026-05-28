@@ -1,16 +1,23 @@
 export interface ApiResponse<T> {
-  data: T;
+  success: boolean;
+  data?: T;
   meta?: {
     total?: number;
     page?: number;
     perPage?: number;
   };
+  error?: {
+    code: string;
+    message: string;
+  };
 }
 
-export interface ApiError {
-  error: string;
-  code: string;
-  status: number;
+export interface ApiErrorResponse {
+  success: boolean;
+  error: {
+    code: string;
+    message: string;
+  };
 }
 
 export const API_ERRORS = {
@@ -31,12 +38,25 @@ export function apiError(
   message: string
 ) {
   const { code, status } = API_ERRORS[key];
-  return Response.json({ error: message, code }, { status });
+  return Response.json(
+    {
+      success: false,
+      error: {
+        code,
+        message,
+      },
+    },
+    { status }
+  );
 }
 
 export function apiSuccess<T>(
   data: T,
   meta?: ApiResponse<T>["meta"]
 ) {
-  return Response.json({ data, ...(meta ? { meta } : {}) });
+  return Response.json({
+    success: true,
+    data,
+    ...(meta ? { meta } : {}),
+  });
 }
