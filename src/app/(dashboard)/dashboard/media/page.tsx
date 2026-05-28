@@ -9,7 +9,9 @@ import {
   List, 
   Copy, 
   Trash2,
-  ExternalLink
+  ExternalLink,
+  UploadCloud,
+  Sparkles
 } from "lucide-react";
 import { useMedia, useUploadMedia, useDeleteMedia } from "@/hooks/use-media";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,26 @@ export default function MediaPage() {
   const deleteMutation = useDeleteMedia();
   const media = data as MediaItem[];
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      uploadMutation.mutate(file);
+    }
+  };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,19 +122,62 @@ export default function MediaPage() {
           ))}
         </div>
       ) : media?.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 bg-paper border border-border border-dashed rounded-sm graph-bg relative overflow-hidden">
-           <div className="absolute inset-0 graph-bg opacity-[0.05]" />
-           <div className="relative z-10 flex flex-col items-center">
-            <ImageIcon className="size-12 text-ink-faint mb-5 opacity-20" />
-            <h3 className="font-display text-xl font-medium text-ink mb-2">No assets found</h3>
-            <p className="text-ink-muted text-sm mb-9 font-light">Upload images or documents to use them in your content.</p>
-            <Button asChild className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg">
-              <label className="cursor-pointer">
-                <Plus className="size-4 mr-2" />
-                Upload First Asset
-                <input type="file" className="hidden" onChange={handleUpload} />
-              </label>
-            </Button>
+        <div 
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={cn(
+            "relative flex flex-col items-center justify-center py-32 bg-paper border rounded-sm overflow-hidden transition-all duration-500",
+            isDragging 
+              ? "border-accent bg-accent/5 shadow-2xl scale-[1.01] border-dashed border-2" 
+              : "border-border border-dashed border-2 hover:border-accent/40"
+          )}
+        >
+          <div className="absolute inset-0 graph-bg opacity-[0.05]" />
+          
+          {/* Subtle design accents */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col items-center max-w-md text-center px-6">
+            <div className={cn(
+              "w-20 h-20 rounded-full border flex items-center justify-center mb-6 transition-all duration-500",
+              isDragging 
+                ? "bg-accent border-accent text-white scale-110 shadow-lg shadow-accent/25 animate-bounce" 
+                : "bg-canvas border-border text-ink-faint hover:text-accent hover:border-accent/40"
+            )}>
+              {isDragging ? (
+                <UploadCloud className="size-8 animate-pulse" />
+              ) : (
+                <ImageIcon className="size-8 opacity-60" />
+              )}
+            </div>
+
+            <div className="space-y-2 mb-8">
+              <h3 className="font-display text-2xl font-semibold text-ink flex items-center justify-center gap-2">
+                {isDragging ? "Drop to upload" : "Populate your media library"}
+              </h3>
+              <p className="text-ink-muted text-sm font-light leading-relaxed">
+                {isDragging 
+                  ? "Release your files to start the lightning fast indexing process." 
+                  : "Drag and drop raw images or documents anywhere inside this card, or upload them directly from your computer."}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Button asChild className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg w-full sm:w-auto">
+                <label className="cursor-pointer">
+                  <Plus className="size-4 mr-2" />
+                  Select Files
+                  <input type="file" className="hidden" onChange={handleUpload} />
+                </label>
+              </Button>
+            </div>
+            
+            <div className="mt-8 flex items-center gap-2 text-[10px] font-mono text-ink-faint uppercase tracking-wider">
+              <Sparkles className="size-3 text-accent animate-pulse" />
+              <span>Supports PNG, JPEG, SVG & PDF up to 10MB</span>
+            </div>
           </div>
         </div>
       ) : (
