@@ -26,7 +26,7 @@ interface MediaItem {
   url: string;
   title: string;
   size: number;
-  type: string;
+  mimeType: string;
 }
 
 export default function MediaPage() {
@@ -196,7 +196,7 @@ export default function MediaPage() {
                 "bg-canvas flex items-center justify-center overflow-hidden transition-colors group-hover:bg-accent/5",
                 view === "grid" ? "aspect-square" : "size-12 rounded-sm"
               )}>
-                {item.type.startsWith("image/") ? (
+                {item.mimeType?.startsWith("image/") ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
                 ) : (
@@ -209,7 +209,7 @@ export default function MediaPage() {
                 <div className="p-4 border-t border-border group-hover:border-accent/20 transition-colors">
                   <p className="text-[11px] font-semibold text-ink truncate mb-1">{item.title}</p>
                   <p className="text-[9px] font-mono text-ink-faint uppercase tracking-tighter">
-                    {(item.size / 1024).toFixed(1)} KB • {item.type.split("/")[1]}
+                    {(item.size / 1024).toFixed(1)} KB • {item.mimeType ? item.mimeType.split("/")[1] : "FILE"}
                   </p>
                 </div>
               ) : (

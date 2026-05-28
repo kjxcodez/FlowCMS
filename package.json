@@ -85,5 +85,10 @@
     "react-email": "^6.1.1",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "overrides": {
+      "import-in-the-middle": "3.0.1"
+    }
   }
 }
