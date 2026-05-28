@@ -22,26 +22,40 @@ interface QueueWebhookOptions {
   secret: string;
 }
 
+import crypto from "crypto";
+
 export async function queueWebhook({
   webhookId,
   url,
   event,
   payload,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  secret: _secret, // prefixed with _ to avoid unused var warning until signing is implemented 
+  secret,
 }: QueueWebhookOptions) {
   try {
+    const timestamp = new Date().toISOString();
+    const bodyObj = {
+      event,
+      payload,
+      timestamp,
+    };
+    
+    // Cryptographically sign the webhook ID, timestamp, and body
+    const rawBody = JSON.stringify(bodyObj);
+    const hmacInput = `${webhookId}:${timestamp}:${rawBody}`;
+    const signature = crypto
+      .createHmac("sha256", secret)
+      .update(hmacInput)
+      .digest("hex");
+
     // We send the webhook request THROUGH QStash to the destination URL
     // QStash handles retries if the destination returns non-2xx
     return await qstash.publishJSON({
       url,
-      body: {
-        event,
-        payload,
-        timestamp: new Date().toISOString(),
-      },
+      body: bodyObj,
       headers: {
         "X-Flow-Webhook-Id": webhookId,
+        "X-Flow-Signature": signature,
+        "X-Flow-Timestamp": timestamp,
       },
       retries: 3,
       callback: `${process.env.NEXT_PUBLIC_APP_URL}/api/internal/webhooks/qstash-callback`,
