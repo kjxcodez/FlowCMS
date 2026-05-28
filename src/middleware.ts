@@ -1,82 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  publicRoutes,
+  publicRoutePatterns,
+  authRoutes,
+  DEFAULT_LOGIN_REDIRECT,
+  DEFAULT_AUTH_REDIRECT,
+} from "@/lib/routes";
 
-/**
- * Edge-compatible middleware.
- * Does NOT import Prisma or Better Auth server libs (they require Node runtime).
- * Auth check is cookie-based; server routes verify the session properly.
- */
 export async function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-  /**
-   * 1. STATIC & INTERNAL ASSETS
-   */
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/public") ||
-    pathname === "/favicon.ico"
-  ) {
-    return NextResponse.next();
-  }
-
-  /**
-   * 2. AUTH INFRASTRUCTURE (Public)
-   */
-  if (
-    pathname.startsWith("/api/auth") || // Includes /api/auth/prepare
-    pathname === "/auth/error"
-  ) {
-    return NextResponse.next();
-  }
-
-
-  const isAuthRoute = pathname === "/signup" || pathname.startsWith("/register/");
-
-  if (isAuthRoute) {
-    const pendingInvite = request.cookies.get("pending_invite")?.value;
-    const hasTokenInUrl = searchParams.has("invite");
-
-    // Rule: /register/provider REQUIRES an invite token in the URL
-    if (pathname.startsWith("/register/") && !hasTokenInUrl) {
-      return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
-    }
-
-    // Rule: /signup REQUIRES the handoff cookie from Checkpoint 1
-    if (pathname === "/signup" && !pendingInvite) {
-      return NextResponse.redirect(new URL("/auth/error?code=INVITE_REQUIRED", request.url));
-    }
-  }
-
-  /**
-   * 3. PUBLIC ROUTES
-   */
-  const isPublicRoute =
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname.startsWith("/docs") ||
-    pathname.startsWith("/api/v1");
-
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-
-  /**
-   * 4. PROTECTED ROUTES (Dashboard / Admin)
-   */
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("__Secure-better-auth.session_token")?.value;
 
-  if (!sessionToken) {
-    const loginUrl = new URL("/login", request.url);
+  const isAuthenticated = !!sessionToken;
+
+  const isPublicRoute =
+    publicRoutes.some((route) => pathname === route || pathname.startsWith(route + "/")) ||
+    publicRoutePatterns.some((pattern) => pattern.test(pathname));
+
+  const isAuthRoute = authRoutes.some((route) => pathname === route);
+
+  // Auth routes: authenticated users get redirected away, unauthenticated can access
+  if (isAuthRoute) {
+    if (isAuthenticated) {
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Public routes: always accessible
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Protected routes: must be authenticated
+  if (!isAuthenticated) {
+    const loginUrl = new URL(DEFAULT_AUTH_REDIRECT, request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   const response = NextResponse.next();
 
-  // Set security headers for protected routes
-  if (!isPublicRoute && !pathname.startsWith("/api/auth")) {
+  if (!isPublicRoute) {
     response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
     response.headers.set("Pragma", "no-cache");
     response.headers.set("Expires", "0");

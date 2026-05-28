@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 import { redirect } from "next/navigation";
 import { logger } from "./logger";
 import { isAdminEmail } from "./admin";
+import { DEFAULT_LOGIN_REDIRECT } from "./routes";
 
 export async function getSession() {
   const session = await auth.api.getSession({
@@ -14,7 +15,7 @@ export async function getSession() {
 
 export async function requireSession() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/auth/login");
   return session;
 }
 
@@ -27,11 +28,11 @@ export async function requireAdmin() {
   const isPlatformAdmin = isAdminEmail(session.user.email);
 
   if (!isPlatformAdmin) {
-    logger.warn("Unauthorized admin access attempt", { 
-        userId: session.user.id, 
-        email: session.user.email 
+    logger.warn("Unauthorized admin access attempt", {
+      userId: session.user.id,
+      email: session.user.email
     });
-    redirect("/dashboard");
+    redirect(DEFAULT_LOGIN_REDIRECT);
   }
 
   return session;
@@ -43,9 +44,9 @@ export async function requireAdmin() {
  * Membership is strictly enforced. No mock "admin" workspaces allowed.
  */
 export async function requireWorkspace() {
-  const session = await requireSession();
+  const session = await requireVerifiedSession();
   const isPlatformAdmin = isAdminEmail(session.user.email);
-  
+
   // Get the user from database to check onboarding status
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -67,10 +68,10 @@ export async function requireWorkspace() {
   // If not a member, redirect. No "admin" shadow membership.
   if (!member) {
     if (isPlatformAdmin) {
-        // Admins without a workspace go to a safe spot, but they can't perform workspace actions
-        redirect("/onboarding");
+      // Admins without a workspace go to a safe spot, but they can't perform workspace actions
+      redirect(DEFAULT_LOGIN_REDIRECT);
     }
-    redirect("/register");
+    redirect("/auth/register");
   }
 
   return {
@@ -78,4 +79,26 @@ export async function requireWorkspace() {
     workspace: member.workspace,
     role: member.role,
   };
+}
+
+
+export async function requireVerifiedSession() {
+  const session = await requireSession();
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: session.user.id,
+    },
+    select: {
+      emailVerified: true,
+    },
+  });
+
+  // IMPORTANT:
+  // allow access TO the verification page itself
+  if (!user?.emailVerified) {
+    redirect("/auth/verify-email");
+  }
+
+  return session;
 }

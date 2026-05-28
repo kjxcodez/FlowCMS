@@ -15,7 +15,7 @@ export const PAGE_TEMPLATES: PageTemplate[] = [
     blocks: [
       { id: "1", type: "heading", props: { level: 1, content: "The Future of Content" } },
       { id: "2", type: "text", props: { content: "Build faster with industrial-grade tools. No bloat, just performance." } },
-      { id: "3", type: "cta", props: { label: "Get Started", url: "/register" } },
+      { id: "3", type: "cta", props: { label: "Get Started", url: "/auth/register" } },
       { id: "4", type: "divider", props: {} },
       { id: "5", type: "heading", props: { level: 2, content: "Core Features" } },
       { id: "6", type: "text", props: { content: "Enterprise reliability for solo founders." } },

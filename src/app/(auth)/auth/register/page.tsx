@@ -36,7 +36,6 @@ function RegisterForm() {
     defaultValues: {
       name: "",
       email: "",
-      workspaceName: "",
       password: "",
       confirmPassword: "",
     },
@@ -67,20 +66,8 @@ function RegisterForm() {
         return;
       }
 
-      // 2. Register workspace
-      const wsResult = await fetch("/api/auth/register-workspace", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: values.workspaceName || `${values.name}'s Workspace` }),
-      });
-
-      if (!wsResult.ok) {
-        console.error("Failed to create workspace");
-      }
-
-      // 3. Final Handoff: Force session refresh and navigation
-      router.refresh(); // Refresh server components
-      router.push("/dashboard");
+      // Redirect to verify-email; Better Auth sends the link automatically on signup
+      router.push("/auth/verify-email");
     } catch (err) {
       console.error("Signup error:", err);
       setError("Something went wrong. Please try again.");
@@ -142,26 +129,6 @@ function RegisterForm() {
           />
         </div>
 
-        <Controller
-          control={control}
-          name="workspaceName"
-          render={({ field }) => (
-            <Field data-invalid={!!errors.workspaceName}>
-              <FieldLabel className="font-mono text-[10px] font-bold text-ink-muted uppercase tracking-[0.2em]">
-                Workspace Name
-              </FieldLabel>
-              <FieldContent>
-                <Input
-                  {...field}
-                  placeholder="e.g. My Content Hub"
-                  className="bg-transparent border-t-0 border-x-0 border-b border-border-strong rounded-none px-0 py-2.5 text-sm text-ink placeholder:text-ink-faint focus-visible:ring-0 focus-visible:border-accent transition-all shadow-none h-auto"
-                />
-                <FieldError errors={errors.workspaceName ? [errors.workspaceName] : []} className="text-[10px] font-bold uppercase tracking-wider mt-2" />
-              </FieldContent>
-            </Field>
-          )}
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
           <Controller
             control={control}
@@ -177,6 +144,7 @@ function RegisterForm() {
                     type="password"
                     placeholder="••••••••"
                     className="bg-transparent border-t-0 border-x-0 border-b border-border-strong rounded-none px-0 py-2.5 text-sm text-ink placeholder:text-ink-faint focus-visible:ring-0 focus-visible:border-accent transition-all shadow-none h-auto"
+                    autoComplete="new-password"
                   />
                   <FieldError errors={errors.password ? [errors.password] : []} className="text-[10px] font-bold uppercase tracking-wider mt-2" />
                 </FieldContent>
@@ -197,6 +165,7 @@ function RegisterForm() {
                     type="password"
                     placeholder="••••••••"
                     className="bg-transparent border-t-0 border-x-0 border-b border-border-strong rounded-none px-0 py-2.5 text-sm text-ink placeholder:text-ink-faint focus-visible:ring-0 focus-visible:border-accent transition-all shadow-none h-auto"
+                    autoComplete="new-password"
                   />
                   <FieldError errors={errors.confirmPassword ? [errors.confirmPassword] : []} className="text-[10px] font-bold uppercase tracking-wider mt-2" />
                 </FieldContent>
@@ -228,7 +197,7 @@ function RegisterForm() {
         <p className="text-ink-muted text-xs font-light">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href="/auth/login"
             className="text-ink font-bold hover:underline underline-offset-8 no-underline decoration-accent/40"
           >
             Sign in

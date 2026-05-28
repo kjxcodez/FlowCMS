@@ -20,7 +20,7 @@ export function Topbar() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   // Simple breadcrumb generator

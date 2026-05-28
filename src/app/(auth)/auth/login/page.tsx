@@ -83,6 +83,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="name@company.com"
                   className="bg-transparent border-t-0 border-x-0 border-b border-border-strong rounded-none px-0 py-2.5 text-sm text-ink placeholder:text-ink-faint focus-visible:ring-0 focus-visible:border-accent transition-all shadow-none h-auto"
+                  autoComplete="email"
                 />
                 <FieldError errors={errors.email ? [errors.email] : []} className="text-[10px] font-bold uppercase tracking-wider mt-2" />
               </FieldContent>
@@ -100,7 +101,7 @@ export default function LoginPage() {
                   Password
                 </FieldLabel>
                 <Link
-                  href="/forgot-password"
+                  href="/auth/forgot-password"
                   className="text-[10px] font-mono font-bold uppercase tracking-widest text-ink-faint hover:text-ink transition-colors no-underline"
                 >
                   Forgot?
@@ -112,6 +113,7 @@ export default function LoginPage() {
                   type="password"
                   placeholder="••••••••"
                   className="bg-transparent border-t-0 border-x-0 border-b border-border-strong rounded-none px-0 py-2.5 text-sm text-ink placeholder:text-ink-faint focus-visible:ring-0 focus-visible:border-accent transition-all shadow-none h-auto"
+                  autoComplete="current-password"
                 />
                 <FieldError errors={errors.password ? [errors.password] : []} className="text-[10px] font-bold uppercase tracking-wider mt-2" />
               </FieldContent>
@@ -142,7 +144,7 @@ export default function LoginPage() {
         <p className="text-ink-muted text-xs font-light">
           New to FlowCMS?{" "}
           <Link
-            href="/register"
+            href="/auth/register"
             className="text-ink font-bold hover:underline underline-offset-8 no-underline decoration-accent/40"
           >
             Create an account

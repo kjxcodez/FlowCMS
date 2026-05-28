@@ -1,10 +1,12 @@
 import React from "react";
+import { requireVerifiedSession } from "@/lib/session";
 
-export default function OnboardingLayout({
+export default async function OnboardingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireVerifiedSession();
   return (
     <div className="min-h-screen bg-sidebar flex items-center justify-center relative overflow-hidden">
       {/* Background Effects */}

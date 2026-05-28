@@ -314,7 +314,7 @@ export default function Home() {
                     size="lg"
                     className="h-14 px-10 text-sm font-bold uppercase tracking-widest rounded-sm shadow-2xl"
                   >
-                    <Link href="/register">
+                    <Link href="/auth/register">
                       Start building free{" "}
                       <ArrowRightIcon className="ml-2 size-4" />
                     </Link>
@@ -663,7 +663,7 @@ export default function Home() {
                         "w-full h-14 rounded-sm text-[11px] font-bold uppercase tracking-[0.2em] border-border-strong relative z-10",
                       )}
                     >
-                      <Link href="/register">{tier.cta}</Link>
+                      <Link href="/auth/register">{tier.cta}</Link>
                     </Button>
                   </Card>
                 </FadeUp>
@@ -727,7 +727,7 @@ export default function Home() {
                   size="lg"
                   className="h-16 px-12 text-sm font-bold uppercase tracking-widest rounded-sm bg-accent-bright text-sidebar hover:bg-white shadow-2xl"
                 >
-                  <Link href="/register">
+                  <Link href="/auth/register">
                     Create free account{" "}
                     <ArrowRightIcon className="ml-2 size-4" />
                   </Link>

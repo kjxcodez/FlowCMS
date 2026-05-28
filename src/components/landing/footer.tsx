@@ -139,7 +139,7 @@ const Footer = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
             {/* Primary CTA */}
             <Link
-              href="/register"
+              href="/auth/register"
               className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-ink rounded-[2px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
               style={{
                 background: "#CAFF4D",

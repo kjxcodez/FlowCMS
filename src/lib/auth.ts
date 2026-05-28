@@ -3,6 +3,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { isAdminEmail } from "./admin";
+import { sendVerificationEmail } from "@/lib/email";
+import { DEFAULT_LOGIN_REDIRECT } from "./routes";
 
 
 export const auth = betterAuth({
@@ -11,7 +13,19 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: false, // Enforced via requireVerifiedSession(), not at API layer
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail({
+        to: user.email,
+        name: user.name ?? undefined,
+        verificationUrl: url,
+      });
+    },
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    redirectTo: DEFAULT_LOGIN_REDIRECT,
   },
   socialProviders: {
     google: {

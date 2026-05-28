@@ -33,7 +33,7 @@ export const NavCTA = ({ session = null, fullWidth = false, onAction }: NavCTAPr
   return (
     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
       <Button asChild className={btnClass} onClick={onAction}>
-        <Link href="/register">
+        <Link href="/auth/register">
           Get started <ArrowRightIcon className="ml-2 size-3.5" />
         </Link>
       </Button>

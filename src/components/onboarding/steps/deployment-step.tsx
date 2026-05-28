@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useRouter } from "next/navigation";
 import { Activity } from "lucide-react";
+import { DEFAULT_LOGIN_REDIRECT } from "@/lib/routes";
 
 export function DeploymentStep({ data }: { data: any }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const router = useRouter();
@@ -35,7 +36,7 @@ export function DeploymentStep({ data }: { data: any }) { // eslint-disable-line
         });
         
         setTimeout(() => {
-          router.push("/dashboard");
+          router.push(DEFAULT_LOGIN_REDIRECT);
         }, 8000); // Give them time to soak in the "Deployment"
       } catch (err) {
         console.error(err);

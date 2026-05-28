@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { DEFAULT_LOGIN_REDIRECT } from "@/lib/routes";
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="size-4 mr-3" xmlns="http://www.w3.org/2000/svg">
@@ -34,7 +35,7 @@ export function SocialAuth() {
     try {
       await signIn.social({
         provider,
-        callbackURL: "/dashboard",
+        callbackURL: DEFAULT_LOGIN_REDIRECT,
       });
     } catch (err) {
       console.error(err);
