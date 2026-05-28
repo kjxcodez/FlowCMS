@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { requireAdmin } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function AdminLayout({
   children,
@@ -24,6 +25,7 @@ export default async function AdminLayout({
           </main>
         </SidebarInset>
       </div>
+      <Toaster/>
     </SidebarProvider>
   );
 }
