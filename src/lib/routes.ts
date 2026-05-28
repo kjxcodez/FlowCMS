@@ -2,6 +2,7 @@ export const publicRoutes = [
   "/",
   "/docs",
   "/auth/verify-email",
+  "/auth/reset-password",
   "/auth/error",
   "/api/auth",
   "/api/v1",
@@ -14,7 +15,7 @@ export const publicRoutePatterns = [
 export const authRoutes = [
   "/auth/login",
   "/auth/register",
-  "/auth/reset-password",
+  "/auth/forgot-password",
 ];
 
 export const DEFAULT_LOGIN_REDIRECT = "/dashboard";

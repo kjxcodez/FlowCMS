@@ -3,7 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { isAdminEmail } from "./admin";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
 import { DEFAULT_LOGIN_REDIRECT } from "./routes";
 
 
@@ -14,9 +14,19 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Enforced via requireVerifiedSession(), not at API layer
+    sendResetPassword: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+      await sendPasswordResetEmail({
+        to: user.email,
+        name: user.name ?? undefined,
+        resetUrl: url,
+        expiresInMinutes: 60,
+      });
+    },
+    resetPasswordTokenExpiresIn: 3600, // 1 hour
+    revokeSessionsOnPasswordReset: true,
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
+    sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
       await sendVerificationEmail({
         to: user.email,
         name: user.name ?? undefined,
@@ -44,7 +54,7 @@ export const auth = betterAuth({
    * Correct Better Auth hook architecture using databaseHooks.
    * Validates login state (e.g., checks if user is suspended) before session creation.
    */
-    databaseHooks: {
+  databaseHooks: {
     session: {
       create: {
         before: async (session) => {
@@ -57,7 +67,7 @@ export const auth = betterAuth({
           if (user.isSuspended) {
             const isPlatformAdmin = isAdminEmail(user.email);
             if (isPlatformAdmin) return; // Emergency bypass for admins
-            
+
             logger.warn("Login blocked: User suspended", { userId: user.id, email: user.email });
             return false;
           }
