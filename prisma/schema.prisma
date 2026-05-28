@@ -79,6 +79,7 @@ model Workspace {
   environments     Environment[]
   collections      Collection[]
   media            Media[]
+  folders          MediaFolder[]
   apiKeys          ApiKey[]
   webhooks         Webhook[]
   usageLogs        UsageLog[]
@@ -174,14 +175,40 @@ model Media {
   mimeType    String
   size        Int
   alt         String?
+  title       String?
+  caption     String?
   width       Int?
   height      Int?
   folder      String?  @default("/")
+
+  folderId    String?
+  folderRelation MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId, folder])
+  @@index([workspaceId, folderId])
+}
+
+model MediaFolder {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  parent MediaFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+
+  children MediaFolder[] @relation("FolderHierarchy")
+  media    Media[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, parentId])
 }
 
 // ── API Keys ───────────────────────────────────────────────────────
