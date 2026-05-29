@@ -58,6 +58,7 @@ interface MediaItem {
   height: number | null;
   folderId: string | null;
   createdAt: string;
+  folder?: { id: string; name: string } | null;
 }
 
 interface FolderNode {
@@ -845,9 +846,9 @@ export default function MediaPage() {
                           </div>
 
                           {/* Inline indicators */}
-                          {item.folderRelation && (
+                          {item.folder && (
                             <div className="absolute bottom-1 right-1 bg-ink/75 backdrop-blur-[2px] text-[8px] font-mono text-white rounded-[2px] px-1.5 py-0.5">
-                              {item.folderRelation.name}
+                              {item.folder.name}
                             </div>
                           )}
                         </div>
@@ -926,7 +927,7 @@ export default function MediaPage() {
                             </td>
                             <td className="p-3">
                               <span className="px-1.5 py-0.5 bg-canvas border border-border rounded-[2px] font-mono text-[9px] text-ink-muted uppercase">
-                                {item.folderRelation?.name || "root"}
+                                {item.folder?.name || "root"}
                               </span>
                             </td>
                             <td className="p-3 text-ink-muted font-mono text-[10px]">

@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         { title: { contains: q, mode: "insensitive" } },
         { caption: { contains: q, mode: "insensitive" } },
         {
-          folderRelation: {
+          folder: {
             name: { contains: q, mode: "insensitive" },
           },
         },
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const media = await prisma.media.findMany({
       where: whereClause,
       include: {
-        folderRelation: true,
+        folder: true,
       },
       orderBy: { createdAt: "desc" },
     });
