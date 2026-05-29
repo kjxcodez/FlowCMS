@@ -54,16 +54,15 @@ export function DeveloperQuickActions() {
     {
       title: "Read Docs",
       desc: "Learn integration patterns and type-safe SDK usage.",
-      href: APP_CONFIG.docsUrl || "https://docs.flowcms.com",
+      href: "/docs",
       icon: BookOpen,
-      isExternal: true,
       color: "text-emerald-400",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(52,211,153,0.15)]",
     },
     {
       title: "Open API Explorer",
       desc: "Simulate queries and review live JSON response bodies.",
-      href: "#first-api-widget",
+      href: "/dashboard/api-explorer",
       icon: Terminal,
       color: "text-pink-400",
       glowColor: "group-hover:shadow-[0_0_20px_rgba(244,114,182,0.15)]",
