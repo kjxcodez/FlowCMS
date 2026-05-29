@@ -1,18 +1,17 @@
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { DeliveriesList } from "@/components/dashboard/webhooks/deliveries-list";
+
 import { 
-  CheckCircle2, 
-  XCircle, 
   Clock, 
   ArrowLeft,
   Activity,
-  Code,
   Globe
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
@@ -64,43 +63,7 @@ export default async function WebhookDetailsPage({ params }: { params: { id: str
           </h3>
           
           <div className="space-y-4">
-            {deliveries.length === 0 ? (
-              <div className="p-12 bg-canvas border border-dashed border-border rounded-sm text-center">
-                <p className="text-sm text-ink-muted">No delivery attempts recorded yet.</p>
-              </div>
-            ) : (
-              deliveries.map((log) => (
-                <Card key={log.id} className="bg-paper border-border hover:border-accent/30 transition-colors overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="flex items-center justify-between p-6 bg-canvas/30 border-b border-border">
-                      <div className="flex items-center gap-4">
-                        {log.success ? (
-                          <CheckCircle2 className="size-4 text-success" />
-                        ) : (
-                          <XCircle className="size-4 text-destructive" />
-                        )}
-                        <span className="font-mono text-[11px] font-bold text-ink">{log.event}</span>
-                        <Badge variant="outline" className="text-[9px] font-mono border-border">
-                          {log.statusCode}
-                        </Badge>
-                      </div>
-                      <span className="text-[10px] font-mono text-ink-faint">
-                        {format(new Date(log.createdAt), "MMM dd, HH:mm:ss")}
-                      </span>
-                    </div>
-                    <div className="p-6 space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Code className="size-3 text-ink-faint" />
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-ink-muted">Payload</span>
-                      </div>
-                      <pre className="bg-[#0F1109] p-4 rounded-sm text-[10px] font-mono text-white/70 overflow-auto max-h-48 custom-scrollbar">
-                        {JSON.stringify(log.payload, null, 2)}
-                      </pre>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+            <DeliveriesList initialDeliveries={deliveries as unknown as Parameters<typeof DeliveriesList>[0]['initialDeliveries']} />
           </div>
         </div>
 
