@@ -5,6 +5,7 @@ import { apiError, apiSuccess } from "@/types/api";
 import { ApiKeyService } from "@/server/services/api-key.service";
 import { CreateApiKeySchema } from "@/lib/validations/api-key";
 import { FEATURES } from "@/lib/launch";
+import { isAdminEmail } from "@/lib/admin";
 
 export const runtime = "nodejs";
 
@@ -15,7 +16,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const { workspace, session } = await requireWorkspace();
-    if (!FEATURES.enableApiKeyGeneration && !session.user.email?.includes("@kapil")) {
+    if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
 
@@ -53,7 +54,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { workspace, session } = await requireWorkspace();
-    if (!FEATURES.enableApiKeyGeneration && !session.user.email?.includes("@kapil")) {
+    if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
 
@@ -94,7 +95,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { workspace, session } = await requireWorkspace();
-    if (!FEATURES.enableApiKeyGeneration && !session.user.email?.includes("@kapil")) {
+    if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
 
