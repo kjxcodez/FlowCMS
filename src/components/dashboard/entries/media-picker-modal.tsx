@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { 
   X, 
   Search, 
@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useMedia, useUploadMedia } from "@/hooks/use-media";
+import { toast } from "sonner";
 
 interface MediaPickerModalProps {
   isOpen: boolean;
@@ -23,6 +25,22 @@ interface MediaPickerModalProps {
   onSelect: (url: string) => void;
   selectedUrl?: string;
 }
+
+interface PickerFile {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+}
+
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
 
 export function MediaPickerModal({
   isOpen,
@@ -32,17 +50,35 @@ export function MediaPickerModal({
 }: MediaPickerModalProps) {
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock media data
-  const mediaFiles = [
-    { id: "1", name: "hero-banner.jpg", url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800", type: "image" },
-    { id: "2", name: "product-demo.mp4", url: "#", type: "video" },
-    { id: "3", name: "profile-shot.png", url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400", type: "image" },
-    { id: "4", name: "logo-dark.svg", url: "#", type: "image" },
-    { id: "5", name: "background-texture.webp", url: "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=800", type: "image" },
-  ];
+  const { data: media = [], isLoading } = useMedia();
+  const uploadMutation = useUploadMedia();
 
-  const filteredMedia = mediaFiles.filter(m => m.name.toLowerCase().includes(search.toLowerCase()));
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const res = await uploadMutation.mutateAsync({ file });
+      if (res?.data?.url) {
+        onSelect(res.data.url);
+        toast.success("Media uploaded and selected!");
+      } else {
+        toast.success("Media uploaded successfully!");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload media");
+    }
+  };
+
+  const filteredMedia: PickerFile[] = (media || []).map((m: any) => ({
+    id: m.id,
+    name: m.filename,
+    url: m.url,
+    type: m.mimeType?.startsWith("image") ? "image" : "video",
+    size: m.size,
+  })).filter((m: PickerFile) => m.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <AnimatePresence>
@@ -98,18 +134,40 @@ export function MediaPickerModal({
                         <List className="size-3.5" />
                      </button>
                   </div>
-                  <Button size="sm" className="h-9 gap-2 text-[10px] font-bold uppercase tracking-widest px-4">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handleFileUpload} 
+                    accept="image/*,video/*"
+                  />
+                  <Button 
+                    size="sm" 
+                    disabled={uploadMutation.isPending}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-9 gap-2 text-[10px] font-bold uppercase tracking-widest px-4"
+                  >
                     <Upload className="size-3.5" />
-                    Upload
+                    {uploadMutation.isPending ? "Uploading..." : "Upload"}
                   </Button>
                </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-auto p-6 bg-canvas custom-scrollbar">
-              {view === "grid" ? (
+              {isLoading ? (
+                <div className="size-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
+                </div>
+              ) : filteredMedia.length === 0 ? (
+                <div className="size-full flex flex-col items-center justify-center text-ink-muted">
+                  <ImageIcon className="size-12 text-ink-faint mb-4" />
+                  <p className="text-sm font-medium">No media files found</p>
+                  <p className="text-xs text-ink-faint mt-1">Upload files to get started</p>
+                </div>
+              ) : view === "grid" ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {filteredMedia.map(file => (
+                  {filteredMedia.map((file: PickerFile) => (
                     <div 
                       key={file.id}
                       onClick={() => onSelect(file.url)}
@@ -119,7 +177,15 @@ export function MediaPickerModal({
                       )}
                     >
                       {file.type === "image" ? (
-                        <Image src={file.url} alt={file.name} className="size-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                        <div className="relative size-full">
+                          <Image 
+                            src={file.url} 
+                            alt={file.name} 
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="object-cover grayscale group-hover:grayscale-0 transition-all" 
+                          />
+                        </div>
                       ) : (
                         <div className="size-full flex items-center justify-center bg-accent/5">
                            <File className="size-8 text-accent/20 group-hover:text-accent transition-colors" />
@@ -140,7 +206,7 @@ export function MediaPickerModal({
                 </div>
               ) : (
                 <div className="space-y-1">
-                   {filteredMedia.map(file => (
+                   {filteredMedia.map((file: PickerFile) => (
                      <div 
                        key={file.id}
                        onClick={() => onSelect(file.url)}
@@ -149,16 +215,18 @@ export function MediaPickerModal({
                          selectedUrl === file.url && "border-accent bg-accent/5"
                        )}
                      >
-                        <div className="size-10 bg-canvas rounded-sm flex items-center justify-center shrink-0">
+                        <div className="size-10 bg-canvas rounded-sm flex items-center justify-center shrink-0 overflow-hidden relative">
                            {file.type === "image" ? (
-                             <Image src={file.url} alt={file.name} className="size-8 object-cover grayscale rounded-[1px]" />
+                             <Image src={file.url} alt={file.name} fill className="object-cover grayscale rounded-[1px]" />
                            ) : (
                              <File className="size-5 text-accent/40" />
                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                            <p className="text-xs font-bold text-ink truncate">{file.name}</p>
-                           <p className="text-[10px] font-mono text-ink-faint uppercase">1.2 MB • {file.type}</p>
+                           <p className="text-[10px] font-mono text-ink-faint uppercase">
+                             {formatSize(file.size)} • {file.type}
+                           </p>
                         </div>
                         {selectedUrl === file.url && <Check className="size-4 text-accent" />}
                      </div>
