@@ -36,12 +36,16 @@ import { useWorkspace } from "@/hooks/use-workspace";
 import { toast } from "sonner";
 
 const AVAILABLE_EVENTS = [
-  { id: "entry.created", label: "Entry Created", desc: "Triggered when a new entry is created." },
-  { id: "entry.updated", label: "Entry Updated", desc: "Triggered when an entry is modified." },
-  { id: "entry.published", label: "Entry Published", desc: "Triggered when an entry goes live." },
-  { id: "entry.deleted", label: "Entry Deleted", desc: "Triggered when an entry is removed." },
-  { id: "collection.created", label: "Collection Created", desc: "Triggered when a new schema is defined." },
-  { id: "media.uploaded", label: "Media Uploaded", desc: "Triggered when an asset is uploaded." },
+  { id: "ENTRY_CREATED", label: "Entry Created", desc: "Triggered when a new entry is created." },
+  { id: "ENTRY_UPDATED", label: "Entry Updated", desc: "Triggered when an entry is modified." },
+  { id: "ENTRY_PUBLISHED", label: "Entry Published", desc: "Triggered when an entry goes live." },
+  { id: "ENTRY_DELETED", label: "Entry Deleted", desc: "Triggered when an entry is removed." },
+  { id: "COLLECTION_CREATED", label: "Collection Created", desc: "Triggered when a new collection is created." },
+  { id: "COLLECTION_UPDATED", label: "Collection Updated", desc: "Triggered when a collection is modified." },
+  { id: "COLLECTION_DELETED", label: "Collection Deleted", desc: "Triggered when a collection is deleted." },
+  { id: "MEDIA_UPLOADED", label: "Media Uploaded", desc: "Triggered when an asset is uploaded." },
+  { id: "MEDIA_UPDATED", label: "Media Updated", desc: "Triggered when an asset is modified." },
+  { id: "MEDIA_DELETED", label: "Media Deleted", desc: "Triggered when an asset is deleted." },
 ];
 
 export default function WebhooksPage() {
@@ -49,7 +53,7 @@ export default function WebhooksPage() {
   const { data: workspace } = useWorkspace();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUrl, setNewUrl] = useState("");
-  const [selectedEvents, setSelectedEvents] = useState<string[]>(["entry.published"]);
+  const [selectedEvents, setSelectedEvents] = useState<string[]>(["ENTRY_PUBLISHED"]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -60,7 +64,7 @@ export default function WebhooksPage() {
       await createWebhook({ url: newUrl, events: selectedEvents });
       setIsCreateOpen(false);
       setNewUrl("");
-      setSelectedEvents(["entry.published"]);
+      setSelectedEvents(["ENTRY_PUBLISHED"]);
       toast.success("Webhook endpoint registered successfully!");
     } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(e?.message || "Failed to create webhook.");
@@ -264,15 +268,15 @@ export default function WebhooksPage() {
                 {/* Visual nodes showing a publish event going to a destination */}
                 <div className="space-y-4 font-mono text-[10px]">
                   <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all">
-                    <span className="text-accent font-bold">entry.published</span>
+                    <span className="text-accent font-bold">ENTRY_PUBLISHED</span>
                     <span className="text-ink-faint">&rarr; Vercel ISR Hook</span>
                   </div>
                   <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all opacity-70">
-                    <span className="text-accent font-bold">media.uploaded</span>
+                    <span className="text-accent font-bold">MEDIA_UPLOADED</span>
                     <span className="text-ink-faint">&rarr; Algolia Sync</span>
                   </div>
                   <div className="p-3 bg-paper border border-border rounded-sm flex items-center justify-between shadow-sm hover:border-accent/30 transition-all opacity-45">
-                    <span className="text-accent font-bold">collection.created</span>
+                    <span className="text-accent font-bold">COLLECTION_CREATED</span>
                     <span className="text-ink-faint">&rarr; Discord Alert</span>
                   </div>
                 </div>
