@@ -121,7 +121,7 @@ export function RecentActivityFeed({ logs, isLoading }: RecentActivityFeedProps)
   const hasLogs = logs && logs.length > 0;
 
   return (
-    <Card className="h-full bg-paper border-border rounded-sm p-8 shadow-sm overflow-hidden relative">
+    <Card className="min-h-[450px] bg-paper border-border rounded-sm p-8 shadow-sm overflow-hidden relative">
       <div className="absolute top-0 left-0 w-full h-1 bg-accent/20" />
       
       <CardHeader className="p-0 mb-8">
@@ -144,7 +144,7 @@ export function RecentActivityFeed({ logs, isLoading }: RecentActivityFeedProps)
         </div>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="p-0 overflow-hidden">
         {!hasLogs ? (
           <div className="py-12 text-center space-y-4 border border-dashed border-border rounded-sm bg-canvas/30">
             <Sparkles className="size-8 text-ink-faint mx-auto animate-pulse" />
@@ -157,49 +157,51 @@ export function RecentActivityFeed({ logs, isLoading }: RecentActivityFeedProps)
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="relative pl-6 border-l border-border space-y-6">
-              {logs.map((log) => {
-                const styles = getActionStyles(log.action);
-                const Icon = getResourceIcon(log.resourceType);
-                const actionText = getFriendlyActionText(log.action, log.resourceType, log.resourceName);
-                
-                let timeStr = "recently";
-                try {
-                  timeStr = formatDistanceToNow(new Date(log.createdAt), { addSuffix: true });
-                } catch {
-                  // Fallback if date is invalid
-                }
+            <div className="max-h-[650px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="relative pl-6 border-l border-border space-y-6">
+                {logs.map((log) => {
+                  const styles = getActionStyles(log.action);
+                  const Icon = getResourceIcon(log.resourceType);
+                  const actionText = getFriendlyActionText(log.action, log.resourceType, log.resourceName);
+                  
+                  let timeStr = "recently";
+                  try {
+                    timeStr = formatDistanceToNow(new Date(log.createdAt), { addSuffix: true });
+                  } catch {
+                    // Fallback if date is invalid
+                  }
 
-                return (
-                  <div key={log.id} className="relative group/item">
-                    {/* Activity Dot */}
-                    <div className={`absolute -left-[30px] top-1.5 size-4 rounded-full border-4 border-paper flex items-center justify-center shrink-0`}>
-                      <div className={`size-1.5 rounded-full ${styles.dotColor}`} />
-                    </div>
+                  return (
+                    <div key={log.id} className="relative group/item">
+                      {/* Activity Dot */}
+                      <div className={`absolute -left-[30px] top-1.5 size-4 rounded-full border-4 border-paper flex items-center justify-center shrink-0`}>
+                        <div className={`size-1.5 rounded-full ${styles.dotColor}`} />
+                      </div>
 
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`size-8 rounded-sm ${styles.bgColor} border flex items-center justify-center shrink-0`}>
-                          <Icon className={`size-4 ${styles.iconColor}`} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-ink leading-snug group-hover/item:text-accent transition-colors">
-                            {actionText}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1.5 text-[10px] text-ink-muted font-light">
-                            <span className="flex items-center gap-1">
-                              <User className="size-3 text-ink-faint" />
-                              {log.user?.name || log.user?.email || "System"}
-                            </span>
-                            <span>•</span>
-                            <span>{timeStr}</span>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className={`size-8 rounded-sm ${styles.bgColor} border flex items-center justify-center shrink-0`}>
+                            <Icon className={`size-4 ${styles.iconColor}`} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-ink leading-snug group-hover/item:text-accent transition-colors">
+                              {actionText}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1.5 text-[10px] text-ink-muted font-light">
+                              <span className="flex items-center gap-1">
+                                <User className="size-3 text-ink-faint" />
+                                {log.user?.name || log.user?.email || "System"}
+                              </span>
+                              <span>•</span>
+                              <span>{timeStr}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
 
             <div className="pt-4 border-t border-border">
