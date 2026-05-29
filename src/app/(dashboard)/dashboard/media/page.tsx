@@ -221,7 +221,7 @@ export default function MediaPage() {
     let currentId: string | null = activeFolderId;
     
     while (currentId) {
-      const folder = folderMap[currentId];
+      const folder = folderMap[currentId as string] as MediaFolderItem;
       if (!folder) break;
       chain.unshift({ id: folder.id, name: folder.name });
       currentId = folder.parentId;
