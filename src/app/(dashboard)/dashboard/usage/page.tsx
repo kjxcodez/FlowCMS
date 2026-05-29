@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useUsage, useUsageRequests } from "@/hooks/use-usage";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { PLAN_LIMITS } from "@/types/cms";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,8 +28,10 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ label, current, max, unit = "", icon: Icon }: MetricCardProps) => {
-  const percentage = Math.min(Math.round((current / max) * 100), 100);
+  const isUnlimited = max === -1;
+  const percentage = isUnlimited ? 0 : Math.min(Math.round((current / max) * 100), 100);
   const isHigh = percentage > 80;
+  const displayMax = isUnlimited ? "∞" : max.toLocaleString();
 
   return (
     <Card className="bg-paper border-border rounded-sm overflow-hidden group">
@@ -40,7 +43,7 @@ const MetricCard = ({ label, current, max, unit = "", icon: Icon }: MetricCardPr
           <div className="text-right">
             <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted mb-2">{label}</p>
             <p className="text-3xl font-display font-semibold text-ink">
-              {current.toLocaleString()}{unit} <span className="text-sm text-ink-faint font-light">/ {max.toLocaleString()}{unit}</span>
+              {current.toLocaleString()}{unit} <span className="text-sm text-ink-faint font-light">/ {displayMax}{unit}</span>
             </p>
           </div>
         </div>
@@ -49,10 +52,10 @@ const MetricCard = ({ label, current, max, unit = "", icon: Icon }: MetricCardPr
           <Progress value={percentage} className={cn("h-1 bg-canvas", isHigh && "[&>div]:bg-destructive")} />
           <div className="flex justify-between text-[9px] font-mono font-bold uppercase tracking-[0.2em]">
             <span className={cn(isHigh ? "text-destructive" : "text-ink-muted")}>
-              {percentage}% consumed
+              {isUnlimited ? "Unlimited capacity" : `${percentage}% consumed`}
             </span>
             <span className="text-ink-faint">
-              {(max - current).toLocaleString()}{unit} remaining
+              {isUnlimited ? "No ceiling limit" : `${(max - current).toLocaleString()}${unit} remaining`}
             </span>
           </div>
         </div>
@@ -77,6 +80,9 @@ export default function UsagePage() {
   };
 
   const storageGB = (usage?.storageBytes || 0) / (1024 * 1024 * 1024);
+  const activePlan = workspace?.plan || "HOBBY";
+  const limits = PLAN_LIMITS[activePlan];
+  const storageLimitGb = activePlan === "PRO" ? 50 : activePlan === "AGENCY" ? 250 : activePlan === "ENTERPRISE" ? -1 : 5;
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-1000 pb-32">
@@ -100,13 +106,13 @@ export default function UsagePage() {
         <MetricCard 
           label="API Requests" 
           current={usage?.apiRequests ?? 0} 
-          max={5000} 
+          max={limits?.apiRequestsPerMonth ?? 5000} 
           icon={Zap} 
         />
         <MetricCard 
           label="Asset Storage" 
           current={Number(storageGB.toFixed(2))} 
-          max={5} 
+          max={storageLimitGb} 
           unit=" GB" 
           icon={Database} 
         />
@@ -178,7 +184,7 @@ export default function UsagePage() {
             <div className="absolute inset-0 noise-overlay opacity-20" />
             <CardContent className="relative z-10 p-10 space-y-8 flex flex-col h-full">
               <Badge className="w-fit px-3 py-1 bg-accent-bright text-sidebar text-[10px] font-bold uppercase tracking-widest rounded-sm border-none">
-                Current Plan: Free
+                Current Plan: {activePlan}
               </Badge>
               <div className="space-y-4">
                 <h3 className="font-display text-3xl font-semibold leading-tight text-white">
