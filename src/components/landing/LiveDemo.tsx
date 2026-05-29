@@ -340,7 +340,7 @@ export const LiveDemo = () => {
       "Docs Article": [
         { id: "1", type: "Heading", translations: { EN: "API Authentication" } },
         { id: "2", type: "Rich Text", translations: { EN: "Learn how to secure your API calls using FlowCMS bearer tokens." } },
-        { id: "3", type: "Code Snippet", translations: { EN: "curl -X GET https://getflowcms.com/v1/entries/blog-post" } }
+        { id: "3", type: "Code Snippet", translations: { EN: "curl -X GET https://getflowcms.com/api/v1/entries/blog-post" } }
       ],
       "Landing Section": [
         { id: "1", type: "Heading", translations: { EN: "Ready to go flow?" } },
@@ -785,11 +785,11 @@ export const LiveDemo = () => {
           <div className="group flex items-center justify-between bg-white/5 border border-white/10 p-2 rounded-sm transition-colors hover:border-white/20">
             <div className="flex items-center gap-2 overflow-hidden">
               <span className="font-mono text-[10px] font-bold bg-accent-bright text-ink px-1.5 py-0.5 rounded-sm shrink-0">GET</span>
-              <code className="font-mono text-[11px] text-white/60 truncate">/v1/entries/{collectionSlug}</code>
+              <code className="font-mono text-[11px] text-white/60 truncate">/api/v1/entries/{collectionSlug}</code>
             </div>
             <div className="flex items-center gap-2 shrink-0">
                <button 
-                 onClick={() => handleCopy(`https://api.getflowcms.com/v1/entries/${collectionSlug}`)}
+                 onClick={() => handleCopy(`https://getflowcms.com/api/v1/entries/${collectionSlug}`)}
                  className="p-1 text-white/20 hover:text-accent-bright transition-colors cursor-pointer bg-transparent border-none"
                  title="Copy full URL"
                >
