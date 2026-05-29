@@ -4,10 +4,10 @@ import { apiError, apiSuccess } from "@/types/api";
 
 export const runtime = "nodejs";
 
-export const GET = withApiAuth(async (req, { workspaceId }) => {
-  const parts = req.nextUrl.pathname.split("/");
-  const entrySlug = parts.at(-1)!;
-  const collectionSlug = parts.at(-2)!;
+export const GET = withApiAuth(async (req, { workspaceId, params }) => {
+  const resolvedParams = await params;
+  const entrySlug = resolvedParams?.entrySlug || req.nextUrl.pathname.split("/").at(-1)!;
+  const collectionSlug = resolvedParams?.collectionSlug || req.nextUrl.pathname.split("/").at(-2)!;
 
   const collection = await prisma.collection.findUnique({
     where: { workspaceId_slug: { workspaceId, slug: collectionSlug } },

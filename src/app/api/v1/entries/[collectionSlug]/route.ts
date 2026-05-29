@@ -4,15 +4,17 @@ import { apiError, apiSuccess } from "@/types/api";
 
 export const runtime = "nodejs";
 
-export const GET = withApiAuth(async (req, { workspaceId }) => {
-  // Use the param from the URL
-  const { collectionSlug } = (req as any).params || {};  // eslint-disable-line @typescript-eslint/no-explicit-any
-  // In Next.js App Router with withApiAuth, we might need to handle params differently if it's wrapped.
-  // Actually, req.nextUrl.pathname works too.
+interface CollectionField {
+  slug: string;
+  type: string;
+}
+
+export const GET = withApiAuth(async (req, { workspaceId, params }) => {
+  const resolvedParams = await params;
+  const collectionSlug = resolvedParams?.collectionSlug;
   const slug = collectionSlug || req.nextUrl.pathname.split("/").at(-1)!;
 
   const { searchParams } = req.nextUrl;
-  // const status = searchParams.get("status") ?? "published";
   const page = parseInt(searchParams.get("page") ?? "1");
   const perPage = Math.min(
     parseInt(searchParams.get("perPage") ?? "20"),
@@ -47,17 +49,17 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
   
   if (expand && entries.length > 0) {
     // 1. Identify reference fields
-    const fields = (collection.fields as any[]) || []; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const fields = (collection.fields as unknown as CollectionField[]) || [];
     const referenceFields = fields.filter(f => f.type === "reference").map(f => f.slug);
 
     if (referenceFields.length > 0) {
       // 2. Collect all referenced IDs
       const allRefIds = new Set<string>();
       entries.forEach(entry => {
-        const data = entry.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        referenceFields.forEach(slug => {
-          if (data[slug] && typeof data[slug] === "string") {
-            allRefIds.add(data[slug]);
+        const data = entry.data as Record<string, any>;
+        referenceFields.forEach(fieldSlug => {
+          if (data[fieldSlug] && typeof data[fieldSlug] === "string") {
+            allRefIds.add(data[fieldSlug]);
           }
         });
       });
@@ -72,10 +74,10 @@ export const GET = withApiAuth(async (req, { workspaceId }) => {
 
         // 4. Inject referenced entries back into data
         entries.forEach(entry => {
-          const data = entry.data as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-          referenceFields.forEach(slug => {
-            if (data[slug] && refMap.has(data[slug])) {
-              data[`_${slug}_expanded`] = refMap.get(data[slug]);
+          const data = entry.data as Record<string, any>;
+          referenceFields.forEach(fieldSlug => {
+            if (data[fieldSlug] && refMap.has(data[fieldSlug])) {
+              data[`_${fieldSlug}_expanded`] = refMap.get(data[fieldSlug]);
             }
           });
         });
