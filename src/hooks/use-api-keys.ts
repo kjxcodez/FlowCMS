@@ -5,6 +5,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 async function fetchJson(url: string) {
   const r = await fetch(url);
   const json = await r.json();
+  if (!r.ok) {
+    throw new Error(json.message || "Failed to fetch data");
+  }
   return json.data;
 }
 
@@ -32,7 +35,11 @@ export function useCreateApiKey() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
-      }).then((r) => r.json()),
+      }).then(async (r) => {
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.message || "Failed to create API key.");
+        return json;
+      }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["api-keys"] }),
   });
@@ -44,7 +51,11 @@ export function useDeleteApiKey() {
     mutationFn: (id: string) =>
       fetch(`/api/internal/api-keys?id=${id}`, {
         method: "DELETE",
-      }).then((r) => r.json()),
+      }).then(async (r) => {
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.message || "Failed to delete API key.");
+        return json;
+      }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["api-keys"] }),
   });
