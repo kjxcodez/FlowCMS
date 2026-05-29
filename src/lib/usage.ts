@@ -114,3 +114,76 @@ export async function checkCollectionLimit(
     limit: limits.collections,
   };
 }
+
+export async function incrementStorageUsage(
+  workspaceId: string,
+  sizeBytes: number
+): Promise<void> {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  await prisma.monthlyUsage.upsert({
+    where: {
+      workspaceId_year_month: {
+        workspaceId,
+        year,
+        month,
+      },
+    },
+    update: {
+      storageBytes: {
+        increment: sizeBytes,
+      },
+    },
+    create: {
+      workspaceId,
+      year,
+      month,
+      storageBytes: sizeBytes,
+    },
+  });
+}
+
+export async function decrementStorageUsage(
+  workspaceId: string,
+  sizeBytes: number
+): Promise<void> {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  // Safely decrement to avoid negative values
+  const record = await prisma.monthlyUsage.findUnique({
+    where: {
+      workspaceId_year_month: {
+        workspaceId,
+        year,
+        month,
+      },
+    },
+  });
+
+  const currentStorage = record?.storageBytes ?? 0;
+  const newStorage = Math.max(0, currentStorage - sizeBytes);
+
+  await prisma.monthlyUsage.upsert({
+    where: {
+      workspaceId_year_month: {
+        workspaceId,
+        year,
+        month,
+      },
+    },
+    update: {
+      storageBytes: newStorage,
+    },
+    create: {
+      workspaceId,
+      year,
+      month,
+      storageBytes: 0,
+    },
+  });
+}
+

@@ -38,7 +38,7 @@ export function emitPlatformEvent(event: PlatformEvent, payload: any) { // eslin
 // ==========================================
 
 // 1. Unified Audit Log Listener
-platformEmitter.on("*", async (event: string, _payload: unknown) => { // Wildcard listening fallback helper
+platformEmitter.on("*", async (event: string) => { // Wildcard listening fallback helper
   logger.debug(`Wildcard listener observed event: ${event}`);
 });
 
