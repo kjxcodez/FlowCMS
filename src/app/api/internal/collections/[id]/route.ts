@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { UpdateCollectionSchema } from "@/lib/validations/collection";
 
+import { dispatchWebhooks } from "@/lib/webhooks";
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -39,6 +41,11 @@ export async function PATCH(
   if (!result.count) return apiError("NOT_FOUND", "Collection not found.");
 
   const updated = await prisma.collection.findUnique({ where: { id } });
+  
+  if (updated) {
+    dispatchWebhooks(workspace.id, "COLLECTION_UPDATED", updated);
+  }
+
   return apiSuccess(updated);
 }
 
@@ -49,9 +56,16 @@ export async function DELETE(
   const { workspace } = await requireWorkspace();
   const { id } = await params;
 
-  const result = await prisma.collection.deleteMany({
+  const collection = await prisma.collection.findFirst({
     where: { id, workspaceId: workspace.id },
   });
-  if (!result.count) return apiError("NOT_FOUND", "Collection not found.");
+  if (!collection) return apiError("NOT_FOUND", "Collection not found.");
+
+  await prisma.collection.delete({
+    where: { id },
+  });
+
+  dispatchWebhooks(workspace.id, "COLLECTION_DELETED", collection);
+
   return apiSuccess({ deleted: true });
 }

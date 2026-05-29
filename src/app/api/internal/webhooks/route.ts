@@ -9,6 +9,8 @@ import { logAction } from "@/lib/audit";
 import { canAccessFeature } from "@/lib/launch";
 import { isAdminEmail } from "@/lib/admin";
 
+import { WebhookEvent } from "@/generated/prisma";
+
 export async function GET() {
   const { workspace, session } = await requireWorkspace();
   if (!canAccessFeature("enableWebhooks", session.user.email)) {
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
     data: {
       workspaceId: workspace.id,
       url: parsed.data.url,
-      events: parsed.data.events as never[],
+      events: parsed.data.events as WebhookEvent[],
       secret: crypto.randomBytes(32).toString("hex"),
     },
   });

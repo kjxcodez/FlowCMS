@@ -4,13 +4,18 @@ import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { CreateEntrySchema } from "@/lib/validations/entry";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { EntryStatus, Prisma } from "@/generated/prisma";
 
 export async function GET(req: NextRequest) {
   const { workspace } = await requireWorkspace();
   const { searchParams } = req.nextUrl;
 
   const collectionId = searchParams.get("collectionId");
-  const status = searchParams.get("status");
+  const statusParam = searchParams.get("status");
+  const status = statusParam && Object.values(EntryStatus).includes(statusParam as EntryStatus)
+    ? (statusParam as EntryStatus)
+    : undefined;
+
   const page = parseInt(searchParams.get("page") ?? "1");
   const perPage = Math.min(
     parseInt(searchParams.get("perPage") ?? "20"),
@@ -19,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const where = {
     ...(collectionId ? { collectionId } : {}),
-    ...(status ? { status: status as never } : {}),
+    ...(status ? { status } : {}),
     collection: { workspaceId: workspace.id },
   };
 
@@ -72,8 +77,7 @@ export async function POST(req: NextRequest) {
       collectionId: parsed.data.collectionId,
       workspaceId: workspace.id,
       slug: parsed.data.slug,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: parsed.data.data as any,
+      data: parsed.data.data as Prisma.InputJsonValue,
       status: parsed.data.status ?? "DRAFT",
       publishedAt:
         parsed.data.status === "PUBLISHED" ? new Date() : null,

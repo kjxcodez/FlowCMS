@@ -8,6 +8,8 @@ import { CreateCollectionSchema } from "@/lib/validations/collection";
 
 import { isAdminEmail } from "@/lib/admin";
 
+import { dispatchWebhooks } from "@/lib/webhooks";
+
 import * as Sentry from "@sentry/nextjs";
 
 export const runtime = "nodejs";
@@ -72,6 +74,10 @@ export async function POST(req: NextRequest) {
       workspaceId: workspace.id,
       slug: parsed.data.slug,
     });
+
+    // Dispatch Outbound Webhook
+    dispatchWebhooks(workspace.id, "COLLECTION_CREATED", collection);
+
     return apiSuccess(collection);
   } catch (error) {
     Sentry.captureException(error);
