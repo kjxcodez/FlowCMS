@@ -8,6 +8,9 @@ export interface MediaUploadParams {
   url: string;
   mimeType: string;
   size: number;
+  folderId?: string | null;
+  title?: string | null;
+  caption?: string | null;
 }
 
 export class MediaService {
@@ -41,6 +44,9 @@ export class MediaService {
         url: params.url,
         mimeType: params.mimeType,
         size: params.size,
+        folderId: params.folderId || null,
+        title: params.title || null,
+        caption: params.caption || null,
       },
     });
 
@@ -120,5 +126,34 @@ export class MediaService {
       count,
       totalBytes: aggregate._sum.size ?? 0,
     };
+  }
+
+  /**
+   * Scan entry data to track references of a media item in the workspace.
+   */
+  static async getMediaUsage(workspaceId: string, mediaId: string, mediaUrl: string) {
+    const entries = await prisma.entry.findMany({
+      where: { workspaceId },
+      include: {
+        collection: true,
+      },
+    });
+
+    const usages: { type: string; name: string; id: string }[] = [];
+
+    for (const entry of entries) {
+      const dataStr = JSON.stringify(entry.data);
+      // Scan for media ID or public URL in JSON data to capture any usage
+      if (dataStr.includes(mediaId) || dataStr.includes(mediaUrl)) {
+        usages.push({
+          type: entry.collection.name,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          name: (entry.data as any)?.title || (entry.data as any)?.name || entry.slug,
+          id: entry.id,
+        });
+      }
+    }
+
+    return usages;
   }
 }
