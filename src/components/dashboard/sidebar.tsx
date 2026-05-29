@@ -18,9 +18,10 @@ import {
   GitBranch,
   Users,
   ClipboardList,
-  CreditCard,
   Lock,
-  Shield
+  Shield,
+  Terminal,
+  CreditCard
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -57,6 +58,7 @@ const NAV_GROUPS = [
     label: "Developers",
     items: [
       { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
+      { href: "/dashboard/api-explorer", label: "API Explorer", icon: Terminal },
       { href: "/dashboard/webhooks", label: "Webhooks", icon: Webhook },
       { href: "/dashboard/environments", label: "Environments", icon: GitBranch },
       { href: "/dashboard/usage", label: "Usage & Logs", icon: Activity },
