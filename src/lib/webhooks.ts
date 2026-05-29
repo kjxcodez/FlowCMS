@@ -1,3 +1,4 @@
+import { WebhookEvent } from "@/generated/prisma";
 import { prisma } from "./prisma";
 import { queueWebhook } from "./qstash";
 import { logger } from "./logger";
@@ -8,7 +9,7 @@ export async function dispatchWebhooks(workspaceId: string, event: string, paylo
       where: {
         workspaceId,
         enabled: true,
-        events: { has: event as any }, // eslint-disable-line @typescript-eslint/no-explicit-any
+        events: { has: event as WebhookEvent },
       },
     });
 
