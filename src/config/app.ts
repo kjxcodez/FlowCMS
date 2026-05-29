@@ -145,3 +145,10 @@ export const APP_CONFIG = {
   copyright:
     "© FlowCMS"
 } as const;
+
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+}
