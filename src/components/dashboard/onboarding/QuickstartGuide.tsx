@@ -16,16 +16,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useApiKeys } from "@/hooks/use-api-keys";
 import { useCollections } from "@/hooks/use-collections";
 import Link from "next/link";
+import { getApiBaseUrl } from "@/config/app";
 
 export function QuickstartGuide() {
   const { data: apiKeys } = useApiKeys();
   const { data: collections } = useCollections();
   const [copied, setCopied] = useState(false);
 
+  const originUrl = getApiBaseUrl();
   const apiKey = apiKeys?.[0]?.key || "YOUR_API_KEY";
   const collectionSlug = collections?.[0]?.slug || "starter-collection";
   
-  const fetchCode = `fetch('https://getflowcms.com/v1/entries/${collectionSlug}/hello-world', {
+  const fetchCode = `fetch('${originUrl}/api/v1/entries/${collectionSlug}/hello-world', {
   headers: {
     'Authorization': 'Bearer ${apiKey}'
   }
@@ -80,13 +82,18 @@ export function QuickstartGuide() {
           <div className="flex items-center gap-4 p-6 bg-accent/5 border border-accent/10 rounded-sm">
              <Cpu className="size-5 text-accent opacity-50" />
              <div className="flex-1">
-               <p className="text-[11px] font-bold uppercase tracking-widest text-ink mb-1">SDK Available</p>
-               <p className="text-[10px] text-ink-muted font-light">Install our type-safe client: <code className="text-accent">npm install @flowcms/sdk</code></p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-ink">Type-safe SDK</p>
+                  <span className="px-1.5 py-0.5 bg-accent/10 text-accent border border-accent/20 rounded-[2px] font-mono text-[8px] uppercase font-bold tracking-tighter">
+                    Coming Soon
+                  </span>
+                </div>
+                <p className="text-[10px] text-ink-muted font-light mt-1">Our upcoming type-safe TypeScript/React client library.</p>
              </div>
              <Button variant="ghost" size="icon" asChild>
-               <a href="https://docs.flowcms.com" target="_blank">
-                 <ExternalLink className="size-4" />
-               </a>
+                <Link href="/docs">
+                  <ExternalLink className="size-4" />
+                </Link>
              </Button>
           </div>
         </div>
