@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
+import { incrementStorageUsage, decrementStorageUsage } from "@/lib/usage";
+
 
 export interface MediaUploadParams {
   workspaceId: string;
@@ -50,6 +52,9 @@ export class MediaService {
       },
     });
 
+    // Dynamically increment active workspace storage consumption
+    await incrementStorageUsage(params.workspaceId, params.size);
+
     emitPlatformEvent(PLATFORM_EVENTS.MEDIA_UPLOADED, {
       workspaceId: params.workspaceId,
       mediaId: media.id,
@@ -72,12 +77,6 @@ export class MediaService {
     }
 
     // 1. Extract physical path from public URL or parse stored path format
-    // In our Storage Layer, we return both the URL and the original file path.
-    // If the path format isn't stored separately in the DB (it is typically in the URL or folders),
-    // we can parse it from the public URL or look for specific substrings.
-    // However, our unified storage upload saves a clear folder path relative to the bucket.
-    // For Supabase, the path is workspaceId/filename.
-    // Let's deduce the storage path from the URL.
     const urlParts = media.url.split("/media/");
     let storagePath = urlParts.length > 1 ? urlParts[1] : `${media.workspaceId}/${media.filename}`;
     
@@ -91,8 +90,6 @@ export class MediaService {
       await storage.delete(storagePath);
     } catch (err) {
       console.error(`Physical media deletion failed for path ${storagePath}:`, err);
-      // We can proceed to clean up DB even if storage failed to avoid listing deadlock,
-      // or bubble it up depending on strictness. Here we log and proceed to protect platform state.
     }
 
     // 3. Database deletion
@@ -100,12 +97,75 @@ export class MediaService {
       where: { id },
     });
 
+    // Dynamically decrement active workspace storage consumption
+    await decrementStorageUsage(workspaceId, media.size);
+
     emitPlatformEvent(PLATFORM_EVENTS.MEDIA_DELETED, {
       workspaceId,
       mediaId: id,
     });
 
     return { deleted: true };
+  }
+
+  /**
+   * Performs high-reliability bulk deletion: aggregates combined sizes,
+   * performs physical deletions, executes a single prisma.media.deleteMany,
+   * and dispatches a single atomic decrement of storage usage.
+   */
+  static async bulkDeleteMedia(workspaceId: string, ids: string[]) {
+    // 1. Fetch metadata for all target media
+    const mediaItems = await prisma.media.findMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+      },
+    });
+
+    if (mediaItems.length === 0) {
+      return { deleted: 0 };
+    }
+
+    // 2. Aggregate sizes for a single atomic decrement
+    const totalSize = mediaItems.reduce((sum, item) => sum + item.size, 0);
+
+    // 3. Physical cleanup in parallel
+    await Promise.all(
+      mediaItems.map(async (media) => {
+        const urlParts = media.url.split("/media/");
+        let storagePath = urlParts.length > 1 ? urlParts[1] : `${media.workspaceId}/${media.filename}`;
+        if (storagePath.includes("?")) {
+          storagePath = storagePath.split("?")[0];
+        }
+
+        try {
+          await storage.delete(storagePath);
+        } catch (err) {
+          console.error(`Physical bulk media deletion failed for path ${storagePath}:`, err);
+        }
+      })
+    );
+
+    // 4. Atomic database deletion
+    await prisma.media.deleteMany({
+      where: {
+        id: { in: ids },
+        workspaceId,
+      },
+    });
+
+    // 5. Atomic storage usage decrement
+    await decrementStorageUsage(workspaceId, totalSize);
+
+    // 6. Emit platform events
+    mediaItems.forEach((media) => {
+      emitPlatformEvent(PLATFORM_EVENTS.MEDIA_DELETED, {
+        workspaceId,
+        mediaId: media.id,
+      });
+    });
+
+    return { deleted: mediaItems.length };
   }
 
   /**

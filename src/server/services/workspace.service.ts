@@ -20,6 +20,9 @@ export class WorkspaceService {
    * standard content schemas (Blog, Authors, Pages, Categories), and seeds initial entries.
    */
   static async provisionWorkspace(userId: string, workspaceName: string, _firstSchemaName?: string) {
+    if (_firstSchemaName) {
+      console.log(`Dynamic seeding request received for schema: ${_firstSchemaName}`);
+    }
     const finalWorkspaceName = workspaceName?.trim() || "My Workspace";
 
     const result = await prisma.$transaction(async (tx) => {
