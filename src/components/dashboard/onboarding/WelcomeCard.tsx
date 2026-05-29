@@ -102,11 +102,11 @@ export function WelcomeCard({ onDismiss }: WelcomeCardProps) {
                 variant="outline"
                 className="h-12 px-6 rounded-sm border-white/10 hover:border-white/30 text-white/80 hover:text-white font-mono text-[10px] uppercase tracking-widest bg-transparent"
               >
-                <a href={APP_CONFIG.docsUrl || "https://docs.flowcms.com"} target="_blank" rel="noopener noreferrer">
+                <Link href="/docs">
                   <BookOpen className="size-3.5 mr-2 text-white/40" />
                   Open Docs
                   <ExternalLink className="size-3 ml-1.5 opacity-50" />
-                </a>
+                </Link>
               </Button>
 
               <Button

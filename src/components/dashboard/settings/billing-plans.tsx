@@ -1,128 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { APP_CONFIG } from "@/config/app";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check } from "lucide-react";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles } from "lucide-react";
 
-interface BillingPlansProps {
-  currentPlan: string;
-}
-
-export function BillingPlans({ currentPlan }: BillingPlansProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleSubscribe = async (planKey: string) => {
-    if (planKey === "HOBBY" || currentPlan === planKey.split("_")[0]) return;
-
-    setLoading(planKey);
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Failed to start checkout");
-
-      const { subscriptionId, keyId, userEmail, userName } = result.data;
-
-      const options = {
-        key: keyId,
-        subscription_id: subscriptionId,
-        name: "FlowCMS",
-        description: `Subscription to ${planKey.replace("_MONTHLY", "")} Plan`,
-        image: "/logo.png",
-        handler: function () {
-          toast.success("Payment successful! Your workspace will be upgraded shortly.");
-          setTimeout(() => window.location.reload(), 2000);
-        },
-        prefill: {
-          name: userName,
-          email: userEmail,
-        },
-        theme: {
-          color: "#4E7C59", // Sap Green
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options); // eslint-disable-line @typescript-eslint/no-explicit-any
-      rzp.on('payment.failed', function (response: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        toast.error("Payment failed: " + response.error.description);
-      });
-      rzp.open();
-    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      toast.error(err.message);
-    } finally {
-      setLoading(null);
-    }
-  };
-
+export function BillingPlans({ currentPlan }: { currentPlan: string }) {
   return (
-    <div className="grid gap-8 md:grid-cols-3 pt-4">
-      {APP_CONFIG.pricing.map((p) => {
-        const isCurrent = currentPlan === p.planKey.split("_")[0];
-        const isHobby = p.planKey === "HOBBY";
+    <div className="pt-4 max-w-2xl mx-auto">
+      <Card className="bg-[#0F110A] border-accent/20 border-l-4 border-l-accent overflow-hidden shadow-2xl p-10 group relative">
+        <div className="absolute inset-0 noise-overlay opacity-20 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 blur-[80px] -mr-32 -mt-32 pointer-events-none" />
+        
+        <CardContent className="p-0 flex flex-col items-center text-center space-y-6 relative z-10">
+          <div className="size-16 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center">
+            <Sparkles className="size-8 text-accent animate-pulse" />
+          </div>
+          
+          <div className="space-y-3">
+            <h3 className="font-display text-2xl font-semibold text-white tracking-tight leading-tight">
+              Early Access Beta Active
+            </h3>
+            <p className="text-white/60 text-sm max-w-md font-light leading-relaxed">
+              Your workspace is automatically allocated premium Hobby resources completely free of charge. Pricing plans and billing mechanisms are currently disabled during the early access test phase.
+            </p>
+          </div>
 
-        return (
-          <Card 
-            key={p.plan} 
-            className={cn(
-              "relative flex flex-col border-2 transition-all duration-300 rounded-none overflow-hidden", // Sharp edges
-              p.featured ? "border-accent bg-accent/5 shadow-lg scale-105 z-10" : "border-border",
-              isCurrent && "border-accent ring-1 ring-accent/20"
-            )}
-          >
-            {p.featured && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent px-4 py-1 text-[10px] font-bold uppercase tracking-widest text-white animate-pulse-custom z-20">
-                Most Popular
-              </div>
-            )}
-            <CardHeader className="pb-8 relative z-10">
-              <CardTitle className="font-display text-3xl tracking-tight">{p.plan}</CardTitle>
-              <CardDescription className="flex items-baseline gap-1 mt-2">
-                <span className="text-4xl font-bold text-foreground tabular-nums">{p.price}</span>
-                <span className="text-sm font-medium text-muted-foreground">{p.period}</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 pb-8 relative z-10">
-              <ul className="space-y-4 text-sm">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <div className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center bg-accent-bright text-ink">
-                      <Check className="h-3 w-3 stroke-[3]" />
-                    </div>
-                    <span className="text-ink/80 leading-snug">{f}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter className="pt-0 relative z-10">
-              <Button 
-                className={cn(
-                  "w-full font-bold uppercase tracking-widest py-6 rounded-none transition-all duration-200", // Sharp edges
-                  isCurrent ? "bg-border text-muted-foreground cursor-default hover:bg-border" : "hover:scale-[1.02]"
-                )}
-                variant={p.featured ? "default" : "outline"}
-                disabled={loading !== null || isCurrent || (isHobby && isCurrent)}
-                onClick={() => handleSubscribe(p.planKey)}
-              >
-                {loading === p.planKey ? "Processing..." : isCurrent ? "Current Plan" : p.cta}
-              </Button>
-            </CardFooter>
-            
-            {/* Texture overlay for industrial look */}
-            <div className="absolute inset-0 pointer-events-none noise-overlay opacity-30" />
-            {p.featured && (
-              <div className="absolute top-0 right-0 w-32 h-32 bg-accent-bright/10 blur-3xl -mr-16 -mt-16 pointer-events-none" />
-            )}
-          </Card>
-        );
-      })}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent font-mono text-[9px] uppercase font-bold tracking-widest">
+            Currently in Early Access Beta. Billing coming soon.
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
