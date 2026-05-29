@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { ApiKeyService } from "./api-key.service";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
+import { toCollectionFieldsJson, toEntryDataJson } from "@/types/prisma-helpers";
 
 export class WorkspaceService {
   /**
@@ -120,11 +121,11 @@ export class WorkspaceService {
             slug: authorSlug,
             description: "Profiles of publishers and content contributors.",
             mode: "STRUCTURED",
-            fields: [
+            fields: toCollectionFieldsJson([
               { id: "a1", name: "Name", slug: "name", type: "text", required: true },
               { id: "a2", name: "Avatar URL", slug: "avatar", type: "media", required: false },
               { id: "a3", name: "Bio Text", slug: "bio", type: "richtext", required: false },
-            ] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            ]),
           },
         });
       }
@@ -141,12 +142,12 @@ export class WorkspaceService {
             workspaceId,
             name: "Categories",
             slug: categorySlug,
-            description: "Topics and tags for entry taxomomy classifications.",
+            description: "Topics and tags for entry taxonomy classifications.",
             mode: "STRUCTURED",
-            fields: [
+            fields: toCollectionFieldsJson([
               { id: "c1", name: "Name", slug: "name", type: "text", required: true },
               { id: "c2", name: "Slug", slug: "slug", type: "text", required: true },
-            ] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            ]),
           },
         });
       }
@@ -165,7 +166,7 @@ export class WorkspaceService {
             slug: blogSlug,
             description: "Articles, announcements, and structured press logs.",
             mode: "STRUCTURED",
-            fields: [
+            fields: toCollectionFieldsJson([
               { id: "b1", name: "Title", slug: "title", type: "text", required: true },
               { id: "b2", name: "Slug", slug: "slug", type: "text", required: true },
               { id: "b3", name: "Excerpt", slug: "excerpt", type: "text", required: false },
@@ -176,7 +177,7 @@ export class WorkspaceService {
               { id: "b8", name: "Published Date", slug: "published_at", type: "date", required: false },
               { id: "b9", name: "SEO Title", slug: "seo_title", type: "text", required: false },
               { id: "b10", name: "SEO Description", slug: "seo_description", type: "text", required: false },
-            ] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            ]),
           },
         });
       }
@@ -193,9 +194,9 @@ export class WorkspaceService {
             workspaceId,
             name: "Pages",
             slug: pagesSlug,
-            description: "Dynamic web pages powered by the visual visual editor.",
+            description: "Dynamic web pages powered by the visual editor.",
             mode: "VISUAL",
-            fields: [] as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            fields: toCollectionFieldsJson([]),
           },
         });
       }
@@ -215,11 +216,11 @@ export class WorkspaceService {
             environmentId: environment.id,
             slug: seedAuthorSlug,
             status: "PUBLISHED",
-            data: {
+            data: toEntryDataJson({
               name: "Jane Smith",
-              avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+              avatar: "/placeholders/avatar.png",
               bio: "<p>Jane is an lead content architect at FlowCMS with a focus on editorial systems engineering.</p>",
-            } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            }),
           },
         });
       }
@@ -238,10 +239,10 @@ export class WorkspaceService {
             environmentId: environment.id,
             slug: seedCategorySlug,
             status: "PUBLISHED",
-            data: {
+            data: toEntryDataJson({
               name: "Technology",
               slug: "technology",
-            } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            }),
           },
         });
       }
@@ -260,18 +261,18 @@ export class WorkspaceService {
             environmentId: environment.id,
             slug: seedBlogPostSlug,
             status: "PUBLISHED",
-            data: {
+            data: toEntryDataJson({
               title: "Welcome to FlowCMS",
               slug: seedBlogPostSlug,
               excerpt: "FlowCMS bridges the editor's editorial craft with advanced engineering.",
               content: "<p>Welcome to your new headless CMS dashboard! This entry is fully wired and ready to be fetched via our cURL or fetch guidelines. Start customizing your block designs to get your platform rolling.</p>",
-              cover: "https://images.unsplash.com/photo-1542435503-956c469947f6?w=800",
+              cover: "/placeholders/cover.png",
               author: authorEntry.id, // Direct reference linked
-              category: categoryEntry.id, // Taxomomy reference linked
+              category: categoryEntry.id, // Taxonomy reference linked
               published_at: new Date().toISOString().split("T")[0],
               seo_title: "Getting Started with FlowCMS",
               seo_description: "Learn how content modeling can be done instantly with FlowCMS.",
-            } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            }),
           },
         });
       }
@@ -290,13 +291,13 @@ export class WorkspaceService {
             environmentId: environment.id,
             slug: seedPageSlug,
             status: "PUBLISHED",
-            data: {
+            data: toEntryDataJson({
               title: "Home",
               blocks: [
                 { id: "b1", type: "heading", props: { text: "Visual Content, Structured for Builders", level: 1 } },
                 { id: "b2", type: "text", props: { text: "This visual block page is served instantly from the FlowCMS edge cache network." } },
               ],
-            } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+            }),
           },
         });
       }

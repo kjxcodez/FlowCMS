@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { PLAN_LIMITS } from "@/types/cms";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
 
+import { WebhookEvent } from "@/generated/prisma";
+
 export class WebhookService {
   /**
    * List all webhook endpoints registered for a workspace.
@@ -20,7 +22,7 @@ export class WebhookService {
   static async createWebhook(
     workspaceId: string,
     url: string,
-    events: string[],
+    events: WebhookEvent[],
     userId: string,
     plan: "HOBBY" | "PRO" | "AGENCY" | "ENTERPRISE",
     isPlatformAdmin: boolean
@@ -41,7 +43,7 @@ export class WebhookService {
       data: {
         workspaceId,
         url,
-        events: events as never[],
+        events,
         secret: crypto.randomBytes(32).toString("hex"),
       },
     });

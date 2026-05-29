@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { storage } from "@/lib/storage";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
 import { incrementStorageUsage, decrementStorageUsage } from "@/lib/usage";
+import { dispatchWebhooks } from "@/lib/webhooks";
 
 
 export interface MediaUploadParams {
@@ -61,6 +62,8 @@ export class MediaService {
       filename: media.filename,
     });
 
+    dispatchWebhooks(params.workspaceId, "MEDIA_UPLOADED", media).catch(() => {});
+
     return media;
   }
 
@@ -104,6 +107,8 @@ export class MediaService {
       workspaceId,
       mediaId: id,
     });
+
+    dispatchWebhooks(workspaceId, "MEDIA_DELETED", media).catch(() => {});
 
     return { deleted: true };
   }
@@ -157,12 +162,13 @@ export class MediaService {
     // 5. Atomic storage usage decrement
     await decrementStorageUsage(workspaceId, totalSize);
 
-    // 6. Emit platform events
+    // 6. Emit platform events and dispatch webhooks
     mediaItems.forEach((media) => {
       emitPlatformEvent(PLATFORM_EVENTS.MEDIA_DELETED, {
         workspaceId,
         mediaId: media.id,
       });
+      dispatchWebhooks(workspaceId, "MEDIA_DELETED", media).catch(() => {});
     });
 
     return { deleted: mediaItems.length };
