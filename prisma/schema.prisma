@@ -179,16 +179,14 @@ model Media {
   caption     String?
   width       Int?
   height      Int?
-  folder      String?  @default("/")
 
   folderId    String?
-  folderRelation MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  folder      MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   createdAt   DateTime @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  @@index([workspaceId, folder])
   @@index([workspaceId, folderId])
 }
 
