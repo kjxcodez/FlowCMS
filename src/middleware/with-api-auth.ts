@@ -14,6 +14,7 @@ export interface ApiContext {
   plan: string;
   apiKeyId: string;
   requestId: string;
+  params: Promise<any>;
 }
 
 type ApiHandler = (
@@ -22,7 +23,7 @@ type ApiHandler = (
 ) => Promise<Response>;
 
 export function withApiAuth(handler: ApiHandler) {
-  return async (req: NextRequest): Promise<Response> => {
+  return async (req: NextRequest, context?: { params: Promise<any> }): Promise<Response> => {
     const requestId = crypto.randomUUID();
     const start = Date.now();
 
@@ -79,6 +80,7 @@ export function withApiAuth(handler: ApiHandler) {
         plan,
         apiKeyId,
         requestId,
+        params: context?.params || Promise.resolve({}),
       });
     } catch (err) {
       logger.error("API handler error", {
