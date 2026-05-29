@@ -18,7 +18,6 @@ import {
   ChevronDown,
   Loader2,
   X,
-  Info,
   AlertTriangle,
   FileText,
   Maximize2,
@@ -652,20 +651,7 @@ export default function MediaPage() {
           </div>
         </div>
 
-        {/* Storage stats */}
-        <div className="p-4 bg-sidebar-mid border-t border-sidebar-border text-[11px] font-mono text-ink-faint/50 flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
-            <Info className="size-3 text-accent" />
-            <span>Pro Workspace Quota</span>
-          </div>
-          <div className="w-full bg-sidebar-border h-1 rounded-full overflow-hidden mt-1.5">
-            <div className="bg-accent h-full w-[24%]" />
-          </div>
-          <div className="flex justify-between mt-1 text-[9px]">
-            <span>120.4 MB Used</span>
-            <span>500 MB limit</span>
-          </div>
-        </div>
+
       </aside>
 
       {/* ──────────────────────────────────────────────────────────────
@@ -1160,6 +1146,12 @@ export default function MediaPage() {
                   <span>Uploaded At</span>
                   <span className="text-ink text-[10px]">
                     {new Date(selectedAsset.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Folder Directory</span>
+                  <span className="text-ink text-[10px]">
+                    {selectedAsset.folder?.name || "Root"}
                   </span>
                 </div>
               </div>
