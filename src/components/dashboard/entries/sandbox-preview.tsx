@@ -102,7 +102,7 @@ export function SandboxPreview({
               <div className="flex items-center gap-4">
                 <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-canvas border border-border rounded-sm font-mono text-[10px] text-ink-muted">
                   <Globe className="size-3 text-accent" />
-                  <span>api.flowcms.com/v1/entries/{collectionSlug}/{entrySlug}</span>
+                  <span>getflowcms.com/v1/entries/{collectionSlug}/{entrySlug}</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-canvas">
                   <X className="size-5" />

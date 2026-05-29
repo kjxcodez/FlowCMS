@@ -340,7 +340,7 @@ export const LiveDemo = () => {
       "Docs Article": [
         { id: "1", type: "Heading", translations: { EN: "API Authentication" } },
         { id: "2", type: "Rich Text", translations: { EN: "Learn how to secure your API calls using FlowCMS bearer tokens." } },
-        { id: "3", type: "Code Snippet", translations: { EN: "curl -X GET https://api.flowcms.com/v1/entries/blog-post" } }
+        { id: "3", type: "Code Snippet", translations: { EN: "curl -X GET https://getflowcms.com/v1/entries/blog-post" } }
       ],
       "Landing Section": [
         { id: "1", type: "Heading", translations: { EN: "Ready to go flow?" } },

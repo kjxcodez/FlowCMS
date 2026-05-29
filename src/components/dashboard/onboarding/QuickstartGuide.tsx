@@ -25,7 +25,7 @@ export function QuickstartGuide() {
   const apiKey = apiKeys?.[0]?.key || "YOUR_API_KEY";
   const collectionSlug = collections?.[0]?.slug || "starter-collection";
   
-  const fetchCode = `fetch('https://api.flowcms.com/v1/entries/${collectionSlug}/hello-world', {
+  const fetchCode = `fetch('https://getflowcms.com/v1/entries/${collectionSlug}/hello-world', {
   headers: {
     'Authorization': 'Bearer ${apiKey}'
   }
