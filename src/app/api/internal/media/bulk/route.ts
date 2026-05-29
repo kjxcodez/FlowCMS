@@ -47,16 +47,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "delete") {
-      let successCount = 0;
-      for (const id of ids) {
-        try {
-          await MediaService.deleteMedia(workspace.id, id);
-          successCount++;
-        } catch (err) {
-          console.error(`Bulk deletion failed for media ID ${id}:`, err);
-        }
-      }
-      return apiSuccess({ deleted: successCount });
+      const result = await MediaService.bulkDeleteMedia(workspace.id, ids);
+      return apiSuccess(result);
     }
 
     return apiError("INVALID_INPUT", "Unsupported bulk action. Use 'move' or 'delete'.");

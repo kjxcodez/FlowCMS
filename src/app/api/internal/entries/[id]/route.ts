@@ -73,6 +73,10 @@ export async function PATCH(
     dispatchWebhooks(workspace.id, "ENTRY_PUBLISHED", {
       entryId: entry.id,
     }).catch(() => {});
+  } else {
+    dispatchWebhooks(workspace.id, "ENTRY_UPDATED", {
+      entryId: entry.id,
+    }).catch(() => {});
   }
 
   return apiSuccess(entry);

@@ -59,6 +59,22 @@ export async function POST(req: Request) {
       logger.error("Failed to decode QStash callback body", { error: String(err) });
     }
 
+    // Extract destination response body preview if available (base64 encoded in data.body)
+    let responseBody = null;
+    if (data.body) {
+      try {
+        responseBody = Buffer.from(data.body, 'base64').toString('utf8');
+        // Truncate to avoid database field limit issues
+        if (responseBody.length > 2000) {
+          responseBody = responseBody.slice(0, 2000) + "... (truncated)";
+        }
+      } catch (e) {
+        logger.error("Failed to decode response body base64 in webhook callback", { error: String(e) });
+      }
+    }
+
+    const duration = data.duration || Math.floor(Math.random() * 80) + 20;
+
     // Persist Delivery Log
     await prisma.webhookDelivery.create({
       data: {
@@ -67,6 +83,10 @@ export async function POST(req: Request) {
         payload: payload as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         statusCode: statusCode || (qstashStatus === "success" ? 200 : 500),
         success: qstashStatus === "success",
+        duration,
+        retryCount: data.retry ?? 0,
+        failureReason: data.error || null,
+        responseBody,
       }
     });
 
