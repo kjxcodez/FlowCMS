@@ -93,7 +93,7 @@ export default function ApiExplorerPage() {
 
   // Code snippet definitions
   const snippets = useMemo(() => {
-    const keyPrefix = selectedKey ? `flw_${selectedKey.keyPrefix}••••••••` : "YOUR_API_KEY";
+    const keyPrefix = selectedKey ? `${selectedKey.keyPrefix}••••••••` : "YOUR_API_KEY";
     const slug = selectedCollectionSlug || "collection-slug";
     return {
       curl: `curl -X GET "${originUrl}/api/v1/entries/${slug}" \\\n  -H "Authorization: Bearer ${keyPrefix}"`,

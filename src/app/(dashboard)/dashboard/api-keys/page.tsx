@@ -56,7 +56,7 @@ export default function ApiKeysPage() {
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
-    toast.success("API key prefix copied!");
+    toast.success("API key identifier prefix copied!");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -221,7 +221,7 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
                       size="icon"
                       onClick={() => handleCopy(key.keyPrefix, key.id)}
                       className="size-10 text-ink-muted hover:text-accent hover:bg-accent/5 border border-border rounded-sm transition-all"
-                      title="Copy Key Prefix"
+                      title="Copy Key Identifier (prefix only)"
                     >
                       {copiedId === key.id ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                     </Button>

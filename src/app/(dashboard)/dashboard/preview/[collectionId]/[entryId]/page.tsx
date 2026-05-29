@@ -122,7 +122,7 @@ export default function EntryPreviewPage() {
                  <div className="size-2.5 rounded-full bg-border-strong/20" />
                </div>
                <div className="flex-1 mx-8 h-7 bg-paper rounded-full border border-border flex items-center px-4 font-mono text-[9px] text-ink-faint">
-                 https://{collection?.slug || "api"}.flowcms.com/{entry.slug}
+                 https://getflowcms.com/api/v1/entries/{collection?.slug}/{entry.slug}
                </div>
             </div>
           )}
