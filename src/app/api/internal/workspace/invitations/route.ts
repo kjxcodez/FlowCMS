@@ -44,11 +44,13 @@ export async function POST(req: NextRequest) {
       return apiError("INVALID_INPUT", "Invalid email address.");
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // 1. Check if already a member
     const existingMember = await prisma.workspaceMember.findFirst({
       where: {
         workspaceId: workspace.id,
-        user: { email },
+        user: { email: normalizedEmail },
       },
     });
 
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
       where: { 
         workspaceId_email: {
           workspaceId: workspace.id,
-          email,
+          email: normalizedEmail,
         }
       },
       update: {
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
       },
       create: {
         workspaceId: workspace.id,
-        email,
+        email: normalizedEmail,
         role: memberRole || "EDITOR",
         token,
         invitedById: session.user.id,
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     // 3. Send Email
     const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
     await sendEmail({
-      to: email,
+      to: normalizedEmail,
       subject: `Join ${workspace.name} on FlowCMS`,
       react: WorkspaceInviteEmail({
         workspaceName: workspace.name,
@@ -103,8 +105,8 @@ export async function POST(req: NextRequest) {
       action: "MEMBER_INVITED",
       resourceType: "INVITATION",
       resourceId: invitation.id,
-      resourceName: email,
-      after: { email, role: memberRole },
+      resourceName: normalizedEmail,
+      after: { email: normalizedEmail, role: memberRole },
     });
 
     return apiSuccess({ id: invitation.id, email: invitation.email });
