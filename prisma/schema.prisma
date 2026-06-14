@@ -114,9 +114,10 @@ model Environment {
   isDefault   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  apiKeys   ApiKey[]
-  entries   Entry[]
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  apiKeys     ApiKey[]
+  entries     Entry[]
+  draftTokens DraftToken[]
 
   @@unique([workspaceId, slug])
 }
@@ -350,15 +351,20 @@ model Invitation {
 
 // ── Preview & Domains ──────────────────────────────────────────────
 model DraftToken {
-  id          String    @id @default(cuid())
-  workspaceId String
-  name        String
-  token       String    @unique
-  expiresAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  id                  String      @id @default(cuid())
+  workspaceId         String
+  environmentId       String?
+  name                String
+  token               String      @unique
+  active              Boolean     @default(true)
+  expiresAt           DateTime?
+  lastUsedAt          DateTime?
+  createdAt           DateTime    @default(now())
+  allowedCollectionId String?
+  allowedEntryId      String?
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
 }
 
 model CustomDomain {
@@ -452,6 +458,8 @@ enum AuditAction {
   PLAN_CHANGED
   WEBHOOK_CREATED
   WEBHOOK_DELETED
+  DRAFT_TOKEN_USED
+  DRAFT_TOKEN_FAILED
 }
 
 enum InvitationStatus {
