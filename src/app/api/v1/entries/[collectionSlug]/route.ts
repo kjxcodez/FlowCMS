@@ -1,6 +1,7 @@
 import { withApiAuth } from "@/middleware/with-api-auth";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { verifyDraftPreview } from "@/lib/preview";
 
 export const runtime = "nodejs";
 
@@ -29,10 +30,40 @@ export const GET = withApiAuth(async (req, { workspaceId, params }) => {
     return apiError("NOT_FOUND", `Collection "${slug}" not found.`);
   }
 
-  const where = {
+  const includeDrafts = searchParams.get("preview") === "true";
+  const where: any = {
     collectionId: collection.id,
-    status: "PUBLISHED" as const, // Strictly enforce published only for public API
   };
+
+  if (includeDrafts) {
+    const previewToken = searchParams.get("token") || searchParams.get("_token") || req.headers.get("x-draft-token");
+    const previewResult = await verifyDraftPreview({
+      tokenValue: previewToken,
+      workspaceId,
+      collectionSlug: slug,
+      ip: req.headers.get("x-forwarded-for") || undefined,
+      userAgent: req.headers.get("user-agent") || undefined,
+    });
+
+    if (!previewResult.allowed) {
+      return apiError(
+        previewResult.errorResponse!.code as any,
+        previewResult.errorResponse!.message
+      );
+    }
+
+    // Apply environment scoping if set on the token
+    if (previewResult.token?.environmentId) {
+      where.environmentId = previewResult.token.environmentId;
+    }
+
+    // Apply entry scoping if set on the token
+    if (previewResult.token?.allowedEntryId) {
+      where.id = previewResult.token.allowedEntryId;
+    }
+  } else {
+    where.status = "PUBLISHED";
+  }
 
   const [entries, total] = await Promise.all([
     prisma.entry.findMany({
