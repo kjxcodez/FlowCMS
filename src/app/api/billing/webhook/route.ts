@@ -145,9 +145,6 @@ export async function POST(req: NextRequest) {
       logger.error("Failed to invalidate workspace API keys cache on plan change", { workspaceId, error: String(err) });
     });
 
-    // 5. Force UI Refresh
-    revalidatePath("/dashboard", "layout");
-
     return new Response("OK", { status: 200 });
   } catch (err) {
     await redis.del(lockKey);
@@ -155,5 +152,3 @@ export async function POST(req: NextRequest) {
     return new Response("Webhook Error", { status: 500 });
   }
 }
-
-import { revalidatePath } from "next/cache";
