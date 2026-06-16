@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { nanoid } from "nanoid";
@@ -10,7 +10,9 @@ import { canAccessFeature } from "@/lib/launch";
 
 export async function GET() {
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
+
     if (!canAccessFeature("enableTeamInvites", session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
@@ -21,7 +23,10 @@ export async function GET() {
     });
 
     return apiSuccess(invitations);
-  } catch {
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     return apiError("INTERNAL_ERROR", "Failed to fetch invitations.");
   }
 }
@@ -29,13 +34,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
 
     if (!canAccessFeature("enableTeamInvites", session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
-    }
-
-    if (role !== "OWNER" && role !== "ADMIN") {
-      return apiError("FORBIDDEN", "Only owners and admins can invite members.");
     }
 
     const { email, role: memberRole } = await req.json();
@@ -111,6 +113,9 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess({ id: invitation.id, email: invitation.email });
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("[INVITE_ERROR]", err);
     return apiError("INTERNAL_ERROR", "Failed to send invitation.");
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { logAction } from "@/lib/audit";
@@ -12,9 +12,7 @@ export async function DELETE(
     const { workspace, session, role } = await requireWorkspace();
     const { id } = await params;
 
-    if (role !== "OWNER" && role !== "ADMIN") {
-      return apiError("FORBIDDEN", "Only owners and admins can revoke invitations.");
-    }
+    await requireRole(role, "ADMIN");
 
     const invitation = await prisma.invitation.findUnique({
       where: { id },
@@ -39,7 +37,10 @@ export async function DELETE(
     });
 
     return apiSuccess({ success: true });
-  } catch {
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     return apiError("INTERNAL_ERROR", "Failed to revoke invitation.");
   }
 }

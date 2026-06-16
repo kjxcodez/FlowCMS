@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 
@@ -14,7 +14,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
     const { id } = await params;
     const body = await req.json();
     const { name, parentId } = body;
@@ -58,6 +59,9 @@ export async function PATCH(
 
     return apiSuccess(updated);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Failed to update media folder:", err);
     return apiError("INTERNAL_ERROR", "Failed to update media folder.");
   }
@@ -72,7 +76,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
     const { id } = await params;
     
     const url = new URL(req.url);
@@ -118,6 +123,9 @@ export async function DELETE(
 
     return apiSuccess({ deleted: true, movedTo: targetParentId || "root" });
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Failed to delete media folder:", err);
     return apiError("INTERNAL_ERROR", "Failed to delete media folder.");
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 
@@ -19,9 +19,7 @@ export async function DELETE(
     const { workspace, session, role } = await requireWorkspace();
     const targetUserId = userId;
 
-    if (role !== "OWNER") {
-      return apiError("FORBIDDEN", "Only workspace owners can remove members.");
-    }
+    await requireRole(role, "OWNER");
 
     if (targetUserId === session.user.id) {
       return apiError("INVALID_ACTION", "You cannot remove yourself from the workspace. Use 'Leave Workspace' if available.");
@@ -69,6 +67,9 @@ export async function DELETE(
 
     return apiSuccess({ ok: true });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Member removal error:", err);
     return apiError("INTERNAL_ERROR", "Failed to remove member.");
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { COLLECTION_TEMPLATES } from "@/config/templates/collections";
@@ -9,9 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     const { workspace, session, role } = await requireWorkspace();
 
-    if (role !== "OWNER" && role !== "ADMIN") {
-      return apiError("FORBIDDEN", "Only owners and admins can apply templates.");
-    }
+    await requireRole(role, "ADMIN");
 
     const { templateId } = await req.json();
     const template = COLLECTION_TEMPLATES.find((t) => t.id === templateId);
@@ -53,6 +51,9 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess(collection);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("[APPLY_TEMPLATE_ERROR]", err);
     return apiError("INTERNAL_ERROR", "Failed to apply collection template.");
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { razorpay, RAZORPAY_PLANS, PlanKey } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
@@ -9,7 +9,9 @@ export async function POST(req: NextRequest) {
   if (!FEATURES.enableBilling) return apiError("FORBIDDEN", "This feature is not available yet.");
   
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "OWNER");
+
     const body = await req.json();
     const planKey = body.planKey as PlanKey;
 
@@ -92,6 +94,9 @@ export async function POST(req: NextRequest) {
       userName: session.user.name,
     });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("[RAZORPAY_CHECKOUT_ERROR]", err);
     return apiError("INTERNAL_ERROR", "Failed to initialize subscription checkout.");
   }

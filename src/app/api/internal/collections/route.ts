@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { checkCollectionLimit } from "@/lib/usage";
 import { apiError, apiSuccess } from "@/types/api";
@@ -31,7 +31,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
 
     const limit = await checkCollectionLimit(
       workspace.id,
@@ -80,6 +81,9 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess(collection);
   } catch (error) {
+    if (error instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", error.message);
+    }
     Sentry.captureException(error);
     return apiError("INTERNAL_ERROR", "Failed to create collection");
   }

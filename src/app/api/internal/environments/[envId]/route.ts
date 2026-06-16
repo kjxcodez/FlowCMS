@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 
@@ -10,9 +10,7 @@ export async function DELETE(
   try {
     const { envId } = await params;
     const { workspace, session, role } = await requireWorkspace();
-    if (role !== "OWNER") {
-      return apiError("FORBIDDEN", "Only workspace owners can delete environments.");
-    }
+    await requireRole(role, "OWNER");
 
     const env = await prisma.environment.findFirst({
       where: { id: envId, workspaceId: workspace.id }
@@ -53,6 +51,9 @@ export async function DELETE(
 
     return apiSuccess({ ok: true });
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Environment delete error:", err);
     return apiError("INTERNAL_ERROR", "Failed to delete environment.");
   }

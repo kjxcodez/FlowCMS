@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { MediaService } from "@/server/services/media.service";
 import { apiError, apiSuccess } from "@/types/api";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +15,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "EDITOR");
     const { id } = await params;
     const body = await req.json();
     const { title, alt, caption, folderId } = body;
@@ -50,6 +51,9 @@ export async function PATCH(
 
     return apiSuccess(updated);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Failed to update media asset:", err);
     return apiError("INTERNAL_ERROR", "Failed to update media asset.");
   }
@@ -64,7 +68,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
     const { id } = await params;
 
     if (!id) {
@@ -74,6 +79,9 @@ export async function DELETE(
     const result = await MediaService.deleteMedia(workspace.id, id);
     return apiSuccess(result);
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Internal Media deletion exception:", err);
     if (err.message?.startsWith("NOT_FOUND")) {
       return apiError("NOT_FOUND", "Media asset not found in this workspace.");

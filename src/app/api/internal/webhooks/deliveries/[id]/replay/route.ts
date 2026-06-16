@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { queueWebhook } from "@/lib/qstash";
@@ -11,7 +11,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
     const { id } = await params;
 
     // 1. Fetch the delivery record
@@ -42,6 +43,9 @@ export async function POST(
 
     return apiSuccess({ message: "Webhook successfully re-queued for delivery." });
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Manual webhook replay exception:", err);
     return apiError("INTERNAL_ERROR", "Failed to replay webhook delivery.");
   }

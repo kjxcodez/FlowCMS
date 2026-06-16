@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { MediaService } from "@/server/services/media.service";
@@ -12,7 +12,8 @@ export const runtime = "nodejs";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
     const body = await req.json();
     const { ids, action, targetFolderId } = body;
 
@@ -53,6 +54,9 @@ export async function POST(req: NextRequest) {
 
     return apiError("INVALID_INPUT", "Unsupported bulk action. Use 'move' or 'delete'.");
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Bulk media operation exception:", err);
     return apiError("INTERNAL_ERROR", "Failed to execute bulk operation.");
   }

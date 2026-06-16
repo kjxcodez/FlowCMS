@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { ApiKeyService } from "@/server/services/api-key.service";
@@ -15,7 +15,9 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
+
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
@@ -42,6 +44,9 @@ export async function GET() {
 
     return apiSuccess(formattedKeys);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Failed to list API keys:", err);
     return apiError("INTERNAL_ERROR", "Failed to retrieve API keys.");
   }
@@ -53,7 +58,9 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
+
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
@@ -80,6 +87,9 @@ export async function POST(req: NextRequest) {
       createdAt: key.createdAt,
     });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("API Key generation failed:", err);
     if (err.message?.startsWith("PLAN_LIMIT_REACHED")) {
       return apiError("PLAN_LIMIT_REACHED", "Maximum 5 API keys allowed.");
@@ -94,7 +104,9 @@ export async function POST(req: NextRequest) {
  */
 export async function DELETE(req: NextRequest) {
   try {
-    const { workspace, session } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
+
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
@@ -107,6 +119,9 @@ export async function DELETE(req: NextRequest) {
     const result = await ApiKeyService.revokeApiKey(workspace.id, id, session.user.id);
     return apiSuccess(result);
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("API Key revocation failed:", err);
     if (err.message?.startsWith("NOT_FOUND")) {
       return apiError("NOT_FOUND", "API key not found.");

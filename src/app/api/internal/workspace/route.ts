@@ -1,20 +1,17 @@
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/types/api";
 import { logAction } from "@/lib/audit";
 
 export async function GET() {
-  const { workspace } = await requireWorkspace();
-  return apiSuccess({ name: workspace.name, plan: workspace.plan, slug: workspace.slug });
+  const { workspace, role } = await requireWorkspace();
+  return apiSuccess({ name: workspace.name, plan: workspace.plan, slug: workspace.slug, role });
 }
 
 export async function PATCH(req: Request) {
   try {
     const { workspace, role } = await requireWorkspace();
-    
-    if (role !== "OWNER" && role !== "ADMIN") {
-      return apiError("FORBIDDEN", "Insufficient permissions to update workspace settings.");
-    }
+    await requireRole(role, "ADMIN");
 
     const userId = (await requireWorkspace()).session.user.id;
 
@@ -38,8 +35,11 @@ export async function PATCH(req: Request) {
       after: { name: updated.name },
     });
 
-    return apiSuccess({ name: updated.name, plan: updated.plan, slug: updated.slug });
-  } catch {
+    return apiSuccess({ name: updated.name, plan: updated.plan, slug: updated.slug, role });
+  } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     return apiError("INTERNAL_ERROR", "Failed to update workspace.");
   }
 }
@@ -47,10 +47,7 @@ export async function PATCH(req: Request) {
 export async function DELETE() {
   try {
     const { workspace, role } = await requireWorkspace();
-
-    if (role !== "OWNER") {
-      return apiError("FORBIDDEN", "Only the workspace owner can delete the workspace.");
-    }
+    await requireRole(role, "OWNER");
 
     const userId = (await requireWorkspace()).session.user.id;
 
@@ -70,6 +67,9 @@ export async function DELETE() {
 
     return apiSuccess({ message: "Workspace deleted successfully" });
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("[WORKSPACE_DELETE_ERROR]", err);
     return apiError("INTERNAL_ERROR", "Failed to delete workspace.");
   }

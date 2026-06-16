@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { apiError, apiSuccess } from "@/types/api";
 import { MediaService } from "@/server/services/media.service";
 import { storage } from "@/lib/storage";
@@ -72,7 +72,8 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "EDITOR");
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const folderId = formData.get("folderId") as string | null;
@@ -100,6 +101,9 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess(media);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Internal media upload failure:", err);
     return apiError("INTERNAL_ERROR", "Unexpected upload system failure.");
   }

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireWorkspace } from "@/lib/session";
+import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 
@@ -29,7 +29,9 @@ export async function GET() {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { workspace } = await requireWorkspace();
+    const { workspace, role } = await requireWorkspace();
+    await requireRole(role, "ADMIN");
+
     const body = await req.json();
     const { name, parentId } = body;
 
@@ -47,6 +49,9 @@ export async function POST(req: NextRequest) {
 
     return apiSuccess(folder);
   } catch (err) {
+    if (err instanceof ForbiddenError) {
+      return apiError("FORBIDDEN", err.message);
+    }
     console.error("Failed to create media folder:", err);
     return apiError("INTERNAL_ERROR", "Failed to create media folder.");
   }
