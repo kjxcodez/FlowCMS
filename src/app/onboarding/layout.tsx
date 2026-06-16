@@ -1,6 +1,8 @@
 import React from "react";
 import { requireVerifiedSession } from "@/lib/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingLayout({
   children,
 }: {

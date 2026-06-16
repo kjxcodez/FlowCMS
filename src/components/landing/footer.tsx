@@ -108,7 +108,7 @@ const MobileAccordion = ({ title, links }: { title: string; links: typeof FOOTER
 
 // ── Main Footer ───────────────────────────────────────────────────────────────
 
-const Footer = () => {
+const Footer = ({ session = null }: { session?: object | null }) => {
   const year = new Date().getFullYear();
 
   return (
@@ -125,40 +125,59 @@ const Footer = () => {
           className="max-w-[1200px] mx-auto px-8 py-16 md:py-20 flex flex-col md:flex-row md:items-center md:justify-between gap-10"
         >
           <div className="space-y-3 max-w-lg">
-            <h2 className="font-display text-[28px] md:text-[36px] font-semibold text-ink leading-tight tracking-tight"
+            <h2 className="font-display text-[28px] md:text-[36px] font-semibold text-black leading-tight tracking-tight"
               style={{ letterSpacing: "-0.02em" }}
             >
               Ready to ship content faster?
             </h2>
-            <p className="text-base text-ink-muted font-light leading-relaxed">
+            <p className="text-base text-ink-muted dark:text-black/70 font-light leading-relaxed">
               Create your workspace and start building with{" "}
-              <span className="font-medium text-ink">{APP_CONFIG.name}</span> today.
+              <span className="font-medium text-black">{APP_CONFIG.name}</span> today.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
             {/* Primary CTA */}
-            <Link
-              href="/auth/register"
-              className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-ink rounded-[2px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
-              style={{
-                background: "#CAFF4D",
-              }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#D6FF6A"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#CAFF4D"; }}
-            >
-              Start Building Free
-              <ArrowRight
-                size={14}
-                strokeWidth={1.5}
-                className="transition-transform duration-150 group-hover:translate-x-0.5"
-              />
-            </Link>
+            {session ? (
+              <Link
+                href="/dashboard"
+                className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-black rounded-[2px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
+                style={{
+                  background: "#CAFF4D",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#D6FF6A"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#CAFF4D"; }}
+              >
+                Go to Dashboard
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="transition-transform duration-150 group-hover:translate-x-0.5"
+                />
+              </Link>
+            ) : (
+              <Link
+                href="/auth/register"
+                className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-black rounded-[2px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
+                style={{
+                  background: "#CAFF4D",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#D6FF6A"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = "#CAFF4D"; }}
+              >
+                Get Started
+                <ArrowRight
+                  size={14}
+                  strokeWidth={1.5}
+                  className="transition-transform duration-150 group-hover:translate-x-0.5"
+                />
+              </Link>
+            )}
 
             {/* Secondary CTA */}
             <Link
               href="/docs"
-              className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-ink border border-border-strong rounded-[2px] transition-all duration-150 hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
+              className="group inline-flex items-center gap-2 no-underline px-5 py-2.5 font-ui font-medium text-[13px] uppercase tracking-[0.04em] text-black border border-border-strong rounded-[2px] transition-all duration-150 hover:border-accent hover:text-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-bright"
               style={{ background: "transparent" }}
             >
               <BookOpen size={13} strokeWidth={1.5} />
@@ -178,7 +197,7 @@ const Footer = () => {
           <div className="col-span-1 space-y-6">
             <Link
               href="/"
-              className="font-display text-xl font-semibold text-ink flex items-center gap-2.5 no-underline"
+              className="font-display text-xl font-semibold text-black flex items-center gap-2.5 no-underline"
             >
               <div className="w-7 h-7 bg-sidebar rounded-[4px] flex items-center justify-center shrink-0">
                 <div className="w-3 h-3 bg-accent-bright rounded-[1px]" />

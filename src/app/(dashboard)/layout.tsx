@@ -6,6 +6,8 @@ import { requireWorkspace } from "@/lib/session";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { Toaster } from "@/components/ui/sonner";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {

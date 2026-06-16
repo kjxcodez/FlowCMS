@@ -4,6 +4,8 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { ResendVerification } from "@/components/auth/resend-verification";
 
+export const dynamic = "force-dynamic";
+
 export default async function VerifyEmailPage() {
   const session = await getSession();
 

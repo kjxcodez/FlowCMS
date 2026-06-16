@@ -23,7 +23,7 @@ export const NavCTA = ({ session = null, fullWidth = false, onAction }: NavCTAPr
       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
         <Button asChild className={btnClass} onClick={onAction}>
           <Link href="/dashboard">
-            Dashboard <ArrowRightIcon className="ml-2 size-3.5" />
+            Go to Dashboard <ArrowRightIcon className="ml-2 size-3.5" />
           </Link>
         </Button>
       </motion.div>
@@ -34,7 +34,7 @@ export const NavCTA = ({ session = null, fullWidth = false, onAction }: NavCTAPr
     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
       <Button asChild className={btnClass} onClick={onAction}>
         <Link href="/auth/register">
-          Get started <ArrowRightIcon className="ml-2 size-3.5" />
+          Get Started <ArrowRightIcon className="ml-2 size-3.5" />
         </Link>
       </Button>
     </motion.div>

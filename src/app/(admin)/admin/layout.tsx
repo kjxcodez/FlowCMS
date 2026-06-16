@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { Toaster } from "@/components/ui/sonner";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {
