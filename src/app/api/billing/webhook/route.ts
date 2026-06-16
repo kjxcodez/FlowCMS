@@ -3,6 +3,7 @@ import { validateWebhookSignature } from "razorpay/dist/utils/razorpay-utils";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { Redis } from "@upstash/redis";
+import { invalidateApiKeyCache } from "@/lib/api-key";
 
 const WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET!;
 const redis = new Redis({
@@ -91,6 +92,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Update Database
+    const keysToInvalidate = await prisma.apiKey.findMany({
+      where: { workspaceId },
+    });
+
     await prisma.$transaction(async (tx) => {
       // Update Customer Record
       await tx.razorpayCustomer.update({
@@ -131,6 +136,13 @@ export async function POST(req: NextRequest) {
           },
         });
       }
+    });
+
+    // Invalidate Redis caches after successful database transaction
+    await Promise.all(
+      keysToInvalidate.map((key) => invalidateApiKeyCache(key.id, key.keyHash))
+    ).catch((err) => {
+      logger.error("Failed to invalidate workspace API keys cache on plan change", { workspaceId, error: String(err) });
     });
 
     // 5. Force UI Refresh

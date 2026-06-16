@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
 import { cached } from "@/lib/cache";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
+import { verifyApiKey as verifyApiKeyLib, invalidateApiKeyCache } from "@/lib/api-key";
 
 export class ApiKeyService {
   /**
@@ -72,12 +73,19 @@ export class ApiKeyService {
    * Revokes an existing API Key.
    */
   static async revokeApiKey(workspaceId: string, id: string, userId: string) {
-    const result = await prisma.apiKey.deleteMany({
+    const key = await prisma.apiKey.findFirst({
       where: { id, workspaceId },
     });
-    if (!result.count) {
+    if (!key) {
       throw new Error("NOT_FOUND: API key not found.");
     }
+
+    // Invalidate cache before deleting the database record
+    await invalidateApiKeyCache(id, key.keyHash);
+
+    await prisma.apiKey.delete({
+      where: { id },
+    });
 
     // Emit event for auditing
     emitPlatformEvent(PLATFORM_EVENTS.API_KEY_REVOKED, {
@@ -92,66 +100,7 @@ export class ApiKeyService {
   /**
    * Verifies a raw token against stored API key hashes using timing-safe comparisons.
    */
-  static async verifyApiKey(raw: string): Promise<{
-    valid: boolean;
-    workspaceId: string;
-    environmentId: string | null;
-    plan: string;
-    apiKeyId: string;
-    scopes: string[];
-  } | null> {
-    const prefix = raw.slice(0, 8);
-    const secureCacheKey = `auth:key:v1:${crypto.createHash("sha256").update(raw).digest("hex")}`;
-
-    return cached(secureCacheKey, 300, async () => {
-      const candidates = await prisma.apiKey.findMany({
-        where: { keyPrefix: prefix },
-        include: {
-          workspace: { select: { id: true, plan: true } },
-        },
-      });
-
-      for (const key of candidates) {
-        let match = false;
-
-        if (key.keyHash.startsWith("sha256:")) {
-          const hash = crypto.createHash("sha256").update(raw).digest("hex");
-          const expectedHash = `sha256:${hash}`;
-          
-          const a = Buffer.from(expectedHash);
-          const b = Buffer.from(key.keyHash);
-          
-          if (a.length !== b.length) {
-            match = false;
-          } else {
-            match = crypto.timingSafeEqual(a, b);
-          }
-        } else {
-          // Fallback legacy bcrypt
-          match = await bcrypt.compare(raw, key.keyHash);
-        }
-
-        if (match) {
-          // Update last used timestamp in the background
-          prisma.apiKey
-            .update({
-              where: { id: key.id },
-              data: { lastUsedAt: new Date() },
-            })
-            .catch(() => {});
-
-          return {
-            valid: true,
-            workspaceId: key.workspaceId,
-            environmentId: key.environmentId,
-            plan: key.workspace.plan,
-            apiKeyId: key.id,
-            scopes: key.scopes,
-          };
-        }
-      }
-
-      return null;
-    });
+  static async verifyApiKey(raw: string) {
+    return verifyApiKeyLib(raw);
   }
 }
