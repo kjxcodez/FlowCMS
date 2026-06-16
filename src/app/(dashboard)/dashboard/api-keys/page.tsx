@@ -32,7 +32,27 @@ interface ApiKey {
   keyPrefix: string;
   createdAt: string;
   lastUsedAt?: string;
+  scopes: string[];
 }
+
+const SCOPE_CATEGORIES = {
+  Entries: [
+    { id: "read:entries", description: "Retrieve content entries" },
+    { id: "write:entries", description: "Create, update, and delete entries" },
+  ],
+  Media: [
+    { id: "read:media", description: "List media assets" },
+    { id: "write:media", description: "Upload/delete media assets" },
+  ],
+  Collections: [
+    { id: "read:collections", description: "Read content schemas and definitions" },
+    { id: "write:collections", description: "Define or delete content schemas" },
+  ],
+  Webhooks: [
+    { id: "read:webhooks", description: "Read webhook configurations" },
+    { id: "write:webhooks", description: "Create, update, and remove webhooks" },
+  ],
+};
 
 export default function ApiKeysPage() {
   const { data, isLoading, createMutation, deleteMutation } = useApiKeys();
@@ -41,6 +61,10 @@ export default function ApiKeysPage() {
   const [newKeyLabel, setNewKeyLabel] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [originUrl, setOriginUrl] = useState("http://localhost:3000");
+
+  // Selection Dialog State
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedScopes, setSelectedScopes] = useState<string[]>(["read:entries", "read:media"]);
 
   // One-Time Reveal Dialog State
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
@@ -67,16 +91,29 @@ export default function ApiKeysPage() {
     setTimeout(() => setCopiedGeneratedKey(false), 2000);
   };
 
+  const handleToggleScope = (scopeId: string) => {
+    setSelectedScopes((prev) => {
+      if (prev.includes(scopeId)) {
+        return prev.filter((s) => s !== scopeId);
+      } else {
+        return [...prev, scopeId];
+      }
+    });
+  };
+
   const handleCreate = async () => {
     if (!newKeyLabel.trim()) return;
     setIsCreating(true);
     try {
-      const response = await createMutation.mutateAsync(newKeyLabel);
+      const response = await createMutation.mutateAsync({
+        name: newKeyLabel,
+        scopes: selectedScopes,
+      });
       
-      // Standardized response shape: { success: true, data: { key: "flw_..." } }
       if (response.success && response.data?.key) {
         setGeneratedKey(response.data.key);
         setIsRevealOpen(true);
+        setIsCreateDialogOpen(false);
         setNewKeyLabel("");
       } else {
         toast.error("Failed to generate API key.");
@@ -127,20 +164,16 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
           </p>
         </div>
         <div className="flex gap-3">
-          <Input 
-            type="text" 
-            value={newKeyLabel}
-            onChange={(e) => setNewKeyLabel(e.target.value)}
-            placeholder="Key label (e.g. Production)"
-            className="h-10 bg-paper border-border text-sm w-64 rounded-sm"
-          />
           <Button 
-            onClick={handleCreate}
-            disabled={isCreating || !newKeyLabel.trim()}
+            onClick={() => {
+              setNewKeyLabel("");
+              setSelectedScopes(["read:entries", "read:media"]);
+              setIsCreateDialogOpen(true);
+            }}
             className="h-10 px-6 text-[11px] font-bold uppercase tracking-widest rounded-sm"
           >
             <Plus className="size-3.5 mr-2" />
-            {isCreating ? "Generating..." : "Generate Key"}
+            Create API Key
           </Button>
         </div>
       </header>
@@ -176,20 +209,16 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
                   Generate your first key to start accessing the headless content delivery REST endpoints.
                 </p>
               </div>
-              <div className="flex gap-3 justify-center">
-                <Input
-                  type="text"
-                  value={newKeyLabel}
-                  onChange={(e) => setNewKeyLabel(e.target.value)}
-                  placeholder="Key label (e.g. Development)"
-                  className="h-10 bg-canvas border-border text-xs rounded-sm w-44"
-                />
+              <div className="flex justify-center">
                 <Button
-                  onClick={handleCreate}
-                  disabled={isCreating || !newKeyLabel.trim()}
+                  onClick={() => {
+                    setNewKeyLabel("");
+                    setSelectedScopes(["read:entries", "read:media"]);
+                    setIsCreateDialogOpen(true);
+                  }}
                   className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-sm shrink-0"
                 >
-                  Create Key
+                  Create API Key
                 </Button>
               </div>
             </div>
@@ -198,7 +227,7 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
           keys.map((key) => (
             <Card key={key.id} className="bg-paper border-border rounded-sm overflow-hidden hover:border-border-strong transition-all group">
               <CardContent className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                <div className="space-y-5 flex-1 min-w-0">
+                <div className="space-y-4 flex-1 min-w-0">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded bg-canvas flex items-center justify-center text-accent group-hover:bg-accent/5 transition-colors">
                       <Key className="size-4.5" />
@@ -225,6 +254,19 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
                     >
                       {copiedId === key.id ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                     </Button>
+                  </div>
+
+                  {/* Display Key Scopes */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {key.scopes && key.scopes.length > 0 ? (
+                      key.scopes.map((scope) => (
+                        <span key={scope} className="inline-flex items-center px-2.5 py-0.5 rounded bg-accent/5 border border-accent/15 text-accent text-[9px] font-mono font-medium leading-none">
+                          {scope}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-ink-faint italic font-light">No scopes assigned</span>
+                    )}
                   </div>
                 </div>
 
@@ -297,6 +339,100 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
         </div>
       </section>
 
+      {/* Create Key Scope Selection Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-xl bg-paper border-border rounded-sm p-8 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="font-display text-2xl font-semibold text-ink">Create API Key</DialogTitle>
+            <DialogDescription className="text-xs text-ink-muted font-light leading-relaxed">
+              Create a new API key to authenticate requests against our REST APIs. Assign specific permissions (scopes) to enforce access control.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-ink">Key Label</label>
+              <Input
+                type="text"
+                value={newKeyLabel}
+                onChange={(e) => setNewKeyLabel(e.target.value)}
+                placeholder="Key label (e.g. Production API Key)"
+                className="h-10 bg-canvas border-border text-sm w-full rounded-sm"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-ink">Select Scopes</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedScopes.includes("admin:workspace")) {
+                      setSelectedScopes(["read:entries", "read:media"]);
+                    } else {
+                      setSelectedScopes(["admin:workspace"]);
+                    }
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-wider text-accent hover:text-accent-bright bg-transparent border-none cursor-pointer"
+                >
+                  {selectedScopes.includes("admin:workspace") ? "Use Standard Scopes" : "Set Admin Scope"}
+                </button>
+              </div>
+
+              {selectedScopes.includes("admin:workspace") ? (
+                <div className="p-4 bg-accent/5 border border-accent/20 rounded-sm text-center">
+                  <p className="text-xs text-accent font-medium">
+                    Workspace Admin scope is enabled. This key will bypass all scope restrictions and have full access.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(SCOPE_CATEGORIES).map(([category, categoryScopes]) => (
+                    <div key={category} className="p-4 bg-canvas border border-border rounded-sm space-y-3">
+                      <h4 className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">{category}</h4>
+                      <div className="space-y-2">
+                        {categoryScopes.map((scope) => (
+                          <label key={scope.id} className="flex items-start gap-2.5 cursor-pointer select-none text-[11px] font-light text-ink hover:text-accent">
+                            <input
+                              type="checkbox"
+                              checked={selectedScopes.includes(scope.id)}
+                              onChange={() => handleToggleScope(scope.id)}
+                              className="mt-0.5 rounded border-border text-accent focus:ring-accent size-3.5"
+                            />
+                            <div>
+                              <span className="font-semibold block font-mono text-[10px] leading-tight text-ink">{scope.id}</span>
+                              <span className="text-ink-faint text-[9px] block mt-0.5 leading-tight">{scope.description}</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="pt-6">
+            <Button
+              variant="ghost"
+              onClick={() => setIsCreateDialogOpen(false)}
+              className="text-[11px] font-bold uppercase tracking-widest rounded-sm h-11"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              disabled={isCreating || !newKeyLabel.trim() || selectedScopes.length === 0}
+              className="px-6 text-[11px] font-bold uppercase tracking-widest rounded-sm h-11"
+            >
+              {isCreating ? "Generating..." : "Generate Key"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* One-Time Reveal Dialog */}
       <Dialog open={isRevealOpen} onOpenChange={setIsRevealOpen}>
         <DialogContent className="max-w-md bg-paper border-border rounded-sm p-8">
           <DialogHeader className="space-y-3">

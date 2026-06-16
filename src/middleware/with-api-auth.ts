@@ -14,6 +14,7 @@ export interface ApiContext {
   plan: string;
   apiKeyId: string;
   requestId: string;
+  scopes: string[];
   params: Promise<any>;
 }
 
@@ -21,6 +22,26 @@ type ApiHandler = (
   req: NextRequest,
   ctx: ApiContext
 ) => Promise<Response>;
+
+export function hasScope(keyScopes: string[], required: string | string[]): boolean {
+  if (keyScopes.includes("admin:workspace")) {
+    return true;
+  }
+  const requiredArray = Array.isArray(required) ? required : [required];
+  return requiredArray.every((s) => keyScopes.includes(s));
+}
+
+export function requireScope(required: string | string[], handler: ApiHandler): ApiHandler {
+  return async (req, ctx) => {
+    if (!ctx.scopes) {
+      return apiError("FORBIDDEN", "Insufficient scopes. API key has no scopes.");
+    }
+    if (!hasScope(ctx.scopes, required)) {
+      return apiError("FORBIDDEN", "Insufficient scopes.");
+    }
+    return handler(req, ctx);
+  };
+}
 
 export function withApiAuth(handler: ApiHandler) {
   return async (req: NextRequest, context?: { params: Promise<any> }): Promise<Response> => {
@@ -43,7 +64,7 @@ export function withApiAuth(handler: ApiHandler) {
       return apiError("UNAUTHORIZED", "Invalid API key.");
     }
 
-    const { workspaceId, plan, apiKeyId } = keyData;
+    const { workspaceId, plan, apiKeyId, scopes } = keyData;
 
     // 3. Rate limit
     const rl = await checkRateLimit(`ws:${workspaceId}`, plan);
@@ -80,6 +101,7 @@ export function withApiAuth(handler: ApiHandler) {
         plan,
         apiKeyId,
         requestId,
+        scopes,
         params: context?.params || Promise.resolve({}),
       });
     } catch (err) {

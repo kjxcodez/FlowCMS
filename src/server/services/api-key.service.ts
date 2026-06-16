@@ -25,7 +25,7 @@ export class ApiKeyService {
   /**
    * Creates a new API Key record and triggers event audits.
    */
-  static async createApiKey(workspaceId: string, name: string, userId: string) {
+  static async createApiKey(workspaceId: string, name: string, userId: string, scopes?: string[]) {
     const count = await prisma.apiKey.count({
       where: { workspaceId },
     });
@@ -42,6 +42,7 @@ export class ApiKeyService {
         name,
         keyHash,
         keyPrefix: prefix,
+        scopes: scopes || ["read:entries", "read:media"],
       },
     });
 
@@ -85,6 +86,7 @@ export class ApiKeyService {
     workspaceId: string;
     plan: string;
     apiKeyId: string;
+    scopes: string[];
   } | null> {
     const prefix = raw.slice(0, 8);
     const secureCacheKey = `auth:key:v1:${crypto.createHash("sha256").update(raw).digest("hex")}`;
@@ -131,6 +133,7 @@ export class ApiKeyService {
             workspaceId: key.workspaceId,
             plan: key.workspace.plan,
             apiKeyId: key.id,
+            scopes: key.scopes,
           };
         }
       }

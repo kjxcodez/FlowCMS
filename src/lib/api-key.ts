@@ -21,6 +21,7 @@ export async function verifyApiKey(raw: string): Promise<{
   workspaceId: string;
   plan: string;
   apiKeyId: string;
+  scopes: string[];
 } | null> {
   const prefix = raw.slice(0, 8);
   // const cacheKey = `auth:key:${raw}`; // Using the raw key as part of the cache key (risky? No, it's a secure token)
@@ -71,6 +72,7 @@ export async function verifyApiKey(raw: string): Promise<{
           workspaceId: key.workspaceId,
           plan: key.workspace.plan,
           apiKeyId: key.id,
+          scopes: key.scopes,
         };
       }
     }

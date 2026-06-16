@@ -5,15 +5,15 @@ import { apiError, apiSuccess } from "@/types/api";
 export const runtime = "nodejs";
 
 export const GET = withApiAuth(
-  requireScope("read:media", async (req, { workspaceId }) => {
+  requireScope("read:collections", async (req, { workspaceId }) => {
     try {
-      const media = await prisma.media.findMany({
+      const collections = await prisma.collection.findMany({
         where: { workspaceId },
         orderBy: { createdAt: "desc" },
       });
-      return apiSuccess(media);
+      return apiSuccess(collections);
     } catch {
-      return apiError("INTERNAL_ERROR", "Failed to retrieve media.");
+      return apiError("INTERNAL_ERROR", "Failed to retrieve collections.");
     }
   })
 );

@@ -31,6 +31,7 @@ export async function GET() {
         lastUsedAt: true,
         expiresAt: true,
         createdAt: true,
+        scopes: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -74,7 +75,8 @@ export async function POST(req: NextRequest) {
     const { rawKey, key } = await ApiKeyService.createApiKey(
       workspace.id,
       parsed.data.name,
-      session.user.id
+      session.user.id,
+      parsed.data.scopes
     );
 
     // Return raw key exclusively once
@@ -85,6 +87,7 @@ export async function POST(req: NextRequest) {
       title: key.name, // Compatibility map
       id: key.id,
       createdAt: key.createdAt,
+      scopes: key.scopes,
     });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (err instanceof ForbiddenError) {

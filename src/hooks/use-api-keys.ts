@@ -30,11 +30,11 @@ export function useApiKeys() {
 export function useCreateApiKey() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (name: string) =>
+    mutationFn: (variables: { name: string; scopes: string[] }) =>
       fetch("/api/internal/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(variables),
       }).then(async (r) => {
         const json = await r.json();
         if (!r.ok) throw new Error(json.message || "Failed to create API key.");
