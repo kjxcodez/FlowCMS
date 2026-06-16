@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { getPlanConfig } from "@/lib/plans";
 import { toast } from "sonner";
 
 const AVAILABLE_EVENTS = [
@@ -81,7 +82,8 @@ export default function WebhooksPage() {
   };
 
   const plan = workspace?.plan || "HOBBY";
-  const isHobby = plan === "HOBBY" && !workspace?.isAdmin;
+  const limits = getPlanConfig(plan);
+  const isHobby = !limits.webhooks && !workspace?.isAdmin;
   const webhookCount = webhooks?.length || 0;
   const isLimitReached = isHobby && webhookCount >= 1;
 
@@ -402,7 +404,7 @@ export default function WebhooksPage() {
                  <Sparkles className="size-5 text-accent-bright animate-pulse" />
                </h3>
                <p className="text-sm text-white/50 leading-relaxed font-light">
-                 Hobby tier is configured for a single destination callback endpoint. Upgrade to Pro or Team plans to unlock unlimited webhooks and multi-server CDNs.
+                 Hobby tier is configured for a single destination callback endpoint. Upgrade to Pro or Agency plans to unlock unlimited webhooks and multi-server CDNs.
                </p>
             </div>
             <Button asChild className="h-12 px-8 bg-white text-sidebar text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent-bright transition-all shadow-xl whitespace-nowrap">

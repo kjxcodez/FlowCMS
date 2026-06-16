@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useUsage, useUsageRequests } from "@/hooks/use-usage";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { PLAN_LIMITS } from "@/types/cms";
+import { getPlanConfig } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,8 +81,8 @@ export default function UsagePage() {
 
   const storageGB = (usage?.storageBytes || 0) / (1024 * 1024 * 1024);
   const activePlan = workspace?.plan || "HOBBY";
-  const limits = PLAN_LIMITS[activePlan];
-  const storageLimitGb = activePlan === "PRO" ? 50 : activePlan === "AGENCY" ? 250 : activePlan === "ENTERPRISE" ? -1 : 5;
+  const limits = getPlanConfig(activePlan);
+  const storageLimitGb = limits.storageLimitGb;
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-1000 pb-32">

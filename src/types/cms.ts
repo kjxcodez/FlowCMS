@@ -26,46 +26,9 @@ export interface Block {
   props: Record<string, unknown>;
 }
 
-export interface PlanLimits {
-  collections: number;
-  apiRequestsPerMonth: number;
-  environments: number;
-  webhooks: boolean;
-  customRoles: boolean;
-  sso: boolean;
-}
+import { PLANS } from "@/lib/plans";
+import type { PlanConfig } from "@/lib/plans";
 
-export const PLAN_LIMITS: Record<string, PlanLimits> = {
-  HOBBY: {
-    collections: 3,
-    apiRequestsPerMonth: 5_000,
-    environments: 1,
-    webhooks: false,
-    customRoles: false,
-    sso: false,
-  },
-  PRO: {
-    collections: -1,
-    apiRequestsPerMonth: 250_000,
-    environments: 2,
-    webhooks: true,
-    customRoles: false,
-    sso: false,
-  },
-  AGENCY: {
-    collections: -1,
-    apiRequestsPerMonth: 1_000_000,
-    environments: 5,
-    webhooks: true,
-    customRoles: true,
-    sso: false,
-  },
-  ENTERPRISE: {
-    collections: -1,
-    apiRequestsPerMonth: -1,
-    environments: -1,
-    webhooks: true,
-    customRoles: true,
-    sso: true,
-  },
-};
+export type PlanLimits = PlanConfig;
+export const PLAN_LIMITS = PLANS;
+

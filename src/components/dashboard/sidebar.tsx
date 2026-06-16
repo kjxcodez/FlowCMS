@@ -27,6 +27,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { getPlanConfig } from "@/lib/plans";
 import {
   Sidebar as SidebarComponent,
   SidebarContent,
@@ -129,7 +130,7 @@ export function Sidebar() {
                 
                 const isAuditLog = item.href === "/dashboard/audit-logs";
                 const plan = workspaceData?.plan ?? "HOBBY";
-                const isLocked = isAuditLog && (plan === "HOBBY" || plan === "PRO");
+                const isLocked = isAuditLog && !getPlanConfig(plan).auditLogs;
 
                 return (
                   <SidebarMenuItem key={item.href}>

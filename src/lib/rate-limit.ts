@@ -8,22 +8,29 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+import { PLANS } from "./plans";
+
 // Map Plan to ratelimit instances using sliding window
 const limiters = {
   HOBBY: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(30, "1 m"),
+    limiter: Ratelimit.slidingWindow(PLANS.HOBBY.rateLimitPerMinute, "1 m"),
     prefix: "rl:hobby",
   }),
   PRO: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(300, "1 m"),
+    limiter: Ratelimit.slidingWindow(PLANS.PRO.rateLimitPerMinute, "1 m"),
     prefix: "rl:pro",
   }),
-  TEAM: new Ratelimit({
+  AGENCY: new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(1000, "1 m"),
-    prefix: "rl:team",
+    limiter: Ratelimit.slidingWindow(PLANS.AGENCY.rateLimitPerMinute, "1 m"),
+    prefix: "rl:agency",
+  }),
+  ENTERPRISE: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(PLANS.ENTERPRISE.rateLimitPerMinute, "1 m"),
+    prefix: "rl:enterprise",
   }),
   PUBLIC: new Ratelimit({
     redis,

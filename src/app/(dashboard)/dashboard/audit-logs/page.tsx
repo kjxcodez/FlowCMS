@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useAuditLogs } from "@/hooks/use-audit-logs";
+import { getPlanConfig } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -60,7 +61,7 @@ export default function AuditLogsPage() {
   const [diffLog, setDiffLog] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   
   const plan = workspace?.plan ?? "HOBBY";
-  const isLocked = plan === "HOBBY" || plan === "PRO";
+  const isLocked = !getPlanConfig(plan).auditLogs;
 
   const handleExport = () => {
     if (!logs) return;

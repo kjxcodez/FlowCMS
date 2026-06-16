@@ -5,15 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getPlanConfig } from "@/lib/plans";
 
 function getPlanLimit(plan: string): number | null {
-  const limits: Record<string, number | null> = {
-    HOBBY: 5000,
-    PRO: 250000,
-    AGENCY: 1000000,
-    ENTERPRISE: null,
-  };
-  return limits[plan] ?? 5000;
+  const limit = getPlanConfig(plan).apiRequestsPerMonth;
+  return limit === -1 ? null : limit;
 }
 
 const statusConfig = {

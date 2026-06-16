@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useDashboardAnalytics } from "@/hooks/use-dashboard-analytics";
 import { useWorkspace } from "@/hooks/use-workspace";
-import { PLAN_LIMITS } from "@/types/cms";
+import { getPlanConfig } from "@/lib/plans";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,15 +126,8 @@ export default function DashboardOverview() {
 
   // Dynamic boundaries resolver
   const activePlan = workspace?.plan || "HOBBY";
-  const limits = PLAN_LIMITS[activePlan];
-  const storageLimitGb =
-    activePlan === "PRO"
-      ? 50
-      : activePlan === "AGENCY"
-        ? 250
-        : activePlan === "ENTERPRISE"
-          ? -1
-          : 5;
+  const limits = getPlanConfig(activePlan);
+  const storageLimitGb = limits.storageLimitGb;
 
   // Avoid hydration issues by tracking mounted state
   const [mounted, setMounted] = useState(false);

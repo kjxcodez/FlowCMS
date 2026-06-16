@@ -1,6 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { prisma } from "./prisma";
-import { PLAN_LIMITS } from "@/types/cms";
+import { getPlanConfig } from "./plans";
 import { logger } from "./logger";
 
 const redis = new Redis({
@@ -58,7 +58,7 @@ export async function checkUsageLimit(
   isAdmin = false
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
   if (isAdmin) return { allowed: true, used: 0, limit: -1 };
-  const limits = PLAN_LIMITS[plan];
+  const limits = getPlanConfig(plan);
   if (!limits || limits.apiRequestsPerMonth === -1) {
     return { allowed: true, used: 0, limit: -1 };
   }
@@ -100,7 +100,7 @@ export async function checkCollectionLimit(
   isAdmin = false
 ): Promise<{ allowed: boolean; used: number; limit: number }> {
   if (isAdmin) return { allowed: true, used: 0, limit: -1 };
-  const limits = PLAN_LIMITS[plan];
+  const limits = getPlanConfig(plan);
   if (!limits || limits.collections === -1) {
     return { allowed: true, used: 0, limit: -1 };
   }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useEnvironments } from "@/hooks/use-environments";
+import { getPlanConfig } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +21,10 @@ export default function EnvironmentsPage() {
   const { data: workspace } = useWorkspace();
   const { data: environments, isLoading } = useEnvironments();
   const plan = workspace?.plan ?? "HOBBY";
-  const isHobby = plan === "HOBBY";
+  const limits = getPlanConfig(plan);
+  const maxEnvironments = limits.environments;
+  const canCreateMore = maxEnvironments === -1 || (environments?.length ?? 0) < maxEnvironments;
+  const isHobby = maxEnvironments === 1;
 
   if (isLoading) return <div className="py-32 text-center font-mono text-[10px] uppercase tracking-widest opacity-30 animate-pulse">Mapping Infrastructure...</div>;
 
@@ -37,16 +41,16 @@ export default function EnvironmentsPage() {
         </div>
         
         <div className="relative group">
-          {isHobby && (
+          {!canCreateMore && (
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-sidebar text-white text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm shadow-xl z-20 whitespace-nowrap">
-              Upgrade to Pro for more environments
+              {maxEnvironments === 1 ? "Upgrade to Pro for more environments" : "Environment limit reached for your plan"}
             </div>
           )}
           <Button 
-            disabled={isHobby}
+            disabled={!canCreateMore}
             className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
           >
-            {isHobby ? <Lock className="size-3.5 mr-2" /> : <Plus className="size-4 mr-2" />}
+            {!canCreateMore ? <Lock className="size-3.5 mr-2" /> : <Plus className="size-4 mr-2" />}
             New Environment
           </Button>
         </div>
