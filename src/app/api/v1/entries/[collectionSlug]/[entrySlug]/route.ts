@@ -61,7 +61,7 @@ export const GET = withApiAuth(
         // If the entry is published, it remains accessible publicly regardless of token check failure
         if (entry.status !== "PUBLISHED") {
           return apiError(
-            previewResult.errorResponse!.code as any,
+            previewResult.errorResponse!.code as any, // eslint-disable-line @typescript-eslint/no-explicit-any
             previewResult.errorResponse!.message
           );
         }

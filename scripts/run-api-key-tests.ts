@@ -1,11 +1,11 @@
-import { prisma } from "../lib/prisma";
-import { ApiKeyService } from "../server/services/api-key.service";
-import { GET as getEntries } from "../app/api/v1/entries/[collectionSlug]/route";
-import { GET as getEntry } from "../app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
-import { GET as getMedia } from "../app/api/v1/media/route";
-import { GET as getWorkspace } from "../app/api/v1/workspace/route";
-import { withApiAuth, requireScope } from "../middleware/with-api-auth";
-import { apiSuccess } from "../types/api";
+import { prisma } from "../src/lib/prisma";
+import { ApiKeyService } from "../src/server/services/api-key.service";
+import { GET as getEntries } from "../src/app/api/v1/entries/[collectionSlug]/route";
+import { GET as getEntry } from "../src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
+import { GET as getMedia } from "../src/app/api/v1/media/route";
+import { GET as getWorkspace } from "../src/app/api/v1/workspace/route";
+import { withApiAuth, requireScope } from "../src/middleware/with-api-auth";
+import { apiSuccess } from "../src/types/api";
 import { NextRequest } from "next/server";
 
 async function runApiKeyTests() {

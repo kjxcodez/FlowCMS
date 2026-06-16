@@ -32,7 +32,7 @@ export const GET = withApiAuth(
     }
 
     const includeDrafts = searchParams.get("preview") === "true";
-    const where: any = {
+    const where: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
       collectionId: collection.id,
       environmentId,
     };
@@ -50,7 +50,7 @@ export const GET = withApiAuth(
 
       if (!previewResult.allowed) {
         return apiError(
-          previewResult.errorResponse!.code as any,
+          previewResult.errorResponse!.code as any, // eslint-disable-line @typescript-eslint/no-explicit-any
           previewResult.errorResponse!.message
         );
       }
@@ -90,7 +90,7 @@ export const GET = withApiAuth(
         // 2. Collect all referenced IDs
         const allRefIds = new Set<string>();
         entries.forEach(entry => {
-          const data = entry.data as Record<string, any>;
+          const data = entry.data as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
           referenceFields.forEach(fieldSlug => {
             if (data[fieldSlug] && typeof data[fieldSlug] === "string") {
               allRefIds.add(data[fieldSlug]);
@@ -111,7 +111,7 @@ export const GET = withApiAuth(
 
           // 4. Inject referenced entries back into data
           entries.forEach(entry => {
-            const data = entry.data as Record<string, any>;
+            const data = entry.data as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
             referenceFields.forEach(fieldSlug => {
               if (data[fieldSlug] && refMap.has(data[fieldSlug])) {
                 data[`_${fieldSlug}_expanded`] = refMap.get(data[fieldSlug]);

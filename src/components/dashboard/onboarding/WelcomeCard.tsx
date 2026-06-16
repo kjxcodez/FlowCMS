@@ -5,7 +5,6 @@ import { Check, Copy, ExternalLink, Sparkles, Layers, BookOpen, AlertCircle } fr
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useApiKeys } from "@/hooks/use-api-keys";
-import { APP_CONFIG } from "@/config/app";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import Link from "next/link";

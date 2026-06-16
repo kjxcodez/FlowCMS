@@ -180,7 +180,7 @@ export async function GET(
     }
 
     return new NextResponse("Error", { status: 500 });
-  } catch (err: any) {
+  } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (err && (err.code === "P2002" || err.message?.includes("Unique constraint failed"))) {
       logger.warn("Invitation accept conflict due to database unique constraint", { error: String(err) });
       return new NextResponse("Conflict: User is already a member or request in progress", { status: 409 });

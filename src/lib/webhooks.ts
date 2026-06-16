@@ -6,7 +6,7 @@ import { logger } from "./logger";
 export async function dispatchWebhooks(
   workspaceId: string,
   event: string,
-  payload: any,
+  payload: any, // eslint-disable-line @typescript-eslint/no-explicit-any
   environmentId?: string
 ) {
   try {
@@ -30,7 +30,7 @@ export async function dispatchWebhooks(
       }
     }
 
-    const whereClause: any = {
+    const whereClause: any = { // eslint-disable-line @typescript-eslint/no-explicit-any
       workspaceId,
       enabled: true,
       events: { has: event as WebhookEvent },

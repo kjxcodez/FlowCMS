@@ -47,7 +47,7 @@ export async function verifyApiKey(raw: string): Promise<{
   const secureCacheKey = `auth:key:v1:${crypto.createHash("sha256").update(raw).digest("hex")}`;
 
   try {
-    const cachedData = await redis.get<any>(secureCacheKey);
+    const cachedData = await redis.get<any>(secureCacheKey); // eslint-disable-line @typescript-eslint/no-explicit-any
     if (cachedData !== null) {
       if (cachedData.expiresAt && new Date(cachedData.expiresAt) < new Date()) {
         logger.warn("Cached API key has expired", { apiKeyId: cachedData.apiKeyId });

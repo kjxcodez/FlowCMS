@@ -1,12 +1,12 @@
-import { POST as createMedia } from "../../../app/api/internal/media/route";
-import { PATCH as updateMedia, DELETE as deleteMedia } from "../../../app/api/internal/media/[id]/route";
-import { POST as createFolder } from "../../../app/api/internal/media/folders/route";
-import { PATCH as updateFolder, DELETE as deleteFolder } from "../../../app/api/internal/media/folders/[id]/route";
-import { POST as bulkMedia } from "../../../app/api/internal/media/bulk/route";
+import { POST as createMedia } from "../../../src/app/api/internal/media/route";
+import { PATCH as updateMedia, DELETE as deleteMedia } from "../../../src/app/api/internal/media/[id]/route";
+import { POST as createFolder } from "../../../src/app/api/internal/media/folders/route";
+import { PATCH as updateFolder, DELETE as deleteFolder } from "../../../src/app/api/internal/media/folders/[id]/route";
+import { POST as bulkMedia } from "../../../src/app/api/internal/media/bulk/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../src/lib/prisma";
 import { setMockUser } from "../../run-rbac-tests";
-import { storage } from "../../../lib/storage";
+import { storage } from "../../../src/lib/storage";
 
 export async function testMedia(ctx: {
   workspace: any;

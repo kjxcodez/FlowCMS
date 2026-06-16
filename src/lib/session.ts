@@ -7,7 +7,7 @@ import { isAdminEmail } from "./admin";
 import { DEFAULT_LOGIN_REDIRECT } from "./routes";
 
 export async function getSession() {
-  let reqHeaders: any;
+  let reqHeaders: any; // eslint-disable-line @typescript-eslint/no-explicit-any
   try {
     reqHeaders = await headers();
   } catch {

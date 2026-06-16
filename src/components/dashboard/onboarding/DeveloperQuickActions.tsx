@@ -5,7 +5,6 @@ import { Layers, Plus, Image as ImageIcon, Key, BookOpen, Terminal, ArrowUpRight
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "motion/react";
 import Link from "next/link";
-import { APP_CONFIG } from "@/config/app";
 
 interface ActionItem {
   title: string;

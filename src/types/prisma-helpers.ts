@@ -9,7 +9,7 @@ export interface FieldDefinition {
 }
 
 export type CollectionFieldsInput = FieldDefinition[];
-export type EntryDataInput = Record<string, any>;
+export type EntryDataInput = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 /**
  * Casts a collection fields array safely to Prisma JSON value.

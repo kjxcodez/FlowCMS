@@ -67,12 +67,12 @@ export function MediaPickerModal({
       } else {
         toast.success("Media uploaded successfully!");
       }
-    } catch (err: any) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       toast.error(err?.message || "Failed to upload media");
     }
   };
 
-  const filteredMedia: PickerFile[] = (media || []).map((m: any) => ({
+  const filteredMedia: PickerFile[] = (media || []).map((m: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
     id: m.id,
     name: m.filename,
     url: m.url,

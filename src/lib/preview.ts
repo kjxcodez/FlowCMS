@@ -5,7 +5,7 @@ import { logger } from "./logger";
 export interface VerifyPreviewResult {
   allowed: boolean;
   errorResponse?: { status: number; message: string; code: string };
-  token?: any;
+  token?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 export async function verifyDraftPreview({

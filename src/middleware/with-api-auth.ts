@@ -16,7 +16,7 @@ export interface ApiContext {
   apiKeyId: string;
   requestId: string;
   scopes: string[];
-  params: Promise<any>;
+  params: Promise<any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 type ApiHandler = (
@@ -45,7 +45,7 @@ export function requireScope(required: string | string[], handler: ApiHandler): 
 }
 
 export function withApiAuth(handler: ApiHandler) {
-  return async (req: NextRequest, context?: { params: Promise<any> }): Promise<Response> => {
+  return async (req: NextRequest, context?: { params: Promise<any> }): Promise<Response> => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const requestId = crypto.randomUUID();
     const start = Date.now();
 

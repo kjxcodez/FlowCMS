@@ -1,8 +1,8 @@
-import { POST as createEntry } from "../../../app/api/internal/entries/route";
-import { PATCH as updateEntry, DELETE as deleteEntry } from "../../../app/api/internal/entries/[id]/route";
-import { PATCH as publishEntry } from "../../../app/api/internal/entries/[id]/publish/route";
+import { POST as createEntry } from "../../../src/app/api/internal/entries/route";
+import { PATCH as updateEntry, DELETE as deleteEntry } from "../../../src/app/api/internal/entries/[id]/route";
+import { PATCH as publishEntry } from "../../../src/app/api/internal/entries/[id]/publish/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../../src/lib/prisma";
 import { setMockUser } from "../../run-rbac-tests";
 
 export async function testEntries(ctx: {
