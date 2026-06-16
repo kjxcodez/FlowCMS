@@ -118,6 +118,7 @@ model Environment {
   apiKeys     ApiKey[]
   entries     Entry[]
   draftTokens DraftToken[]
+  webhooks    Webhook[]
 
   @@unique([workspaceId, slug])
 }
@@ -165,6 +166,9 @@ model Entry {
   @@unique([collectionId, slug])
   @@index([workspaceId, status])
   @@index([collectionId, status])
+  @@index([workspaceId, environmentId])
+  @@index([collectionId, environmentId])
+  @@index([status, environmentId])
 }
 
 // ── Media ──────────────────────────────────────────────────────────
@@ -225,20 +229,26 @@ model ApiKey {
 
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   environment Environment? @relation(fields: [environmentId], references: [id])
+
+  @@index([workspaceId, environmentId])
 }
 
 // ── Webhooks ───────────────────────────────────────────────────────
 model Webhook {
-  id          String         @id @default(cuid())
-  workspaceId String
-  url         String
-  events      WebhookEvent[]
-  secret      String
-  enabled     Boolean        @default(true)
-  createdAt   DateTime       @default(now())
+  id            String         @id @default(cuid())
+  workspaceId   String
+  environmentId String?
+  url           String
+  events        WebhookEvent[]
+  secret        String
+  enabled       Boolean        @default(true)
+  createdAt     DateTime       @default(now())
 
-  workspace  Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  deliveries WebhookDelivery[]
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment?       @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  deliveries  WebhookDelivery[]
+
+  @@index([workspaceId, environmentId])
 }
 
 model WebhookDelivery {
