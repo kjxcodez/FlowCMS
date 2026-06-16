@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { 
   GitBranch, 
   Plus, 
@@ -9,6 +9,7 @@ import {
   Lock,
   Zap
 } from "lucide-react";
+import Link from "next/link";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useEnvironments } from "@/hooks/use-environments";
 import { getPlanConfig } from "@/lib/plans";
@@ -16,15 +17,107 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function EnvironmentsPage() {
   const { data: workspace } = useWorkspace();
-  const { data: environments, isLoading } = useEnvironments();
+  const { 
+    data: environments, 
+    isLoading,
+    createEnvironment,
+    setDefaultEnvironment,
+    updateEnvironment,
+    deleteEnvironment
+  } = useEnvironments();
+
   const plan = workspace?.plan ?? "HOBBY";
   const limits = getPlanConfig(plan);
   const maxEnvironments = limits.environments;
   const canCreateMore = maxEnvironments === -1 || (environments?.length ?? 0) < maxEnvironments;
   const isHobby = maxEnvironments === 1;
+
+  // New Environment Dialog State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newEnvName, setNewEnvName] = useState("");
+  const [isCreatingEnv, setIsCreatingEnv] = useState(false);
+
+  // Settings Dialog State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedEnv, setSelectedEnv] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [editEnvName, setEditEnvName] = useState("");
+  const [isUpdatingEnv, setIsUpdatingEnv] = useState(false);
+  const [isDeletingEnv, setIsDeletingEnv] = useState(false);
+
+  const handleCreateEnvironment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEnvName.trim()) return;
+    setIsCreatingEnv(true);
+    try {
+      await createEnvironment({ name: newEnvName.trim() });
+      toast.success("Environment created successfully!");
+      setIsCreateOpen(false);
+      setNewEnvName("");
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(err.message || "Failed to create environment");
+    } finally {
+      setIsCreatingEnv(false);
+    }
+  };
+
+  const handleSetDefault = async (envId: string) => {
+    try {
+      await setDefaultEnvironment(envId);
+      toast.success("Default environment updated successfully!");
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(err.message || "Failed to update default environment");
+    }
+  };
+
+  const handleUpdateEnvironment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEnv || !editEnvName.trim()) return;
+    setIsUpdatingEnv(true);
+    try {
+      await updateEnvironment({ envId: selectedEnv.id, name: editEnvName.trim() });
+      toast.success("Environment renamed successfully!");
+      setIsSettingsOpen(false);
+      setSelectedEnv(null);
+      setEditEnvName("");
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(err.message || "Failed to rename environment");
+    } finally {
+      setIsUpdatingEnv(false);
+    }
+  };
+
+  const handleDeleteEnvironment = async () => {
+    if (!selectedEnv) return;
+    const confirmDelete = window.confirm(`Are you sure you want to delete the "${selectedEnv.name}" environment? This action cannot be undone.`);
+    if (!confirmDelete) return;
+
+    setIsDeletingEnv(true);
+    try {
+      await deleteEnvironment(selectedEnv.id);
+      toast.success("Environment deleted successfully!");
+      setIsSettingsOpen(false);
+      setSelectedEnv(null);
+      setEditEnvName("");
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      toast.error(err.message || "Failed to delete environment");
+    } finally {
+      setIsDeletingEnv(false);
+    }
+  };
 
   if (isLoading) return <div className="py-32 text-center font-mono text-[10px] uppercase tracking-widest opacity-30 animate-pulse">Mapping Infrastructure...</div>;
 
@@ -48,6 +141,7 @@ export default function EnvironmentsPage() {
           )}
           <Button 
             disabled={!canCreateMore}
+            onClick={() => setIsCreateOpen(true)}
             className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
           >
             {!canCreateMore ? <Lock className="size-3.5 mr-2" /> : <Plus className="size-4 mr-2" />}
@@ -87,17 +181,29 @@ export default function EnvironmentsPage() {
 
                 <div className="flex items-center gap-3">
                   {!env.isDefault && (
-                    <Button variant="ghost" className="h-9 text-[10px] font-bold uppercase tracking-widest text-ink-muted hover:text-accent">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => handleSetDefault(env.id)}
+                      className="h-9 text-[10px] font-bold uppercase tracking-widest text-ink-muted hover:text-accent"
+                    >
                       Set Default
                     </Button>
                   )}
-                  <Button variant="outline" className="h-9 text-[10px] font-bold uppercase tracking-widest border-border text-ink-muted hover:text-ink">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setSelectedEnv(env);
+                      setEditEnvName(env.name);
+                      setIsSettingsOpen(true);
+                    }}
+                    className="h-9 text-[10px] font-bold uppercase tracking-widest border-border text-ink-muted hover:text-ink"
+                  >
                     Settings
                   </Button>
                 </div>
               </div>
 
-              {/* Promo Banner for Promition flow */}
+              {/* Promo Banner for Promotion flow */}
               <div className="px-8 py-4 bg-canvas/30 border-t border-border flex items-center justify-between">
                 <div className="flex items-center gap-3 text-[10px] font-mono font-bold uppercase tracking-widest text-ink-faint">
                   <Zap className="size-3.5 text-accent opacity-50" />
@@ -133,12 +239,123 @@ export default function EnvironmentsPage() {
                  Hobby plans are limited to a single production environment. Upgrade to Pro or Agency to unlock multiple environments and Promotion Flows.
                </p>
             </div>
-            <Button className="h-12 px-8 bg-white text-sidebar text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent-bright transition-all shadow-xl whitespace-nowrap">
-               Upgrade Plan
-            </Button>
+            <Link href="/dashboard/billing" passHref legacyBehavior>
+              <Button asChild className="h-12 px-8 bg-white text-sidebar text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent-bright transition-all shadow-xl whitespace-nowrap">
+                 <a>Upgrade Plan</a>
+              </Button>
+            </Link>
           </div>
         </Card>
       )}
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-paper border-border rounded-sm">
+          <form onSubmit={handleCreateEnvironment}>
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="font-display text-2xl font-bold text-ink">New Environment</DialogTitle>
+              <DialogDescription className="text-ink-muted text-xs font-light">
+                Create a new environment to isolate your content (e.g. Staging, Development).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-[10px] font-mono font-bold uppercase tracking-widest text-ink-muted">Environment Name</Label>
+                <Input
+                  id="name"
+                  value={newEnvName}
+                  onChange={(e) => setNewEnvName(e.target.value)}
+                  placeholder="e.g. Staging"
+                  required
+                  className="bg-canvas border-border focus:border-accent rounded-sm h-11 text-ink text-sm placeholder:text-ink-faint"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsCreateOpen(false)}
+                className="h-11 px-6 text-[10px] font-bold uppercase tracking-widest text-ink-muted hover:text-ink"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isCreatingEnv || !newEnvName.trim()}
+                className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
+              >
+                {isCreatingEnv ? "Creating..." : "Create Environment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={isSettingsOpen} onOpenChange={(open) => {
+        setIsSettingsOpen(open);
+        if (!open) {
+          setSelectedEnv(null);
+          setEditEnvName("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px] bg-paper border-border rounded-sm">
+          <form onSubmit={handleUpdateEnvironment}>
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="font-display text-2xl font-bold text-ink">Environment Settings</DialogTitle>
+              <DialogDescription className="text-ink-muted text-xs font-light">
+                Configure properties and manage settings for this environment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-[10px] font-mono font-bold uppercase tracking-widest text-ink-muted">Environment Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editEnvName}
+                  onChange={(e) => setEditEnvName(e.target.value)}
+                  placeholder="e.g. Staging"
+                  required
+                  className="bg-canvas border-border focus:border-accent rounded-sm h-11 text-ink text-sm placeholder:text-ink-faint"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-4">
+              {selectedEnv && !selectedEnv.isDefault && selectedEnv.slug !== "production" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleDeleteEnvironment}
+                  disabled={isDeletingEnv || isUpdatingEnv}
+                  className="h-11 px-6 text-[10px] font-bold uppercase tracking-widest text-danger hover:bg-danger/10 self-start sm:mr-auto"
+                >
+                  {isDeletingEnv ? "Deleting..." : "Delete"}
+                </Button>
+              ) : (
+                <div />
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="h-11 px-6 text-[10px] font-bold uppercase tracking-widest text-ink-muted hover:text-ink"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isUpdatingEnv || isDeletingEnv || !editEnvName.trim() || editEnvName.trim() === selectedEnv?.name}
+                  className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-lg"
+                >
+                  {isUpdatingEnv ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
