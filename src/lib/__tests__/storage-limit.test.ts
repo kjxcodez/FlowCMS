@@ -21,30 +21,30 @@ prisma.media.aggregate = (async (args: any) => {
 test("Storage Limit Regression Tests", async (t) => {
   
   await t.test("Hobby Plan Rejection", async () => {
-    // Hobby plan: limit 5 GB
-    mockSizeSum = Math.round(4.9 * 1024 * 1024 * 1024);
+    // Hobby plan: limit 1 GB
+    mockSizeSum = Math.round(0.9 * 1024 * 1024 * 1024);
     const uploadSize = 200 * 1024 * 1024;
     
     const result = await checkStorageLimit("workspace-id", "HOBBY", uploadSize, false);
-    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 5GB limit");
+    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 1GB limit");
   });
 
   await t.test("Pro Plan Rejection", async () => {
-    // Pro plan: limit 50 GB
-    mockSizeSum = Math.round(49 * 1024 * 1024 * 1024);
+    // Pro plan: limit 10 GB
+    mockSizeSum = Math.round(9 * 1024 * 1024 * 1024);
     const uploadSize = 2 * 1024 * 1024 * 1024;
     
     const result = await checkStorageLimit("workspace-id", "PRO", uploadSize, false);
-    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 50GB limit");
+    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 10GB limit");
   });
 
   await t.test("Agency Plan Rejection", async () => {
-    // Agency plan: limit 250 GB
-    mockSizeSum = Math.round(249 * 1024 * 1024 * 1024);
+    // Agency plan: limit 50 GB
+    mockSizeSum = Math.round(49 * 1024 * 1024 * 1024);
     const uploadSize = 2 * 1024 * 1024 * 1024;
     
     const result = await checkStorageLimit("workspace-id", "AGENCY", uploadSize, false);
-    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 250GB limit");
+    assert.strictEqual(result.allowed, false, "Should reject upload exceeding 50GB limit");
   });
 
   await t.test("Enterprise Plan Success", async () => {
@@ -57,8 +57,8 @@ test("Storage Limit Regression Tests", async (t) => {
   });
 
   await t.test("Under Limit Success", async () => {
-    // Hobby plan: limit 5 GB
-    mockSizeSum = Math.round(1 * 1024 * 1024 * 1024);
+    // Hobby plan: limit 1 GB
+    mockSizeSum = Math.round(100 * 1024 * 1024);
     const uploadSize = 100 * 1024 * 1024;
     
     const result = await checkStorageLimit("workspace-id", "HOBBY", uploadSize, false);
@@ -66,8 +66,8 @@ test("Storage Limit Regression Tests", async (t) => {
   });
 
   await t.test("Multi-File Upload Rejection", async () => {
-    // Hobby plan: limit 5 GB
-    mockSizeSum = Math.round(4.8 * 1024 * 1024 * 1024);
+    // Hobby plan: limit 1 GB
+    mockSizeSum = Math.round(0.8 * 1024 * 1024 * 1024);
     const uploadSize = (100 + 200) * 1024 * 1024;
     
     const result = await checkStorageLimit("workspace-id", "HOBBY", uploadSize, false);

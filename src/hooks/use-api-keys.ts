@@ -6,7 +6,7 @@ async function fetchJson(url: string) {
   const r = await fetch(url);
   const json = await r.json();
   if (!r.ok) {
-    throw new Error(json.message || "Failed to fetch data");
+    throw new Error(json.error?.message || json.message || "Failed to fetch data");
   }
   return json.data;
 }
@@ -37,7 +37,7 @@ export function useCreateApiKey() {
         body: JSON.stringify(variables),
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to create API key.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to create API key.");
         return json;
       }),
     onSuccess: () =>
@@ -53,7 +53,7 @@ export function useDeleteApiKey() {
         method: "DELETE",
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to delete API key.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to delete API key.");
         return json;
       }),
     onSuccess: () =>

@@ -1,10 +1,9 @@
 import crypto from "crypto";
-import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { prisma } from "@/lib/prisma";
-import { cached } from "@/lib/cache";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
 import { verifyApiKey as verifyApiKeyLib, invalidateApiKeyCache } from "@/lib/api-key";
+import { getPlanConfig } from "@/lib/plans";
 
 export class ApiKeyService {
   /**
@@ -26,12 +25,33 @@ export class ApiKeyService {
   /**
    * Creates a new API Key record and triggers event audits.
    */
-  static async createApiKey(workspaceId: string, name: string, userId: string, scopes?: string[], environmentId?: string) {
+  static async createApiKey(
+    workspaceId: string,
+    name: string,
+    userId: string,
+    scopes?: string[],
+    environmentId?: string,
+    plan?: string,
+    isAdmin = false
+  ) {
+    let resolvedPlan = plan;
+    if (!resolvedPlan) {
+      const ws = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { plan: true },
+      });
+      resolvedPlan = ws?.plan || "HOBBY";
+    }
+
+    const planConfig = getPlanConfig(resolvedPlan);
     const count = await prisma.apiKey.count({
       where: { workspaceId },
     });
-    if (count >= 5) {
-      throw new Error("PLAN_LIMIT_REACHED: Maximum 5 API keys allowed.");
+
+    if (!isAdmin && planConfig.apiKeys !== -1) {
+      if (count >= planConfig.apiKeys) {
+        throw new Error(`PLAN_LIMIT_REACHED: Your plan allows a maximum of ${planConfig.apiKeys} API keys.`);
+      }
     }
 
     let finalEnvId = environmentId;

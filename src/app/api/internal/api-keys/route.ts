@@ -78,7 +78,9 @@ export async function POST(req: NextRequest) {
       parsed.data.name,
       session.user.id,
       parsed.data.scopes,
-      parsed.data.environmentId
+      parsed.data.environmentId,
+      workspace.plan,
+      isAdminEmail(session.user.email)
     );
 
     // Return raw key exclusively once
@@ -98,7 +100,10 @@ export async function POST(req: NextRequest) {
     }
     console.error("API Key generation failed:", err);
     if (err.message?.startsWith("PLAN_LIMIT_REACHED")) {
-      return apiError("PLAN_LIMIT_REACHED", "Maximum 5 API keys allowed.");
+      const message = err.message.includes(":") 
+        ? err.message.split(":")[1].trim() 
+        : "Maximum API keys limit reached.";
+      return apiError("PLAN_LIMIT_REACHED", message);
     }
     return apiError("INTERNAL_ERROR", "Failed to generate API Key.");
   }

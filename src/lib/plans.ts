@@ -11,6 +11,7 @@ export interface PlanConfig {
   customRoles: boolean;
   sso: boolean;
   auditLogs: boolean;
+  apiKeys: number;              // -1 for unlimited
 }
 
 export const PLANS: Record<Plan, PlanConfig> = {
@@ -19,36 +20,39 @@ export const PLANS: Record<Plan, PlanConfig> = {
     collections: 3,
     apiRequestsPerMonth: 5_000,
     rateLimitPerMinute: 30,
-    storageLimitGb: 5,
+    storageLimitGb: 1,
     environments: 1,
     webhooks: false,
     customRoles: false,
     sso: false,
     auditLogs: false,
+    apiKeys: 2,
   },
   PRO: {
     name: "Pro",
     collections: -1,
     apiRequestsPerMonth: 250_000,
     rateLimitPerMinute: 300,
-    storageLimitGb: 50,
+    storageLimitGb: 10,
     environments: 2,
     webhooks: true,
     customRoles: false,
     sso: false,
     auditLogs: false,
+    apiKeys: 10,
   },
   AGENCY: {
     name: "Agency",
     collections: -1,
     apiRequestsPerMonth: 1_000_000,
     rateLimitPerMinute: 1000,
-    storageLimitGb: 250,
+    storageLimitGb: 50,
     environments: 5,
     webhooks: true,
     customRoles: true,
     sso: false,
     auditLogs: true,
+    apiKeys: 50,
   },
   ENTERPRISE: {
     name: "Enterprise",
@@ -61,6 +65,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     customRoles: true,
     sso: true,
     auditLogs: true,
+    apiKeys: -1,
   },
 };
 
