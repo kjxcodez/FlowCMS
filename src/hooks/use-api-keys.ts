@@ -30,7 +30,7 @@ export function useApiKeys() {
 export function useCreateApiKey() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (variables: { name: string; scopes: string[] }) =>
+    mutationFn: (variables: { name: string; scopes: string[]; environmentId?: string }) =>
       fetch("/api/internal/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

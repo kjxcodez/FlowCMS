@@ -32,6 +32,7 @@ export async function GET() {
         expiresAt: true,
         createdAt: true,
         scopes: true,
+        environmentId: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -76,7 +77,8 @@ export async function POST(req: NextRequest) {
       workspace.id,
       parsed.data.name,
       session.user.id,
-      parsed.data.scopes
+      parsed.data.scopes,
+      parsed.data.environmentId
     );
 
     // Return raw key exclusively once
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
       name: key.name,
       title: key.name, // Compatibility map
       id: key.id,
+      environmentId: key.environmentId,
       createdAt: key.createdAt,
       scopes: key.scopes,
     });

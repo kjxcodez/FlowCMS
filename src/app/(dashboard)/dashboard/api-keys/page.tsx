@@ -12,6 +12,7 @@ import {
   Lock,
 } from "lucide-react";
 import { useApiKeys } from "@/hooks/use-api-keys";
+import { useEnvironments } from "@/hooks/use-environments";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +34,7 @@ interface ApiKey {
   createdAt: string;
   lastUsedAt?: string;
   scopes: string[];
+  environmentId?: string | null;
 }
 
 const SCOPE_CATEGORIES = {
@@ -56,6 +58,9 @@ const SCOPE_CATEGORIES = {
 
 export default function ApiKeysPage() {
   const { data, isLoading, createMutation, deleteMutation } = useApiKeys();
+  const { data: environmentsData } = useEnvironments();
+  const environments = (environmentsData || []) as { id: string; name: string; slug: string; isDefault: boolean }[];
+
   const keys = (data || []) as ApiKey[];
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newKeyLabel, setNewKeyLabel] = useState("");
@@ -65,6 +70,7 @@ export default function ApiKeysPage() {
   // Selection Dialog State
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedScopes, setSelectedScopes] = useState<string[]>(["read:entries", "read:media"]);
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string>("");
 
   // One-Time Reveal Dialog State
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
@@ -76,6 +82,14 @@ export default function ApiKeysPage() {
       setOriginUrl(window.location.origin);
     }
   }, []);
+
+  const handleOpenCreateDialog = () => {
+    setNewKeyLabel("");
+    setSelectedScopes(["read:entries", "read:media"]);
+    const defaultEnv = environments.find(e => e.isDefault) || environments[0];
+    setSelectedEnvironmentId(defaultEnv?.id || "");
+    setIsCreateDialogOpen(true);
+  };
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -108,6 +122,7 @@ export default function ApiKeysPage() {
       const response = await createMutation.mutateAsync({
         name: newKeyLabel,
         scopes: selectedScopes,
+        environmentId: selectedEnvironmentId || undefined,
       });
       
       if (response.success && response.data?.key) {
@@ -165,11 +180,7 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
         </div>
         <div className="flex gap-3">
           <Button 
-            onClick={() => {
-              setNewKeyLabel("");
-              setSelectedScopes(["read:entries", "read:media"]);
-              setIsCreateDialogOpen(true);
-            }}
+            onClick={handleOpenCreateDialog}
             className="h-10 px-6 text-[11px] font-bold uppercase tracking-widest rounded-sm"
           >
             <Plus className="size-3.5 mr-2" />
@@ -211,11 +222,7 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
               </div>
               <div className="flex justify-center">
                 <Button
-                  onClick={() => {
-                    setNewKeyLabel("");
-                    setSelectedScopes(["read:entries", "read:media"]);
-                    setIsCreateDialogOpen(true);
-                  }}
+                  onClick={handleOpenCreateDialog}
                   className="h-10 text-[10px] font-bold uppercase tracking-widest rounded-sm shrink-0"
                 >
                   Create API Key
@@ -233,7 +240,14 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
                       <Key className="size-4.5" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-ink leading-tight">{key.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[13px] font-semibold text-ink leading-tight">{key.name}</p>
+                        {key.environmentId && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-600 text-[8px] font-mono font-medium leading-none uppercase tracking-wider">
+                            {environments.find(e => e.id === key.environmentId)?.name || key.environmentId}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] font-mono text-ink-faint uppercase tracking-widest mt-1">
                         Created {new Date(key.createdAt).toLocaleDateString()}
                       </p>
@@ -359,6 +373,28 @@ axios.get('${originUrl}/api/v1/entries/blog-posts', {
                 placeholder="Key label (e.g. Production API Key)"
                 className="h-10 bg-canvas border-border text-sm w-full rounded-sm"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-ink">Environment</label>
+              <select
+                value={selectedEnvironmentId}
+                onChange={(e) => setSelectedEnvironmentId(e.target.value)}
+                className="h-10 bg-canvas border border-border text-sm w-full rounded-sm px-3 text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+              >
+                {environments.length === 0 ? (
+                  <option value="">No environments found</option>
+                ) : (
+                  environments.map((env) => (
+                    <option key={env.id} value={env.id}>
+                      {env.name} {env.isDefault ? "(Default)" : ""}
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="text-[9px] text-ink-faint leading-normal mt-1">
+                The API key will only have access to content in the selected environment.
+              </p>
             </div>
 
             <div className="space-y-4">

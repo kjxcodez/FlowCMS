@@ -23,6 +23,16 @@ async function runApiKeyTests() {
     },
   });
 
+  // Seed default Environment
+  const defaultEnv = await prisma.environment.create({
+    data: {
+      workspaceId: workspace.id,
+      name: "Production",
+      slug: "production",
+      isDefault: true,
+    },
+  });
+
   // Seed a test collection
   const collection = await prisma.collection.create({
     data: {
@@ -38,6 +48,7 @@ async function runApiKeyTests() {
     data: {
       collectionId: collection.id,
       workspaceId: workspace.id,
+      environmentId: defaultEnv.id,
       slug: `scope-test-entry-${suffix}`,
       data: { title: "Test entry" },
       status: "PUBLISHED",
@@ -60,6 +71,7 @@ async function runApiKeyTests() {
     const key = await prisma.apiKey.create({
       data: {
         workspaceId: workspace.id,
+        environmentId: defaultEnv.id,
         name,
         keyHash,
         keyPrefix: prefix,

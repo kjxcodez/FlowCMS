@@ -11,7 +11,7 @@ interface CollectionField {
 }
 
 export const GET = withApiAuth(
-  requireScope("read:entries", async (req, { workspaceId, params }) => {
+  requireScope("read:entries", async (req, { workspaceId, environmentId, params }) => {
     const resolvedParams = await params;
     const collectionSlug = resolvedParams?.collectionSlug;
     const slug = collectionSlug || req.nextUrl.pathname.split("/").at(-1)!;
@@ -34,6 +34,7 @@ export const GET = withApiAuth(
     const includeDrafts = searchParams.get("preview") === "true";
     const where: any = {
       collectionId: collection.id,
+      environmentId,
     };
 
     if (includeDrafts) {
@@ -42,6 +43,7 @@ export const GET = withApiAuth(
         tokenValue: previewToken,
         workspaceId,
         collectionSlug: slug,
+        environmentId: environmentId || undefined,
         ip: req.headers.get("x-forwarded-for") || undefined,
         userAgent: req.headers.get("user-agent") || undefined,
       });
@@ -99,7 +101,10 @@ export const GET = withApiAuth(
         if (allRefIds.size > 0) {
           // 3. Fetch all referenced entries in one go
           const referencedEntries = await prisma.entry.findMany({
-            where: { id: { in: Array.from(allRefIds) } }
+            where: {
+              id: { in: Array.from(allRefIds) },
+              environmentId,
+            }
           });
           
           const refMap = new Map(referencedEntries.map(e => [e.id, e]));

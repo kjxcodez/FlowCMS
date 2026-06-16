@@ -6,7 +6,7 @@ import { verifyDraftPreview } from "@/lib/preview";
 export const runtime = "nodejs";
 
 export const GET = withApiAuth(
-  requireScope("read:entries", async (req, { workspaceId, params }) => {
+  requireScope("read:entries", async (req, { workspaceId, environmentId, params }) => {
     const resolvedParams = await params;
     const entrySlug = resolvedParams?.entrySlug || req.nextUrl.pathname.split("/").at(-1)!;
     const collectionSlug = resolvedParams?.collectionSlug || req.nextUrl.pathname.split("/").at(-2)!;
@@ -32,6 +32,11 @@ export const GET = withApiAuth(
       return apiError("NOT_FOUND", `Entry "${entrySlug}" not found in collection "${collectionSlug}".`);
     }
 
+    // Strictly verify that the entry belongs to the correct environment
+    if (entry.environmentId !== environmentId) {
+      return apiError("NOT_FOUND", `Entry "${entrySlug}" not found in collection "${collectionSlug}".`);
+    }
+
     // Only return published entries by default
     const { searchParams } = req.nextUrl;
     const includeDrafts = searchParams.get("preview") === "true";
@@ -47,6 +52,7 @@ export const GET = withApiAuth(
         workspaceId,
         collectionSlug,
         entrySlug,
+        environmentId: environmentId || undefined,
         ip: req.headers.get("x-forwarded-for") || undefined,
         userAgent: req.headers.get("user-agent") || undefined,
       });

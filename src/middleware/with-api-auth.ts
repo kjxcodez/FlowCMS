@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 
 export interface ApiContext {
   workspaceId: string;
+  environmentId: string | null;
   plan: string;
   apiKeyId: string;
   requestId: string;
@@ -64,7 +65,12 @@ export function withApiAuth(handler: ApiHandler) {
       return apiError("UNAUTHORIZED", "Invalid API key.");
     }
 
-    const { workspaceId, plan, apiKeyId, scopes } = keyData;
+    const { workspaceId, environmentId, plan, apiKeyId, scopes } = keyData;
+
+    // Strict Key Enforcement: reject keys without an environmentId
+    if (!environmentId) {
+      return apiError("UNAUTHORIZED", "API key is not bound to an environment.");
+    }
 
     // 3. Rate limit
     const rl = await checkRateLimit(`ws:${workspaceId}`, plan);
@@ -98,6 +104,7 @@ export function withApiAuth(handler: ApiHandler) {
     try {
       response = await handler(req, {
         workspaceId,
+        environmentId,
         plan,
         apiKeyId,
         requestId,
@@ -141,12 +148,19 @@ export function withApiAuth(handler: ApiHandler) {
     headers.set("X-Response-Time", `${duration}ms`);
     headers.set("X-API-Version", "1");
     
-    // Cloudflare Cache Engineering
-    // We EXCLUDE 'Authorization' from Vary to prevent cache fragmentation.
-    // Security is enforced via Step 2-4 (Auth/Rate-limit) before this response is generated.
-    headers.set("Vary", "Accept-Encoding"); 
-    headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
-    headers.set("X-Cache-Tag", `ws:${workspaceId}`);
+    // Prevent cross-environment cache poisoning by varying on custom environment header
+    headers.set("X-Environment-Id", environmentId || "");
+    headers.set("Vary", "Accept-Encoding, X-Environment-Id");
+
+    // Prevent caching draft preview requests
+    const hasPreview = req.nextUrl.searchParams.get("preview") === "true";
+    if (hasPreview) {
+      headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    } else {
+      headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    }
+
+    headers.set("X-Cache-Tag", `ws:${workspaceId},ws:${workspaceId}:env:${environmentId}`);
 
     Object.entries(rateLimitHeaders(rl)).forEach(([k, v]) =>
       headers.set(k, v)

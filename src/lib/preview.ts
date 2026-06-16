@@ -13,6 +13,7 @@ export async function verifyDraftPreview({
   workspaceId,
   collectionSlug,
   entrySlug,
+  environmentId,
   ip,
   userAgent,
 }: {
@@ -20,6 +21,7 @@ export async function verifyDraftPreview({
   workspaceId: string;
   collectionSlug: string;
   entrySlug?: string;
+  environmentId?: string;
   ip?: string;
   userAgent?: string;
 }): Promise<VerifyPreviewResult> {
@@ -122,7 +124,33 @@ export async function verifyDraftPreview({
     };
   }
 
-  // 3. Validate expiration
+  // 3. Validate environment isolation
+  if (environmentId && token.environmentId && token.environmentId !== environmentId) {
+    logger.warn(`Draft preview failed: Environment mismatch for token "${tokenValue}"`, {
+      tokenEnvironmentId: token.environmentId,
+      requestEnvironmentId: environmentId,
+    });
+    await logAction({
+      workspaceId,
+      action: "DRAFT_TOKEN_FAILED",
+      resourceType: "ENTRY",
+      resourceId: entrySlug || collectionSlug,
+      resourceName: entrySlug ? `${collectionSlug}/${entrySlug}` : collectionSlug,
+      after: { reason: "environment_mismatch", tokenId: token.id },
+      ip,
+      userAgent,
+    });
+    return {
+      allowed: false,
+      errorResponse: {
+        status: 403,
+        code: "FORBIDDEN",
+        message: "Preview token environment mismatch.",
+      },
+    };
+  }
+
+  // 4. Validate expiration
   if (token.expiresAt && token.expiresAt < new Date()) {
     logger.warn(`Draft preview failed: Expired token "${tokenValue}"`, {
       tokenId: token.id,

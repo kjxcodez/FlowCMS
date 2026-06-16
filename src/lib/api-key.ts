@@ -19,6 +19,7 @@ export function hashApiKey(raw: string): string {
 export async function verifyApiKey(raw: string): Promise<{
   valid: boolean;
   workspaceId: string;
+  environmentId: string | null;
   plan: string;
   apiKeyId: string;
   scopes: string[];
@@ -70,6 +71,7 @@ export async function verifyApiKey(raw: string): Promise<{
         return {
           valid: true,
           workspaceId: key.workspaceId,
+          environmentId: key.environmentId,
           plan: key.workspace.plan,
           apiKeyId: key.id,
           scopes: key.scopes,

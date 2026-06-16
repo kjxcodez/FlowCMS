@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const CreateApiKeySchema = z.object({
   name: z.string().min(1).max(64),
+  environmentId: z.string().optional(),
   scopes: z.array(
     z.enum([
       "read:entries",

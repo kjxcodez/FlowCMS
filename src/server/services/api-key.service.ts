@@ -25,12 +25,22 @@ export class ApiKeyService {
   /**
    * Creates a new API Key record and triggers event audits.
    */
-  static async createApiKey(workspaceId: string, name: string, userId: string, scopes?: string[]) {
+  static async createApiKey(workspaceId: string, name: string, userId: string, scopes?: string[], environmentId?: string) {
     const count = await prisma.apiKey.count({
       where: { workspaceId },
     });
     if (count >= 5) {
       throw new Error("PLAN_LIMIT_REACHED: Maximum 5 API keys allowed.");
+    }
+
+    let finalEnvId = environmentId;
+    if (!finalEnvId) {
+      const defaultEnv = await prisma.environment.findFirst({
+        where: { workspaceId, slug: "production" },
+      });
+      if (defaultEnv) {
+        finalEnvId = defaultEnv.id;
+      }
     }
 
     const { raw, prefix } = this.generateApiKey();
@@ -39,6 +49,7 @@ export class ApiKeyService {
     const key = await prisma.apiKey.create({
       data: {
         workspaceId,
+        environmentId: finalEnvId || null,
         name,
         keyHash,
         keyPrefix: prefix,
@@ -84,6 +95,7 @@ export class ApiKeyService {
   static async verifyApiKey(raw: string): Promise<{
     valid: boolean;
     workspaceId: string;
+    environmentId: string | null;
     plan: string;
     apiKeyId: string;
     scopes: string[];
@@ -131,6 +143,7 @@ export class ApiKeyService {
           return {
             valid: true,
             workspaceId: key.workspaceId,
+            environmentId: key.environmentId,
             plan: key.workspace.plan,
             apiKeyId: key.id,
             scopes: key.scopes,
