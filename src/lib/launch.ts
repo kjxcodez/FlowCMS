@@ -3,7 +3,7 @@ import { isAdminEmail } from "./admin";
 export const FEATURES = {
   enableBilling: true,
   enableCustomDomains: false,
-  enableTeamInvites: false,
+  enableTeamInvites: true,
   enableApiKeyGeneration: true,
   enableWebhooks: true,
 };
