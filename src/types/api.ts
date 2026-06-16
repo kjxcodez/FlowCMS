@@ -26,6 +26,7 @@ export const API_ERRORS = {
   NOT_FOUND: { code: "NOT_FOUND", status: 404 },
   RATE_LIMITED: { code: "RATE_LIMITED", status: 429 },
   PLAN_LIMIT_REACHED: { code: "PLAN_LIMIT_REACHED", status: 402 },
+  STORAGE_LIMIT_REACHED: { code: "STORAGE_LIMIT_REACHED", status: 402 },
   INVALID_INPUT: { code: "INVALID_INPUT", status: 400 },
   CONFLICT: { code: "CONFLICT", status: 409 },
   INVALID_ACTION: { code: "INVALID_ACTION", status: 400 },

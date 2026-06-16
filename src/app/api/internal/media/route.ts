@@ -4,6 +4,8 @@ import { apiError, apiSuccess } from "@/types/api";
 import { MediaService } from "@/server/services/media.service";
 import { storage } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
+import { checkStorageLimit } from "@/lib/usage";
+import { isAdminEmail } from "@/lib/admin";
 
 export const runtime = "nodejs";
 
@@ -72,34 +74,51 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const { workspace, role } = await requireWorkspace();
+    const { workspace, session, role } = await requireWorkspace();
     await requireRole(role, "EDITOR");
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const files = formData.getAll("file").filter((val): val is File => val instanceof File);
     const folderId = formData.get("folderId") as string | null;
 
-    if (!file) {
+    if (files.length === 0) {
       return apiError("INVALID_INPUT", "No file uploaded.");
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      return apiError("INVALID_INPUT", "File size exceeds the 10MB boundary.");
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        return apiError("INVALID_INPUT", "File size exceeds the 10MB boundary.");
+      }
     }
 
-    // 1. Storage Provider Upload
-    const { url } = await storage.upload(workspace.id, file);
+    const totalIncomingSize = files.reduce((acc, f) => acc + f.size, 0);
 
-    // 2. Database Catalog Entry via Media Service
-    const media = await MediaService.createMediaRecord({
-      workspaceId: workspace.id,
-      filename: file.name,
-      url,
-      mimeType: file.type,
-      size: file.size,
-      folderId: folderId || null,
-    });
+    const limit = await checkStorageLimit(
+      workspace.id,
+      workspace.plan,
+      totalIncomingSize,
+      isAdminEmail(session.user.email)
+    );
+    if (!limit.allowed) {
+      return apiError("STORAGE_LIMIT_REACHED", "Your workspace has reached its storage limit.");
+    }
 
-    return apiSuccess(media);
+    let lastMediaRecord: any = null;
+    for (const file of files) {
+      // 1. Storage Provider Upload
+      const { url } = await storage.upload(workspace.id, file);
+
+      // 2. Database Catalog Entry via Media Service
+      lastMediaRecord = await MediaService.createMediaRecord({
+        workspaceId: workspace.id,
+        filename: file.name,
+        url,
+        mimeType: file.type,
+        size: file.size,
+        folderId: folderId || null,
+      });
+    }
+
+    return apiSuccess(lastMediaRecord);
   } catch (err) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);

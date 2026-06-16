@@ -208,3 +208,33 @@ export async function decrementStorageUsage(
   });
 }
 
+export async function checkStorageLimit(
+  workspaceId: string,
+  plan: string,
+  incomingBytes: number,
+  isAdmin = false
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdmin) return { allowed: true, used: 0, limit: -1 };
+  
+  const limits = getPlanConfig(plan);
+  if (!limits || limits.storageLimitGb === -1) {
+    return { allowed: true, used: 0, limit: -1 };
+  }
+
+  const limitBytes = limits.storageLimitGb * 1024 * 1024 * 1024;
+
+  const aggregate = await prisma.media.aggregate({
+    where: { workspaceId },
+    _sum: { size: true },
+  });
+  const currentBytes = aggregate._sum.size ?? 0;
+
+  const projectedBytes = currentBytes + incomingBytes;
+
+  return {
+    allowed: projectedBytes <= limitBytes,
+    used: currentBytes,
+    limit: limitBytes,
+  };
+}
+
