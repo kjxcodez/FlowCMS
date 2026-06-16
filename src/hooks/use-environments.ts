@@ -6,7 +6,7 @@ async function fetchJson(url: string) {
   const r = await fetch(url);
   const json = await r.json();
   if (!r.ok) {
-    throw new Error(json.message || "Failed to fetch data");
+    throw new Error(json.error?.message || json.message || "Failed to fetch data");
   }
   return json.data;
 }
@@ -27,7 +27,7 @@ export function useEnvironments() {
         body: JSON.stringify(variables),
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to create environment.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to create environment.");
         return json.data;
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["environments"] }),
@@ -41,7 +41,7 @@ export function useEnvironments() {
         body: JSON.stringify({ isDefault: true }),
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to set default environment.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to set default environment.");
         return json.data;
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["environments"] }),
@@ -55,7 +55,7 @@ export function useEnvironments() {
         body: JSON.stringify({ name }),
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to update environment.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to update environment.");
         return json.data;
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["environments"] }),
@@ -67,7 +67,7 @@ export function useEnvironments() {
         method: "DELETE",
       }).then(async (r) => {
         const json = await r.json();
-        if (!r.ok) throw new Error(json.message || "Failed to delete environment.");
+        if (!r.ok) throw new Error(json.error?.message || json.message || "Failed to delete environment.");
         return json.data;
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["environments"] }),

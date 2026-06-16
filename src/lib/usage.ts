@@ -115,6 +115,27 @@ export async function checkCollectionLimit(
   };
 }
 
+export async function checkEnvironmentLimit(
+  workspaceId: string,
+  plan: string,
+  isAdmin = false
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdmin) return { allowed: true, used: 0, limit: -1 };
+  const limits = getPlanConfig(plan);
+  if (!limits || limits.environments === -1) {
+    return { allowed: true, used: 0, limit: -1 };
+  }
+
+  const count = await prisma.environment.count({
+    where: { workspaceId },
+  });
+  return {
+    allowed: count < limits.environments,
+    used: count,
+    limit: limits.environments,
+  };
+}
+
 export async function incrementStorageUsage(
   workspaceId: string,
   sizeBytes: number

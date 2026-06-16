@@ -3,6 +3,8 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { slugify } from "@/lib/utils";
+import { checkEnvironmentLimit } from "@/lib/usage";
+import { isAdminEmail } from "@/lib/admin";
 
 export async function GET() {
   try {
@@ -21,6 +23,18 @@ export async function POST(req: NextRequest) {
   try {
     const { workspace, session, role } = await requireWorkspace();
     await requireRole(role, "ADMIN");
+
+    const limit = await checkEnvironmentLimit(
+      workspace.id,
+      workspace.plan,
+      isAdminEmail(session.user.email)
+    );
+    if (!limit.allowed) {
+      return apiError(
+        "PLAN_LIMIT_REACHED",
+        `${workspace.plan} plan allows ${limit.limit} environments.`
+      );
+    }
 
     const { name } = await req.json();
     if (!name) return apiError("INVALID_INPUT", "Name is required.");
