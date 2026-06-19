@@ -1,0 +1,136 @@
+---
+title: Draft Preview Mode Guide
+description: Set up real-time draft content previews inside your frontend Next.js app.
+---
+
+# Draft Preview Mode Guide
+
+This guide explains how to integrate FlowCMS's draft preview token system with **Next.js Draft Mode**. This allows editors to preview draft changes inside the actual website layout before clicking Publish.
+
+---
+
+## How It Works
+
+1. In the FlowCMS dashboard, when an editor clicks **Preview**, FlowCMS opens your frontend preview URL (configured in workspace settings) and appends `preview=true` and a secure `token` query parameter.
+2. Your frontend receives this request and calls your `/api/preview` endpoint.
+3. Your endpoint initiates Next.js's native `draftMode().enable()`, setting a secure cookie in the user's browser, and redirects them to the requested page path.
+4. When rendering Server Components, your fetch helper checks if draft mode is enabled. If active, it fetches content from FlowCMS using `preview=true` and passes the preview token.
+
+---
+
+## 1. Create the Preview Route Handler
+
+Create a Next.js route handler to catch the redirect and set the preview cookie:
+
+```typescript
+// app/api/preview/route.ts
+import { NextRequest } from "next/server";
+import { draftMode } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const preview = searchParams.get("preview");
+  const token = searchParams.get("token");
+  const slug = searchParams.get("slug");
+  const collection = searchParams.get("collection");
+
+  if (preview !== "true" || !token || !slug || !collection) {
+    return new Response("Missing required preview parameters.", { status: 400 });
+  }
+
+  // Enable Next.js draft mode (sets a cookie in the browser)
+  const draft = await draftMode();
+  draft.enable();
+
+  // Store the preview token in the draft store or cookie if needed
+  // Or simply redirect the user to the target page passing the preview token
+  redirect(`/blog/${slug}?preview=true&token=${token}`);
+}
+```
+
+---
+
+## 2. Retrieve Draft Content inside Pages
+
+Update your data fetching helper to detect draft mode (via query params or Next.js headers) and request draft content:
+
+```typescript
+// app/blog/[slug]/page.tsx
+import { draftMode } from "next/headers";
+
+interface BlogPostPageProps {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string; token?: string }>;
+}
+
+async function getPostData(slug: string, preview = false, token?: string) {
+  const queryParams = new URLSearchParams();
+  if (preview) {
+    queryParams.set("preview", "true");
+    if (token) queryParams.set("token", token);
+  }
+
+  const url = `https://www.getflowcms.com/api/v1/entries/blog-posts/${slug}?${queryParams.toString()}`;
+
+  const res = await fetch(url, {
+    headers: {
+      "Authorization": `Bearer ${process.env.FLOWCMS_API_KEY}`,
+      "X-API-Version": "1",
+    },
+    // Force bypass caching on preview requests
+    cache: preview ? "no-store" : "default",
+  });
+
+  if (!res.ok) return null;
+  const body = await res.json();
+  return body.data;
+}
+
+export default async function BlogPostPage({ params, searchParams }: BlogPostPageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  
+  const isDraftMode = (await draftMode()).isEnabled || resolvedSearchParams.preview === "true";
+  const token = resolvedSearchParams.token;
+
+  const post = await getPostData(resolvedParams.slug, isDraftMode, token);
+
+  if (!post) {
+    return <div className="p-8">Post not found.</div>;
+  }
+
+  return (
+    <main className="max-w-3xl mx-auto p-8">
+      {isDraftMode && (
+        <div className="bg-amber-100 border-amber-300 border text-amber-800 px-4 py-2 mb-6 rounded-md text-sm">
+          You are currently viewing this page in <strong>Preview Mode (Draft)</strong>.
+        </div>
+      )}
+      <h1 className="text-4xl font-bold mb-4">{post.data.title}</h1>
+      <div 
+        className="prose prose-lg" 
+        dangerouslySetInnerHTML={{ __html: post.data.body }} 
+      />
+    </main>
+  );
+}
+```
+
+---
+
+## 3. Disabling Preview Mode
+
+Create a logout/exit route to deactivate Next.js draft mode and delete the preview cookie:
+
+```typescript
+// app/api/exit-preview/route.ts
+import { draftMode } from "next/headers";
+import { redirect } from "next/navigation";
+
+export async function GET() {
+  const draft = await draftMode();
+  draft.disable();
+  redirect("/");
+}
+```

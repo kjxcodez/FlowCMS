@@ -1,0 +1,55 @@
+---
+title: Pagination
+description: How paginated responses are structured and requested in the FlowCMS API.
+---
+
+# Pagination
+
+Endpoints that return lists of items (such as listing entries for a collection) are paginated. This ensures fast response times and prevents data saturation.
+
+---
+
+## Query Parameters
+
+You can control pagination by passing the following query parameters:
+
+| Parameter | Type | Default | Limits | Description |
+|-----------|------|---------|--------|-------------|
+| `page` | Integer | `1` | Min: `1` | The page offset index to retrieve. |
+| `perPage` | Integer | `20` | Max: `100` | The number of records to return per page. |
+
+### Example Request
+
+```bash
+curl -X GET "https://www.getflowcms.com/api/v1/entries/blog-posts?page=2&perPage=10" \
+  -H "Authorization: Bearer flw_prod_key_xyz" \
+  -H "X-API-Version: 1"
+```
+
+---
+
+## Response Metadata Schema
+
+When pagination is active, the response JSON includes a `meta` block containing total count and current bounds.
+
+### Schema
+
+```json
+{
+  "success": true,
+  "data": [
+    // Array of records...
+  ],
+  "meta": {
+    "total": 45,
+    "page": 2,
+    "perPage": 10
+  }
+}
+```
+
+### Fields
+
+- **`total`** (Integer): The total number of records matching the query in the target collection and environment.
+- **`page`** (Integer): The current page index of the results.
+- **`perPage`** (Integer): The number of records requested per page.

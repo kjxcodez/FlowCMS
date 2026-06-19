@@ -1,0 +1,63 @@
+---
+title: Coding Standards
+description: Coding guidelines, ESLint constraints, and formatting rules.
+---
+
+# Coding Standards
+
+We maintain strict coding standards to ensure that FlowCMS remains fast, secure, and maintainable. All contributions must adhere to these guidelines.
+
+---
+
+## 1. Type Safety & TypeScript
+
+FlowCMS is written in 100% strict TypeScript.
+
+- **Avoid `any`:** Refrain from using `any` unless absolutely necessary (such as in generalized JSON schema fields). If `any` must be used, add a descriptive comment and disable the rule:
+  ```typescript
+  const parsedData = payload as Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  ```
+- **Type Casting:** Prefer type guards or type assertions (`as`) only when Prisma schemas or generic library functions require them.
+- **Strict Null Checks:** Always handle potential `null` or `undefined` values, especially when reading optional columns from database entities.
+
+---
+
+## 2. Input Validation (Zod)
+
+All API route bodies, query parameters, and settings updates must be validated using **Zod** schemas.
+
+- Save all validation schemas under `src/lib/validations/`.
+- Validate user inputs at the API gateway layer before passing them down to service modules.
+- **Example:**
+  ```typescript
+  import { CreateEntrySchema } from "@/lib/validations/entry";
+  
+  const parsed = CreateEntrySchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError("INVALID_INPUT", parsed.error.issues[0].message);
+  }
+  ```
+
+---
+
+## 3. Asynchronous Programming
+
+To prevent blocking Next.js request execution and ensure optimal throughput:
+
+- **Fire and Forget:** Side effects (like logging audit logs, incrementing usage tracking, purging CDNs, or dispatching webhook tasks) must be run asynchronously. Do not `await` them if they are not required to build the HTTP response.
+- **Error Boundaries:** Wrap background Promises with proper `.catch()` blocks to prevent unhandled rejections from crashing serverless edge functions:
+  ```typescript
+  dispatchWebhooks(workspace.id, "ENTRY_PUBLISHED", { entryId }).catch((err) => {
+    logger.error("Failed to dispatch webhooks", { error: String(err) });
+  });
+  ```
+
+---
+
+## 4. Linting & Formatting
+
+We use **ESLint** and **Prettier** to enforce formatting rules.
+
+- **Check Lints:** Run `pnpm run lint` before committing your code. Your PR will not pass CI if there are any linting warnings or errors.
+- **Tabs vs Spaces:** We use spaces (2-space indentation) for all TypeScript, CSS, and Markdown files.
+- **Unused Imports:** ESLint will automatically flag unused imports. Clean them up prior to pushing.

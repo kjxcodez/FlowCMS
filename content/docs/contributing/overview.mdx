@@ -1,0 +1,51 @@
+---
+title: Overview
+description: Welcome to the FlowCMS contributor guidelines.
+---
+
+# Contributing to FlowCMS
+
+Thank you for your interest in contributing to FlowCMS! As an open-source headless CMS built for speed and type-safety, we value community contributions.
+
+This section contains guides and technical documentation to help you get your local environment running, understand our system architecture, and write code that matches our standards.
+
+---
+
+## Code Repository Structure
+
+FlowCMS is structured as a standard Next.js project using the App Router. Here are the key directories:
+
+- `/content/docs` — Documentation MDX files (served by Fumadocs).
+- `/prisma` — Prisma schema (`schema.prisma`) and SQL database migrations.
+- `/public` — Static assets and local file uploads (`/public/uploads`).
+- `/src` — Core application source code:
+  - `/src/app` — Next.js pages, layouts, and API routes.
+  - `/src/components` — Shared UI elements and React components.
+  - `/src/lib` — Core library utilities (caching, database, emailing, queue helper, storage adapters, Better Auth configuration).
+  - `/src/middleware` — Next.js middleware and API authorization handlers.
+  - `/src/types` — TypeScript interfaces and schemas.
+
+---
+
+## Branch Strategy
+
+We follow a simple Git branch workflow:
+
+- **`main`** — Production-ready branch. All releases are tagged from `main`. Do not push directly to `main`.
+- **Feature Branches** — Create feature/bugfix branches off `main` using descriptive names:
+  - `feat/add-sso-support`
+  - `fix/webhook-signature-padding`
+  - `docs/clarify-rate-limits`
+
+---
+
+## Pull Request Guidelines
+
+1. **Open an Issue:** Before starting work on major features or architectural changes, please open an issue to discuss your proposed design with the maintainers.
+2. **Write Tests:** Ensure you add tests for any new features or bug fixes under the `scripts/tests` or equivalent testing directories.
+3. **Validate Locally:** Run formatting, lint checks, and a full production build locally before opening your PR:
+   ```bash
+   pnpm run lint
+   pnpm run build
+   ```
+4. **Descriptive PRs:** State what the PR accomplishes, reference any related issues, and include screenshots or console logs detailing manual verification.

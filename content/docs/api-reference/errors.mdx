@@ -1,0 +1,75 @@
+---
+title: Errors
+description: Standard API error response shapes, status codes, and error categories.
+---
+
+# Errors
+
+FlowCMS uses standard HTTP status codes to indicate the success or failure of API requests.
+
+In addition to the HTTP status code, every failed request returns a structured JSON payload describing the exact nature of the error.
+
+---
+
+## Error Response Format
+
+All API errors return a response body with the following structure:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "A detailed, human-readable description of the error."
+  }
+}
+```
+
+---
+
+## Error Code Reference
+
+The following table lists every error code that can be returned by the public API, along with its HTTP status code and common triggers:
+
+| Error Code | HTTP Status | Common Triggers / Description |
+|------------|-------------|-------------------------------|
+| `INVALID_INPUT` | `400 Bad Request` | The request body, path, or query parameters failed validation (e.g. missing required fields). |
+| `INVALID_ACTION` | `400 Bad Request` | The requested action is invalid (e.g. trying to transition an entry from `ARCHIVED` to `PUBLISHED` directly). |
+| `UNAUTHORIZED` | `401 Unauthorized` | Missing `Authorization` header, invalid API key, or the key is not bound to a workspace/environment. |
+| `PLAN_LIMIT_REACHED` | `402 Payment Required` | The workspace has consumed its monthly API request quota (e.g. 5,000 requests on Hobby plan). |
+| `STORAGE_LIMIT_REACHED` | `402 Payment Required` | The workspace has exceeded its total allocated media storage limit (e.g. 1 GB on Hobby plan). |
+| `FORBIDDEN` | `403 Forbidden` | The API key lacks the required scopes for the endpoint (e.g. reading collections with a key that only has `read:entries`). |
+| `FEATURE_NOT_AVAILABLE` | `403 Forbidden` | The feature requested is not supported by your current subscription plan (e.g. registering a webhook on a Hobby plan). |
+| `NOT_FOUND` | `404 Not Found` | The requested collection, entry, or media asset does not exist in the target workspace/environment. |
+| `CONFLICT` | `409 Conflict` | The resource already exists (e.g. trying to create an entry with a slug that is already taken). |
+| `ALREADY_SUBSCRIBED` | `409 Conflict` | The workspace is already subscribed to the plan (billing only). |
+| `RATE_LIMITED` | `429 Too Many Requests` | The workspace has exceeded the allowed number of requests per minute (e.g. 30 requests/min on Hobby plan). |
+| `INTERNAL_ERROR` | `500 Internal Server Error` | An unexpected error occurred on the server. If this persists, please contact support. |
+
+---
+
+## Handling Errors
+
+When building integrations, we recommend checking the `success` field or the HTTP status code first. Here is an example in Javascript:
+
+```javascript
+const response = await fetch("https://www.getflowcms.com/api/v1/entries/blog-posts", {
+  headers: {
+    "Authorization": "Bearer flw_xyz",
+    "X-API-Version": "1"
+  }
+});
+
+const body = await response.json();
+
+if (!response.ok || !body.success) {
+  const error = body.error;
+  console.error(`API Error [${error.code}]: ${error.message}`);
+  
+  if (response.status === 429) {
+    // Handle throttling (e.g., look at X-RateLimit-Reset header)
+  }
+} else {
+  // Process data...
+}
+```

@@ -1,0 +1,9 @@
+{
+  "title": "Contributing",
+  "pages": [
+    "overview",
+    "local-development",
+    "architecture",
+    "coding-standards"
+  ]
+}

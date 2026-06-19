@@ -1,0 +1,63 @@
+---
+title: Rate Limits
+description: Understand API request throttling, rate limits by plan, and response headers.
+---
+
+# Rate Limits
+
+FlowCMS applies rate limiting on all API endpoints under `/api/v1/*` to protect services from abuse, denial-of-service attacks, and resources exhaustion.
+
+Rate limits are evaluated based on your workspace's current subscription plan and are tracked using Upstash Redis.
+
+---
+
+## Rate Limits by Plan
+
+Throttling is calculated using a **sliding window rate limiter** set to a 1-minute window:
+
+| Plan | Rate Limit (Requests/minute) |
+|------|------------------------------|
+| **Hobby** | 30 |
+| **Pro** | 300 |
+| **Agency** | 1,000 |
+| **Enterprise** | 5,000 |
+| **Public Sandbox** | 10 |
+
+---
+
+## Rate Limit Response Headers
+
+Every authenticated API response returns headers detailing your current limit state:
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `X-RateLimit-Limit` | Integer | The maximum number of requests allowed in the current 1-minute window. |
+| `X-RateLimit-Remaining` | Integer | The number of requests remaining in the current window. |
+| `X-RateLimit-Reset` | Integer | The UTC epoch timestamp (in seconds) when the current rate limit window resets. |
+
+### Example Headers
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-RateLimit-Limit: 300
+X-RateLimit-Remaining: 297
+X-RateLimit-Reset: 1781983200
+```
+
+---
+
+## Exceeding the Limit
+
+When your workspace exceeds its allocated rate limit in a given minute, FlowCMS blocks subsequent requests and returns a `429 Too Many Requests` status code.
+
+### Error Response Body
+
+```json
+{
+  "error": "Rate limit exceeded.",
+  "code": "RATE_LIMITED"
+}
+```
+
+If you receive a `429` error, your client must wait until the time specified in `X-RateLimit-Reset` passes before retrying. We recommend implementing an exponential backoff retry strategy in your application.

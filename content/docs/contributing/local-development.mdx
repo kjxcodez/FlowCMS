@@ -1,0 +1,99 @@
+---
+title: Local Development Setup
+description: Spin up FlowCMS on your local machine for development and testing.
+---
+
+# Local Development Setup
+
+Follow these steps to configure your local machine for contributing to FlowCMS.
+
+---
+
+## Prerequisites
+
+- **Node.js** — v18.0.0 or higher.
+- **pnpm** — We use `pnpm` for package management. Install it via `npm i -g pnpm`.
+- **Docker** (Optional) — Recommended to quickly spin up local PostgreSQL and Redis servers.
+
+---
+
+## 1. Clone & Install Dependencies
+
+Clone the repository and install packages:
+
+```bash
+git clone https://github.com/your-username/flowcms.git
+cd flowcms
+pnpm install
+```
+
+---
+
+## 2. Set Up Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill out the values. For local offline testing, you can use:
+- **`STORAGE_PROVIDER`:** Leave empty or set to `local` to bypass Supabase Storage.
+- **`RESEND_API_KEY`:** You can leave this blank or use a dummy key; emails will log to the console in development mode instead of being sent.
+
+---
+
+## 3. Start PostgreSQL & Redis
+
+The easiest way to boot database dependencies is using the provided Docker Compose configuration.
+
+To start local PostgreSQL and Redis instances:
+
+```bash
+docker compose up -d postgres redis
+```
+
+---
+
+## 4. Run Database Migrations
+
+With PostgreSQL running, initialize your database schema and seed templates using Prisma:
+
+```bash
+# Apply migrations to local database
+pnpm prisma migrate dev
+
+# Generate Prisma Client
+pnpm prisma generate
+```
+
+---
+
+## 5. Start Development Server
+
+Boot the Next.js development server:
+
+```bash
+pnpm run dev
+```
+
+Open `http://localhost:3000` in your browser. The onboarding flow will initiate, letting you create your first user account and workspace.
+
+---
+
+## Prisma Development Workflow
+
+If you make modifications to `prisma/schema.prisma` during development:
+
+1. **Create a migration:**
+   ```bash
+   pnpm prisma migrate dev --name your_migration_name
+   ```
+2. **Apply migrations on production environments:**
+   ```bash
+   pnpm prisma migrate deploy
+   ```
+3. **Open Prisma Studio** to inspect database tables and records via a browser:
+   ```bash
+   pnpm prisma studio
+   ```

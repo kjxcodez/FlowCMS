@@ -1,0 +1,46 @@
+---
+title: Publishing Workflow
+description: Learn how content transitions from drafts to published and archived states.
+---
+
+# Publishing Workflow
+
+FlowCMS enforces a clear publication lifecycle. This ensures content creators (Editors) can edit content freely without affecting production, while administrators retain final sign-off before content goes live.
+
+---
+
+## State Transitions
+
+An entry can be in one of three states: `DRAFT`, `PUBLISHED`, or `ARCHIVED`. The following table summarizes who can perform each state transition:
+
+| Transition | Action | Required Role | Webhook Fired | Cache Purged |
+|------------|--------|:-------------:|:-------------:|:------------:|
+| `DRAFT` → `PUBLISHED` | **Publish** | `ADMIN` / `OWNER` | `ENTRY_PUBLISHED` | Yes |
+| `PUBLISHED` → `DRAFT` | **Unpublish** | `ADMIN` / `OWNER` | `ENTRY_UPDATED` | Yes |
+| `PUBLISHED` → `ARCHIVED` | **Archive** | `ADMIN` / `OWNER` | `ENTRY_UPDATED` | Yes |
+| `ARCHIVED` → `DRAFT` | **Restore** | `ADMIN` / `OWNER` | `ENTRY_UPDATED` | Yes |
+
+---
+
+## Role Restrictions on Publishing
+
+Access to entry mutation endpoints depends on the user's role in the workspace:
+
+- **Editors:**
+  - Can create and update entry content (saved as `DRAFT`).
+  - Cannot publish entries. If an Editor attempts to update an entry's status to `PUBLISHED`, the API middleware intercepts the request and throws a `403 FORBIDDEN` error.
+- **Admins & Owners:**
+  - Have full access to publish, unpublish, and archive entries.
+
+---
+
+## Under the Hood: What Happens on Publish?
+
+When an entry is successfully published:
+
+1. **Database Update:** The entry's status is set to `PUBLISHED`, the `publishedAt` timestamp is set to the current date and time, and the version counter (`version`) is incremented by `1`.
+2. **Cache Purge:** FlowCMS invalidates cached API responses across global CDNs and edge layers. It issues a cache purge command (e.g., via Cloudflare) targeting the workspace cache tags:
+   - `ws:${workspaceId}`
+   - `entry:${entryId}`
+3. **Webhook Dispatch:** The platform fires an outbound `ENTRY_PUBLISHED` webhook event to all registered, active endpoints subscribed to the workspace or matching environment.
+4. **Audit Logging:** The action is permanently recorded in the workspace audit log (accessible to Agency and Enterprise workspaces).

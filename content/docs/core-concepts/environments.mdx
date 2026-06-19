@@ -1,0 +1,61 @@
+---
+title: Environments
+description: Organize your content lifecycle using isolated workspace environments.
+---
+
+# Environments
+
+**Environments** are isolated content branches within a single workspace. They allow you to establish a robust content lifecycle — letting you draft, model, and test schemas in a sandbox without affecting your live production website.
+
+For example, a typical workspace might use:
+- `production` — Serves live, published content directly to your main site or app.
+- `staging` — A sandbox for previewing and reviewing content drafts before they go live.
+
+---
+
+## Environment Isolation
+
+Environments maintain strict data isolation. Each environment maintains its own set of:
+- **Entries** — Content is written, updated, and published independently per environment.
+- **API Keys** — API credentials are bound to a single environment.
+- **Webhooks** — Webhook delivery can be scoped to a single environment.
+- **Draft Tokens** — Preview tokens can be restricted to specific environments.
+
+> [!IMPORTANT]
+> Collections (Content Types) are **shared** across all environments. If you add a new field to a collection schema, that schema change immediately applies to all environments, but the entry data within those environments remains isolated.
+
+---
+
+## Default Environment
+
+Every workspace must have at least one environment.
+- When a workspace is first created, a default environment (typically named `Production` with the slug `production`) is automatically generated with `isDefault` set to `true`.
+- The default environment cannot be deleted.
+- If you run API requests without specifying an environment parameter (or if your API key has no custom environment bindings), the request is automatically routed to the default environment.
+
+---
+
+## Scoping Workspace Resources
+
+Environments enforce boundaries across your API credentials and integrations:
+
+### 1. API Keys Binding
+Every API key **must be bound to a single environment** during creation. A key bound to the `Staging` environment can only read entries within Staging. If that key attempts to query entries from `Production`, the API middleware rejects the request as unauthorized.
+
+This guarantees that developer sandboxes or staging frontends cannot accidentally expose production credentials or bleed draft data.
+
+### 2. Webhooks Scoping
+When creating a webhook subscription, you can optionally select a target environment.
+- If an environment is selected, the webhook will **only** fire for events (e.g. `ENTRY_PUBLISHED`) occurring within that environment.
+- If the environment is left empty (set to `All Environments`), the webhook fires globally across the workspace, but the delivery payload will explicitly carry the `environmentId` so your receiving server can route it appropriately.
+
+---
+
+## Environment Limits by Plan
+
+The maximum number of environments you can create is governed by your subscription plan:
+
+- **Hobby:** **1 environment** (only the default `production` environment is allowed).
+- **Pro:** Up to **2 environments** (e.g., `production` and `staging`).
+- **Agency:** Up to **5 environments** (e.g., `production`, `staging`, `testing`, `development`).
+- **Enterprise:** **Unlimited** environments.

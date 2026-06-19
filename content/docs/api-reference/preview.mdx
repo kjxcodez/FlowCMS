@@ -1,0 +1,58 @@
+---
+title: Preview API (Draft Content)
+description: Read draft content securely before it is published.
+---
+
+# Preview API
+
+By default, the public Entries API only serves `PUBLISHED` content. However, when building dynamic frontend sites, you often need to preview `DRAFT` entries before publishing them to the live environment.
+
+FlowCMS provides a secure **Draft Preview Token** system to request draft content via the API.
+
+---
+
+## Requesting Draft Content
+
+To include draft entries in your API response, make two changes to your request:
+1. Append the `preview=true` query parameter to your endpoint.
+2. Provide a valid **Draft Token** via one of three methods:
+   - In query parameter: `token=YOUR_DRAFT_TOKEN`
+   - In query parameter: `_token=YOUR_DRAFT_TOKEN`
+   - In request header: `x-draft-token: YOUR_DRAFT_TOKEN`
+
+### Example Request
+
+```bash
+curl -X GET "https://www.getflowcms.com/api/v1/entries/blog-posts/introducing-flowcms?preview=true&token=dft_a1b2c3d4e5f6g7h8" \
+  -H "Authorization: Bearer flw_prod_key_xyz" \
+  -H "X-API-Version: 1"
+```
+
+---
+
+## Token Verification Rules
+
+When a preview request is received, the middleware calls `verifyDraftPreview()` to authenticate and validate the token. A token is rejected as `401 UNAUTHORIZED` or `403 FORBIDDEN` if any of the following checks fail:
+
+1. **Active Check:** The token's `active` property in the database must be `true` (it has not been revoked).
+2. **Workspace Isolation:** The token must belong to the workspace associated with the API key used for the request.
+3. **Environment Isolation:** If the token is bound to a specific environment (e.g. `staging`), the API request's target environment must match.
+4. **Expiration:** If the token has an `expiresAt` date set, the current timestamp must be earlier than the expiration date.
+5. **Collection Scoping (Optional):** If the token is restricted to a specific collection (via `allowedCollectionId`), the requested entry must belong to that collection.
+6. **Entry Scoping (Optional):** If the token is restricted to a specific entry (via `allowedEntryId`), only that exact entry can be fetched.
+
+---
+
+## Cache Behavior for Preview Requests
+
+When `preview=true` is passed in the request:
+- The API middleware automatically sets `Cache-Control: private, no-cache, no-store, must-revalidate`.
+- This bypasses all Edge CDN and database caching layers, ensuring the frontend always receives the freshest draft content directly from the database.
+
+---
+
+## Observability & Audit Logs
+
+Preview token usage is logged in the workspace audit log:
+- **`DRAFT_TOKEN_USED`:** Logged on successful token validation. The entry's `lastUsedAt` timestamp is updated.
+- **`DRAFT_TOKEN_FAILED`:** Logged when a preview validation fails. The log payload includes the exact reason (e.g., `missing_token`, `invalid_token`, `revoked_token`, `workspace_mismatch`, `environment_mismatch`, `expired_token`, `unauthorized_collection`, `unauthorized_entry`) to help developers debug integration issues.

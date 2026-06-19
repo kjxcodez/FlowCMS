@@ -1,0 +1,118 @@
+---
+title: Content Modeling
+description: Full reference for field types and visual blocks in FlowCMS.
+---
+
+# Content Modeling
+
+FlowCMS provides a flexible content modeling system. This page details all supported field types in **Structured Mode** and all supported blocks in **Visual Mode**.
+
+---
+
+## Field Types (Structured Mode)
+
+Structured collections are composed of fields. Each field slug maps to a key in the entry's `data` JSON object.
+
+### `text`
+A single-line plain text field.
+* **JSON Structure:** `string` (or `string[]` if `multiple: true`).
+* **Example:** `"FlowCMS is fast"`
+
+### `textarea`
+A multi-line plain text field. Useful for short descriptions or bios.
+* **JSON Structure:** `string`.
+* **Example:** `"Line 1\nLine 2"`
+
+### `richtext`
+A rich text editor field powered by Tiptap. Renders formatted HTML.
+* **JSON Structure:** Rich text HTML `string`.
+* **Example:** `"<p>This is <strong>bold</strong> text.</p>"`
+
+### `number`
+A numeric input field. Supports integers and decimals.
+* **JSON Structure:** `number`.
+* **Example:** `42` or `19.99`
+
+### `boolean`
+A toggle/switch field.
+* **JSON Structure:** `boolean`.
+* **Example:** `true` or `false`
+
+### `date`
+A date and time picker.
+* **JSON Structure:** ISO 8601 UTC date string.
+* **Example:** `"2026-06-19T22:56:31.000Z"`
+
+### `media`
+A reference to a file uploaded to the workspace's Media Library (hosted on Supabase Storage or the local file system).
+* **JSON Structure:** Renders as the media asset ID `string` (or array of IDs if multiple). When retrieved through the API, it is automatically resolved to the full public CDN URL of the media.
+* **Example:** `"cm0media123456"` which resolves to `"https://www.getflowcms.com/uploads/ws_1/1718793200-abc.png"` or Supabase CDN equivalent.
+
+### `reference`
+A reference pointing to another entry in your workspace. This enables complex relational content structures (e.g. Author → Blog Post).
+* **JSON Structure:** Stores the target entry ID `string`.
+* **API Expansion:** When calling the Entries API with `expand=true` or `expand=all`, FlowCMS resolves these references and injects the full expanded entry object into a `_<fieldSlug>_expanded` key.
+* **Example:** `"cm0entry888888"`
+
+---
+
+## Block Types (Visual Mode)
+
+Visual collections use a block builder. Each entry in a visual collection consists of a list of blocks, stored as a JSON array of objects, where each object contains:
+- `id` — A unique identifier for the block instance.
+- `type` — The block type slug.
+- `props` — Key-value properties defining the block's content.
+
+FlowCMS supports the following block types:
+
+### `heading`
+A title or header block.
+* **Properties (`props`):**
+  * `text` (string): The heading text.
+  * `level` (number): Heading size (`1` to `6`).
+
+### `text`
+A rich text paragraph block.
+* **Properties (`props`):**
+  * `html` (string): Rich text HTML content.
+
+### `image`
+An image display block.
+* **Properties (`props`):**
+  * `mediaId` (string): Media library asset ID.
+  * `alt` (string): Optional accessibility alternative text.
+  * `caption` (string): Optional image caption.
+
+### `cta`
+A Call-To-Action banner or button.
+* **Properties (`props`):**
+  * `title` (string): Banner heading.
+  * `buttonText` (string): Button label.
+  * `buttonLink` (string): Button destination URL.
+
+### `divider`
+A visual separation line.
+* **Properties (`props`):** No customizable properties.
+
+### `quote`
+A blockquote highlight.
+* **Properties (`props`):**
+  * `text` (string): The quote content.
+  * `author` (string): The author's name.
+
+### `code`
+Syntax-highlighted code block.
+* **Properties (`props`):**
+  * `code` (string): The code content.
+  * `language` (string): The programming language (e.g., `javascript`, `typescript`).
+
+### `callout`
+An informational or alert callout box.
+* **Properties (`props`):**
+  * `text` (string): Message content.
+  * `type` (string): Box styling (`info`, `warning`, `error`, `success`).
+
+### `accordion`
+Collapsible accordion items.
+* **Properties (`props`):**
+  * `items` (array): Array of `{ title: string, content: string }` objects.

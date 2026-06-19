@@ -1,3 +1,13 @@
 {
-  "pages": ["getting-started", "self-hosting", "api-reference", "changelog"]
+  "pages": [
+    "getting-started",
+    "core-concepts",
+    "features",
+    "api-reference",
+    "self-hosting",
+    "guides",
+    "contributing",
+    "changelog"
+  ]
 }
+

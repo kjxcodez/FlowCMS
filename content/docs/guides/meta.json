@@ -1,4 +1,9 @@
 {
   "title": "Guides",
-  "pages": ["build-a-blog"]
+  "pages": [
+    "build-a-blog",
+    "nextjs-integration",
+    "preview-mode",
+    "webhooks-guide"
+  ]
 }

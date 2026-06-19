@@ -1,14 +1,120 @@
 ---
-title: Content Types API
-description: Fetch content type definitions.
+title: Collections (Content Types) API
+description: Retrieve content schema and collection definitions.
 ---
 
-import { Callout } from 'fumadocs-ui/components/callout';
+# Collections API
 
-# Content Types API
+The Collections API allows you to retrieve the schema definitions for your content types. These definitions are useful for dynamically generating layouts, forms, or checking fields on your frontend.
 
-<Callout title="Coming Soon">
-  The Content Types API is currently under active development. You will soon be able to dynamically fetch your schema definitions to power generic frontend components.
-</Callout>
+## List Collections
 
-Check back during the Early Access phase for full documentation.
+Retrieve a list of all collections defined in your workspace.
+
+### Request
+
+```http
+GET /api/v1/collections
+Authorization: Bearer <your_api_key>
+X-API-Version: 1
+```
+
+### Required Scope
+
+- `read:collections`
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "cm0col1234567890",
+      "workspaceId": "cm0ws1234567890",
+      "name": "Blog Posts",
+      "slug": "blog-posts",
+      "description": "Articles and posts for the company blog",
+      "mode": "STRUCTURED",
+      "fields": [
+        {
+          "id": "fld_1",
+          "name": "Title",
+          "slug": "title",
+          "type": "text",
+          "required": true,
+          "multiple": false
+        },
+        {
+          "id": "fld_2",
+          "name": "Body",
+          "slug": "body",
+          "type": "richtext",
+          "required": true,
+          "multiple": false
+        }
+      ],
+      "createdAt": "2026-05-09T10:00:00Z",
+      "updatedAt": "2026-05-10T12:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Fetch a Single Collection
+
+Retrieve the details and field schema of a specific collection by its slug.
+
+### Request
+
+```http
+GET /api/v1/collections/{slug}
+Authorization: Bearer <your_api_key>
+X-API-Version: 1
+```
+
+### Required Scope
+
+- `read:collections`
+
+### Parameters
+
+- `slug` (in path): The slug of the collection.
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cm0col1234567890",
+    "workspaceId": "cm0ws1234567890",
+    "name": "Blog Posts",
+    "slug": "blog-posts",
+    "description": "Articles and posts for the company blog",
+    "mode": "STRUCTURED",
+    "fields": [
+      {
+        "id": "fld_1",
+        "name": "Title",
+        "slug": "title",
+        "type": "text",
+        "required": true,
+        "multiple": false
+      },
+      {
+        "id": "fld_2",
+        "name": "Body",
+        "slug": "body",
+        "type": "richtext",
+        "required": true,
+        "multiple": false
+      }
+    ],
+    "createdAt": "2026-05-09T10:00:00Z",
+    "updatedAt": "2026-05-10T12:00:00Z"
+  }
+}
+```

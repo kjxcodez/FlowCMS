@@ -1,0 +1,80 @@
+---
+title: Workspaces
+description: Learn about workspaces, plan limits, roles, and custom domains.
+---
+
+# Workspaces
+
+A **Workspace** is the top-level organizational unit in FlowCMS. Everything you create — including collections, content entries, media assets, team invitations, webhooks, and API keys — lives inside and belongs to a workspace.
+
+Workspaces provide absolute isolation: data, assets, and permissions do not leak across workspace boundaries.
+
+---
+
+## Workspace Members & Roles
+
+You can invite team members to collaborate in your workspace. FlowCMS uses Role-Based Access Control (RBAC) to enforce four distinct member roles:
+
+| Role | Level | Description |
+|------|-------|-------------|
+| **OWNER** | 4 | Full administrative control. Can manage billing/subscriptions, transfer ownership, and delete the workspace. A workspace must always have at least one active owner. |
+| **ADMIN** | 3 | Manage all content, create/edit collections, add/remove members, manage API keys, webhooks, environments, and custom domains. |
+| **EDITOR** | 2 | Create, edit, and delete entries, and upload media assets. Editors cannot publish or archive entries, nor can they access workspace settings. |
+| **VIEWER** | 1 | Read-only access. Can view entries, collections, and media assets in the dashboard, but cannot perform any write operations. |
+
+### Capability Matrix
+
+| Dashboard Action | VIEWER | EDITOR | ADMIN | OWNER |
+|------------------|:------:|:------:|:-----:|:-----:|
+| Read content schemas & entries | Yes | Yes | Yes | Yes |
+| Create, edit, delete drafts | No | Yes | Yes | Yes |
+| Upload & delete media assets | No | Yes | Yes | Yes |
+| Publish & Archive entries | No | No | Yes | Yes |
+| Manage Workspace Members | No | No | Yes | Yes |
+| Create & revoke API Keys | No | No | Yes | Yes |
+| Create & edit Webhooks | No | No | Yes | Yes |
+| Manage Environments | No | No | Yes | Yes |
+| Manage Collections | No | No | Yes | Yes |
+| Configure custom domains | No | No | Yes | Yes |
+| Manage Billing & Subscriptions | No | No | No | Yes |
+| Delete Workspace | No | No | No | Yes |
+
+---
+
+## Plan Limits
+
+Each workspace is assigned a plan that dictates its resource consumption and features. FlowCMS enforces these limits at the database and middleware layers:
+
+| Feature/Resource | Hobby | Pro | Agency | Enterprise |
+|------------------|:-----:|:---:|:------:|:----------:|
+| **Collections** | 3 | Unlimited | Unlimited | Unlimited |
+| **Environments** | 1 | 2 | 5 | Unlimited |
+| **API Keys** | 2 | 10 | 50 | Unlimited |
+| **Storage (Media)** | 1 GB | 10 GB | 50 GB | Unlimited |
+| **API Requests/mo** | 5,000 | 250,000 | 1,000,000 | Unlimited |
+| **Rate Limit (req/min)** | 30 | 300 | 1,000 | 5,000 |
+| **Webhooks** | No | Yes | Yes | Yes |
+| **Custom Roles** | No | No | Yes | Yes |
+| **Single Sign-On (SSO)** | No | No | No | Yes |
+| **Audit Logs** | No | No | Yes | Yes |
+
+---
+
+## Billing & Subscriptions
+
+For cloud-hosted environments, FlowCMS integrates with **Razorpay** to process subscriptions.
+
+### Session Rehydration
+To maintain maximum performance, FlowCMS uses a session model powered by Better Auth. However, to ensure that changes to billing plans (such as upgrading from Hobby to Pro) take effect immediately, **session cookie caching is disabled**. The session rehydrates directly from the database on critical requests, preventing stale plan status errors.
+
+---
+
+## Custom Domains
+
+Workspaces on the **PRO** plan and above can configure custom domains to access their visual preview canvases or custom API gateways.
+
+### Verification Process
+1. Navigate to **Settings > Domains** in your dashboard and click **Add Domain**.
+2. FlowCMS generates a `verifyToken` for your domain.
+3. Add a TXT record to your DNS provider pointing `_flowcms-challenge.yourdomain.com` to the verification token.
+4. Click **Verify** in the dashboard. FlowCMS performs a DNS query to check the TXT record and marks the domain as `verified` once matched.

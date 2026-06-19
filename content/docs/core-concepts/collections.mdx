@@ -1,0 +1,53 @@
+---
+title: Collections
+description: Learn how content schemas are defined and managed using collections.
+---
+
+# Collections
+
+A **Collection** is a content type definition (schema) within a workspace. It dictates the fields, rules, and structures that individual content entries must follow.
+
+For example, a workspace might have:
+- A `Blog Posts` collection with fields like Title, Slug, Body, Publish Date, and Author.
+- A `Team Members` collection with fields like Name, Bio, Role, and Profile Image.
+
+---
+
+## Collection Modes
+
+FlowCMS supports two collection modes depending on the nature of the content:
+
+### 1. Structured Mode (Default)
+In **Structured Mode**, a collection is defined by a rigid field-based schema. Each field has a defined data type (e.g. Text, Date, Boolean, Reference) and validation constraints (e.g. `required`, `multiple`).
+* **Best for:** Headless content delivery, blogs, products, reusable page blocks, data-driven resources, and SEO-friendly pages.
+* **API Response:** Returns a typed `data` object mapping your fields directly to their JSON values.
+
+### 2. Visual Mode
+In **Visual Mode**, instead of individual fields, the collection acts as a canvas for a block-based visual page builder. Editors can add, rearrange, and configure pre-defined page blocks (e.g. Hero, Accordion, CTA, Testimonial).
+* **Best for:** Landing pages, marketing pages, and case studies where layout flexibility is required.
+* **API Response:** Returns a `blocks` JSON array listing each selected block type and its respective properties.
+
+---
+
+## Field Schema Definition
+
+When creating a collection in Structured Mode, you define a list of fields. Each field configuration contains:
+- `id` — A unique identifier for the field.
+- `name` — A human-readable display label (e.g., "Cover Image").
+- `slug` — The JSON key used in the entry data (e.g., `coverImage`).
+- `type` — The field data type (e.g., `text`, `media`, `reference`).
+- `required` — Whether the field must be populated to save or publish.
+- `multiple` — Whether the field accepts multiple values (represented as a JSON array of values).
+
+See [Content Modeling](/docs/core-concepts/content-modeling) for the full breakdown of supported field types and visual blocks.
+
+---
+
+## Limits
+
+The maximum number of collections you can create in a workspace is determined by your subscription plan:
+
+- **Hobby Plan:** Up to **3 collections** per workspace.
+- **Pro, Agency, and Enterprise Plans:** **Unlimited** collections.
+
+If a Hobby plan workspace attempts to create a 4th collection, the system throws a `PLAN_LIMIT_REACHED` error.

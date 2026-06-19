@@ -1,0 +1,68 @@
+---
+title: Backup & Recovery
+description: How to back up and restore your database and media files in FlowCMS.
+---
+
+# Backup & Recovery
+
+A reliable backup strategy is essential to prevent data loss. A complete FlowCMS backup consists of two parts:
+1. **The Database:** PostgreSQL records (users, collections, entries, API keys, etc.).
+2. **The Media Files:** Uploaded assets (if using the local filesystem storage provider).
+
+---
+
+## 1. Database Backups
+
+If you are running the PostgreSQL database inside Docker Compose, you can take a snapshot using the `pg_dump` utility.
+
+### Taking a Backup
+
+Run the following command on your host machine to output a compressed SQL dump:
+
+```bash
+docker compose exec -t postgres pg_dump -U flowcms -d flowcms -F c -b -v -f /tmp/flowcms_backup.dump
+```
+
+Copy the dump file out of the postgres container to your host machine:
+
+```bash
+docker compose cp postgres:/tmp/flowcms_backup.dump ./flowcms_backup.dump
+```
+
+### Restoring a Backup
+
+To restore a database dump into a fresh postgres container:
+
+1. Copy the dump file back to the container:
+   ```bash
+   docker compose cp ./flowcms_backup.dump postgres:/tmp/flowcms_backup.dump
+   ```
+2. Run `pg_restore` to overwrite the database:
+   ```bash
+   docker compose exec -t postgres pg_restore -U flowcms -d flowcms -c -v /tmp/flowcms_backup.dump
+   ```
+
+---
+
+## 2. Media Backups
+
+If you are using `STORAGE_PROVIDER=local`, all uploaded assets are written to the host filesystem via a Docker volume (e.g. `public/uploads`).
+
+### Taking a Backup
+
+Create a tarball archive of the uploads directory:
+
+```bash
+tar -czvf flowcms_uploads_backup.tar.gz ./public/uploads
+```
+
+### Restoring a Backup
+
+Extract the archive into the `public/uploads` directory:
+
+```bash
+tar -xzvf flowcms_uploads_backup.tar.gz -C ./
+```
+
+> [!NOTE]
+> If you are using `STORAGE_PROVIDER=supabase`, media files are stored on Supabase's cloud infrastructure. You should configure scheduled backups within your Supabase project dashboard or CLI.

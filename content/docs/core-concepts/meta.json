@@ -1,0 +1,11 @@
+{
+  "title": "Core Concepts",
+  "pages": [
+    "workspaces",
+    "collections",
+    "content-modeling",
+    "entries",
+    "environments",
+    "publishing"
+  ]
+}

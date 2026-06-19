@@ -19,83 +19,96 @@ Navigate to **Settings > Webhooks** in the dashboard and click **Add Webhook**. 
 - **Events** — one or more events to subscribe to (see the full list below)
 - **Environment** (optional) — restrict delivery to a specific environment; if omitted, the webhook fires for all environments
 
-A 32-byte random hex secret is generated automatically when the webhook is created. Store it securely — you will use it to verify the signature of incoming payloads.
+A random secret is generated automatically when the webhook is created. Store it securely — you will use it to verify the signature of incoming payloads.
 
 You can enable or disable a webhook at any time without deleting it.
 
 ## Events
 
-FlowCMS fires webhooks for the following 14 events:
+FlowCMS fires webhooks for the following events:
 
-| Event                  | Description                                                      |
-|------------------------|------------------------------------------------------------------|
-| `ENTRY_CREATED`        | A new entry was created in a collection                          |
-| `ENTRY_UPDATED`        | An existing entry was updated                                    |
-| `ENTRY_PUBLISHED`      | An entry was published (moved to published state)                |
-| `ENTRY_DELETED`        | An entry was deleted                                             |
-| `PAGE_CREATED`         | A new page was created                                           |
-| `PAGE_UPDATED`         | An existing page was updated                                     |
-| `PAGE_PUBLISHED`       | A page was published                                             |
-| `PAGE_DELETED`         | A page was deleted                                               |
-| `COLLECTION_CREATED`   | A new collection was created                                     |
-| `COLLECTION_UPDATED`   | A collection schema was updated                                  |
-| `COLLECTION_DELETED`   | A collection was deleted                                         |
-| `MEDIA_UPLOADED`       | A new media asset was uploaded                                   |
-| `MEDIA_UPDATED`        | A media asset's metadata was updated                             |
-| `MEDIA_DELETED`        | A media asset was deleted                                        |
+| Event | Description |
+|---|---|
+| `ENTRY_CREATED` | A new entry was created |
+| `ENTRY_UPDATED` | An existing entry was updated |
+| `ENTRY_PUBLISHED` | An entry was published |
+| `ENTRY_DELETED` | An entry was deleted |
+| `PAGE_CREATED` | A new page was created |
+| `PAGE_UPDATED` | An existing page was updated |
+| `PAGE_PUBLISHED` | A page was published |
+| `PAGE_DELETED` | A page was deleted |
+| `COLLECTION_CREATED` | A new collection was created |
+| `COLLECTION_UPDATED` | A collection schema was updated |
+| `COLLECTION_DELETED` | A collection was deleted |
+| `MEDIA_UPLOADED` | A new media asset was uploaded |
+| `MEDIA_UPDATED` | A media asset's metadata was updated |
+| `MEDIA_DELETED` | A media asset was deleted |
 
-## Payload Signature
+## Payload Signature Verification
 
-Every webhook delivery includes an `x-webhook-signature` header. The value is an HMAC-SHA256 hex digest of the raw request body, computed using the webhook's 32-byte hex secret.
+To protect your endpoints from unauthorized requests, FlowCMS signs every webhook delivery using your webhook's secret.
 
-Always verify this signature before trusting the payload.
+Each delivery request includes the following headers:
+
+- `X-Flow-Signature` — The HMAC-SHA256 hex signature of the payload.
+- `X-Flow-Timestamp` — The ISO 8601 timestamp when the delivery was generated.
+- `X-Flow-Webhook-Id` — The unique ID of the webhook registration.
+
+### Signature Construction
+
+The signature is computed using the HMAC-SHA256 algorithm with your webhook secret. The signature input is built by joining the webhook ID, the request timestamp, and the raw string request body with colons:
+
+```text
+hmacInput = `${webhookId}:${timestamp}:${rawRequestBody}`
+```
 
 ### Node.js Verification Example
+
+Always use a constant-time comparison to prevent timing attacks.
 
 ```javascript
 const crypto = require('crypto');
 
-function verifyWebhookSignature(payload, signature, secret) {
-  const expected = crypto
+function verifyWebhookSignature({ rawBody, signature, timestamp, webhookId, secret }) {
+  // Construct the signature input
+  const hmacInput = `${webhookId}:${timestamp}:${rawBody}`;
+  
+  // Calculate the expected signature
+  const expectedSignature = crypto
     .createHmac('sha256', secret)
-    .update(payload)
+    .update(hmacInput)
     .digest('hex');
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+
+  // Perform constant-time verification
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
 }
 ```
 
-- `payload` — the raw request body string (do not parse it before verifying)
-- `signature` — the value of the `x-webhook-signature` header
-- `secret` — the 32-byte hex secret from your webhook configuration
-
-Using `crypto.timingSafeEqual` prevents timing attacks.
+- `rawBody` — the raw string request body (do not parse it to JSON before verification).
+- `signature` — the value of the `X-Flow-Signature` header.
+- `timestamp` — the value of the `X-Flow-Timestamp` header.
+- `webhookId` — the value of the `X-Flow-Webhook-Id` header.
+- `secret` — the secret generated for your webhook from the dashboard.
 
 ## Delivery via QStash
 
 FlowCMS delivers webhooks using **Upstash QStash**, a managed message queue service. QStash handles:
 
-- Automatic retries with exponential backoff when your endpoint returns a non-2xx response or is unreachable
-- Signed delivery (QStash also adds its own signing keys; the `x-webhook-signature` header is FlowCMS's application-level signature)
+- Automatic retries (up to 3 times) with exponential backoff if your endpoint returns a non-2xx response or is unreachable.
+- Asynchronous queuing, ensuring that dashboard or API response times are not slowed down by your webhook receiver's performance.
 
-Your endpoint should respond with a 2xx status code within the timeout window to acknowledge delivery.
+Your endpoint should respond with a `2xx` status code within the timeout window to acknowledge successful delivery.
 
 ## Delivery Tracking
 
 The dashboard shows a delivery log for each webhook under **Settings > Webhooks > Delivery History**. Each delivery record includes:
 
-| Field           | Description                                              |
-|-----------------|----------------------------------------------------------|
-| `statusCode`    | HTTP status code returned by your endpoint               |
-| `success`       | Whether the delivery was considered successful           |
-| `duration`      | Time in milliseconds for your endpoint to respond        |
-| `retryCount`    | How many times delivery was attempted                    |
-| `failureReason` | Error message if the delivery failed                     |
-| `responseBody`  | The response body returned by your endpoint (truncated)  |
-
-## Replaying Failed Deliveries
-
-If a delivery fails and the automatic retries are exhausted, you can manually replay it from the dashboard. Navigate to the delivery record in the history log and click **Replay**. This sends the original payload again with the same signature.
-
-## Enabling and Disabling Webhooks
-
-Webhooks can be toggled on or off from the **Settings > Webhooks** page. Disabling a webhook stops all future deliveries without deleting the webhook configuration. Re-enabling it resumes delivery for new events.
+- `statusCode` — HTTP status code returned by your endpoint
+- `success` — Whether the delivery succeeded
+- `duration` — Response time in milliseconds
+- `retryCount` — Number of attempts made
+- `failureReason` — Error message if delivery failed
+- `responseBody` — Response payload from your endpoint (truncated)

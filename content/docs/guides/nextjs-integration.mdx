@@ -1,0 +1,158 @@
+---
+title: Next.js Integration Guide
+description: Fetch and display content from FlowCMS inside a Next.js App Router application.
+---
+
+# Next.js Integration Guide
+
+Integrating FlowCMS with Next.js is straightforward. Because FlowCMS exposes standard HTTP REST endpoints, you can fetch content using native `fetch()` calls.
+
+This guide demonstrates how to fetch a list of entries and single entries in a Next.js App Router setup with optimal caching.
+
+---
+
+## 1. Setup Environment Variables
+
+Add your FlowCMS API credentials to your `.env.local` file:
+
+```bash
+FLOWCMS_API_KEY="flw_your_production_api_key_here"
+FLOWCMS_API_URL="https://www.getflowcms.com"
+```
+
+---
+
+## 2. Create an API Helper
+
+Create a helper function to fetch entries from FlowCMS. This handles headers and error checking:
+
+```typescript
+// lib/flowcms.ts
+
+const API_URL = process.env.FLOWCMS_API_URL || "https://www.getflowcms.com";
+const API_KEY = process.env.FLOWCMS_API_KEY;
+
+export async function fetchEntries<T = any>(
+  collectionSlug: string,
+  options: { page?: number; perPage?: number; expand?: boolean } = {}
+): Promise<{ success: boolean; data: T[]; meta?: any; error?: string }> {
+  const queryParams = new URLSearchParams();
+  if (options.page) queryParams.set("page", String(options.page));
+  if (options.perPage) queryParams.set("perPage", String(options.perPage));
+  if (options.expand) queryParams.set("expand", "true");
+
+  const url = `${API_URL}/api/v1/entries/${collectionSlug}?${queryParams.toString()}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "X-API-Version": "1",
+      },
+      // Cache the response at the edge, utilizing tag-based invalidation
+      next: {
+        tags: [`flowcms-collection:${collectionSlug}`],
+        revalidate: 3600, // Revalidate background cache hourly
+      },
+    });
+
+    const body = await res.json();
+    if (!res.ok || !body.success) {
+      return { success: false, data: [], error: body.error?.message || "Failed to fetch entries" };
+    }
+
+    return { success: true, data: body.data, meta: body.meta };
+  } catch (err) {
+    return { success: false, data: [], error: String(err) };
+  }
+}
+```
+
+---
+
+## 3. Render Content in a Server Component
+
+Now, fetch and render the entries inside a page Server Component:
+
+```typescript
+// app/blog/page.tsx
+import { fetchEntries } from "@/lib/flowcms";
+
+interface BlogPost {
+  id: string;
+  slug: string;
+  data: {
+    title: string;
+    excerpt: string;
+    publishedDate: string;
+  };
+}
+
+export default async function BlogListPage() {
+  const { success, data: posts, error } = await fetchEntries<BlogPost>("blog-posts");
+
+  if (!success) {
+    return <div className="p-8 text-red-500">Error loading posts: {error}</div>;
+  }
+
+  return (
+    <main className="max-w-4xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-8">Company Blog</h1>
+      <div className="grid gap-6">
+        {posts.map((post) => (
+          <article key={post.id} className="border p-6 rounded-md shadow-sm">
+            <h2 className="text-xl font-semibold mb-2">
+              <a href={`/blog/${post.slug}`} className="hover:underline">
+                {post.data.title}
+              </a>
+            </h2>
+            <p className="text-gray-600 mb-4">{post.data.excerpt}</p>
+            <time className="text-sm text-gray-400">
+              {new Date(post.data.publishedDate).toLocaleDateString()}
+            </time>
+          </article>
+        ))}
+      </div>
+    </main>
+  );
+}
+```
+
+---
+
+## 4. Revalidating the Cache
+
+When content is updated in FlowCMS, you want your Next.js site to display changes immediately. FlowCMS dispatches webhook events when entries are updated or published.
+
+You can set up a Next.js API route that acts as a webhook receiver to purge cache tags:
+
+```typescript
+// app/api/revalidate/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+
+export async function POST(req: NextRequest) {
+  const eventHeader = req.headers.get("X-Flow-Signature");
+  if (!eventHeader) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
+  }
+
+  // TODO: Add HMAC signature verification (see Webhooks guide)
+
+  try {
+    const { event, payload } = await req.json();
+
+    // Revalidate the cache for this specific entry and collection
+    if (payload && payload.entry) {
+      const collectionSlug = payload.entry.collection?.slug;
+      if (collectionSlug) {
+        revalidateTag(`flowcms-collection:${collectionSlug}`);
+      }
+    }
+
+    return NextResponse.json({ revalidated: true, now: Date.now() });
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 400 });
+  }
+}
+```

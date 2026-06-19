@@ -1,4 +1,4 @@
 {
   "title": "Features",
-  "pages": ["invitations", "media-library", "team-management", "webhooks"]
+  "pages": ["invitations", "media-library", "team-management", "webhooks", "audit-logs"]
 }

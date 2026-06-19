@@ -1,0 +1,44 @@
+---
+title: System Upgrades
+description: Learn how to safely upgrade FlowCMS and run database schema migrations.
+---
+
+# Upgrading FlowCMS
+
+FlowCMS is under active development. This page details the standard upgrade path and how database migrations are applied.
+
+---
+
+## Container Upgrade Path
+
+If you are running FlowCMS via Docker Compose, updating to the latest release takes a few simple steps:
+
+1. **Pull the latest image:**
+   ```bash
+   docker compose pull app
+   ```
+2. **Restart the service in detached mode:**
+   ```bash
+   docker compose up -d app
+   ```
+3. **Clean up old unused images:**
+   ```bash
+   docker image prune -f
+   ```
+
+---
+
+## Database Migrations
+
+FlowCMS uses Prisma ORM for database modeling. When new features require schema modifications:
+
+- **Automatic Migrations on Startup:** The official FlowCMS Docker container has an entrypoint script that automatically executes `npx prisma migrate deploy` *before* initiating the Next.js application server.
+- **Fail-Safe Startup:** If a migration fails (e.g. database connection times out), the startup script will exit, preventing the application server from running with a stale or mismatched database schema.
+
+---
+
+## Upgrade Best Practices
+
+1. **Always backup before upgrading:** Before pulling the latest Docker image, take a complete backup of your database and media storage (see the [Backups Guide](/docs/self-hosting/backups)).
+2. **Review Changelog:** Check the [Changelog](/docs/changelog) for any breaking changes or required environment variables added in the new version.
+3. **Staging Verification:** If you are running an Enterprise setup, deploy the update to your `staging` environment first to verify that your frontend integrations and custom blocks function as expected.

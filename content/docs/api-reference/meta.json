@@ -1,4 +1,13 @@
 {
   "title": "API Reference",
-  "pages": ["authentication", "entries", "content-types", "api-keys"]
+  "pages": [
+    "authentication",
+    "api-keys",
+    "content-types",
+    "entries",
+    "preview",
+    "pagination",
+    "rate-limits",
+    "errors"
+  ]
 }

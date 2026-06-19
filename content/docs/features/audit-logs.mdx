@@ -1,0 +1,69 @@
+---
+title: Audit Logs
+description: Track and audit administrative and content changes in your workspace.
+---
+
+# Audit Logs
+
+FlowCMS provides a comprehensive audit logging system to track all key actions, security changes, and content mutations within a workspace. This helps team administrators monitor activity, debug configuration changes, and maintain compliance standards.
+
+---
+
+## Plan Availability
+
+Audit logs are only available on the **AGENCY** and **ENTERPRISE** plans. They are not captured or displayed for workspaces on the HOBBY or PRO plans.
+
+If you upgrade a workspace to Agency or Enterprise, audit log capture will begin automatically from the moment of upgrade.
+
+---
+
+## What is Logged?
+
+Every audit log entry is recorded in the database under the `AuditLog` model and captures the following structured attributes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | Unique identifier for the log entry. |
+| `userId` | String (Optional) | The ID of the authenticated user who performed the action (if done via the dashboard). |
+| `apiKeyId` | String (Optional) | The ID of the API key used to authorize the action (if done via the public API). |
+| `action` | Enum | The specific action performed (see list below). |
+| `resourceType` | String | The type of resource mutated (e.g., `ENTRY`, `COLLECTION`, `WEBHOOK`, `API_KEY`, `MEMBER`). |
+| `resourceId` | String | The unique ID of the target resource. |
+| `resourceName` | String (Optional) | A human-readable identifier for the resource (e.g., the entry's slug or user's email). |
+| `before` | JSON (Optional) | A snapshot of the resource state *before* the change occurred. |
+| `after` | JSON (Optional) | A snapshot of the resource state *after* the change occurred. |
+| `ip` | String (Optional) | The IP address from which the request originated. |
+| `userAgent` | String (Optional) | The browser or client user-agent string. |
+| `createdAt` | DateTime | The timestamp when the action occurred. |
+
+---
+
+## Tracked Actions (`AuditAction`)
+
+FlowCMS records logs for the following categories of workspace operations:
+
+### Content & Collections
+* `CREATE` — A new entry or collection was created.
+* `UPDATE` — An entry or collection schema was modified (before/after snapshots included).
+* `DELETE` — An entry or collection was deleted.
+* `PUBLISH` — An entry was published.
+* `UNPUBLISH` — An entry was unpublished back to draft state.
+* `ARCHIVE` — An entry was archived.
+
+### Access & Security
+* `API_KEY_CREATED` — A new API key was generated.
+* `API_KEY_REVOKED` — An API key was manually revoked.
+* `DRAFT_TOKEN_USED` — A draft preview token was successfully used to read content.
+* `DRAFT_TOKEN_FAILED` — A draft preview attempt failed (detailed reason included in the `after` field).
+
+### Team & Collaboration
+* `MEMBER_INVITED` — A workspace invitation was sent.
+* `MEMBER_REMOVED` — A member was removed from the workspace.
+* `INVITE_ACCEPTED` / `INVITE_REJECTED` / `INVITE_EXPIRED` — Status updates for pending workspace invitations.
+* `INVITE_MISMATCH` — A user tried to accept an invitation using an email address different from the invited address.
+
+### Workspace & Integrations
+* `WEBHOOK_CREATED` — A new outbound webhook URL was registered.
+* `WEBHOOK_DELETED` — A webhook configuration was deleted.
+* `WEBHOOK_FIRED` — An outbound webhook delivery was triggered.
+* `PLAN_CHANGED` — The workspace subscription plan was changed or upgraded.

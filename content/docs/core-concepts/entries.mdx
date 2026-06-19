@@ -1,0 +1,84 @@
+---
+title: Entries
+description: Understand the lifecycle, properties, and localization of content entries in FlowCMS.
+---
+
+# Entries
+
+An **Entry** is an individual instance of content within a collection. If a collection is a template or schema (e.g. `Blog Posts`), an entry is a specific article (e.g. "Introducing FlowCMS").
+
+Every entry belongs to a specific workspace and is scoped to a specific collection and environment.
+
+---
+
+## Core Fields of an Entry
+
+In the database, every entry contains the following core metadata fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | String | A unique CUID identifier. |
+| `slug` | String | A URL-safe unique identifier (e.g., `introducing-flowcms`). Must be unique within the combination of collection, environment, and slug. |
+| `data` | JSON | Key-value pairs containing the actual content, matching the fields defined in the parent collection's schema. |
+| `status` | Enum | The publication status of the entry: `DRAFT`, `PUBLISHED`, or `ARCHIVED`. |
+| `version` | Integer | An incremental version counter (increments every time the entry is published). |
+| `localeCode` | String | The language code of the entry. Defaults to `"en"`. |
+| `publishedAt` | DateTime | The timestamp when the entry was first published. |
+| `createdAt` | DateTime | The timestamp when the entry was created. |
+| `updatedAt` | DateTime | The timestamp when the entry was last updated. |
+
+---
+
+## Entry Lifecycle & Statuses
+
+Entries move through a structured state machine:
+
+```
+    (Create)
+       │
+       ▼
+   ┌───────┐
+   │ DRAFT │◄──────────┐
+   └───┬───┘           │
+       │               │
+  (Publish)       (Unpublish)
+       │               │
+       ▼               │
+ ┌───────────┐         │
+ │ PUBLISHED ├─────────┘
+ └─────┬─────┘
+       │
+   (Archive)
+       │
+       ▼
+ ┌───────────┐
+ │ ARCHIVED  │
+ └───────────┘
+```
+
+### 1. DRAFT
+* The entry's initial state.
+* The content is editable and saved automatically.
+* Draft entries are **not** returned by the public API unless a valid preview token is provided in the request (see [Preview API](/docs/api-reference/preview)).
+
+### 2. PUBLISHED
+* The entry is live.
+* Its contents are served by the public Entries API by default.
+* Publishing increments the entry's `version` count by 1 and sets `publishedAt`.
+* Webhooks subscribed to `ENTRY_PUBLISHED` are triggered immediately.
+
+### 3. ARCHIVED
+* The entry is taken offline and kept in a read-only archive state.
+* Archived entries are excluded from both default public API queries and draft preview tokens.
+* Useful for preserving historical content without serving it to frontends.
+* Can be moved back to the `DRAFT` state at any time.
+
+---
+
+## Localization
+
+FlowCMS has built-in support for multi-language content. The `localeCode` field (defaulting to `"en"`) allows you to author translated versions of your entries.
+
+### How it works:
+- Localized entries share the same collection but are separate database records.
+- When retrieving content via the Entries API, you can filter by `localeCode` to retrieve the relevant language version for your frontend application.

@@ -1,0 +1,99 @@
+---
+title: Production Deployment
+description: Critical considerations for running FlowCMS in a production self-hosted environment.
+---
+
+# Production Deployment
+
+When transitioning FlowCMS from local development to a self-hosted production environment, there are several structural requirements and best practices to follow.
+
+---
+
+## 1. Database Configuration
+
+FlowCMS requires a **PostgreSQL (v15+)** database. 
+
+### Connection Pools vs Direct Connections
+Prisma uses two environment variables for database connections:
+1. `DATABASE_URL`: Connection string pointing to your PostgreSQL server. If you use a connection pooling proxy (like PgBouncer or Supabase Supavisor), point this to the pooler.
+2. `DIRECT_URL`: Connection string pointing directly to the PostgreSQL database instance. This is required because Prisma cannot perform schema migrations (`prisma migrate deploy`) or run driver adapters through a transaction pooler.
+
+---
+
+## 2. Session Security (Better Auth)
+
+Better Auth is used to handle session verification. For security:
+- `BETTER_AUTH_SECRET` must be set to a cryptographically secure random string (minimum 32 characters).
+- `BETTER_AUTH_URL` must point to the canonical URL of your CMS dashboard.
+- In production, your application **must run over HTTPS**. Better Auth cookies are configured with `Secure` flags, meaning browser authentication will fail if served over unencrypted HTTP.
+
+---
+
+## 3. Storage Provider Setup
+
+By default, FlowCMS uploads media assets to the local container filesystem under the `/app/public/uploads` directory (`STORAGE_PROVIDER=local`).
+
+### supabase Storage (Recommended for Production)
+If you deploy to ephemeral container environments (e.g. AWS ECS, GCP Cloud Run, or Render), any uploads stored locally will be lost when the container restarts. We recommend setting up Supabase Storage:
+
+1. Create a public bucket in your Supabase project (e.g., named `media`).
+2. Add the following to your environment configuration:
+   ```bash
+   STORAGE_PROVIDER="supabase"
+   NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+   SUPABASE_SERVICE_KEY="your-service-role-key"
+   ```
+
+---
+
+## 4. Upstash Services (Redis & QStash)
+
+FlowCMS relies on Upstash for rate-limiting, usage logs, caching, and background webhook deliveries.
+
+- **Redis:** Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+- **QStash:** QStash is required to queue and retry webhooks. Set `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, and `QSTASH_NEXT_SIGNING_KEY`.
+
+---
+
+## 5. Reverse Proxy Configuration (Caddy / Nginx)
+
+We recommend placing a reverse proxy in front of FlowCMS to handle SSL termination, compression, and request routing.
+
+### Caddyfile Example
+Caddy handles SSL automatically:
+
+```text
+cms.yourdomain.com {
+    reverse_proxy localhost:3000
+    
+    # Configure maximum upload size to match platform limits (10MB)
+    request_body {
+        max_size 10MB
+    }
+}
+```
+
+### Nginx Config Example
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name cms.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/cms.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/cms.yourdomain.com/privkey.pem;
+
+    client_max_body_size 10M;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```

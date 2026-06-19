@@ -1,4 +1,10 @@
 {
   "title": "Self-Hosting",
-  "pages": ["docker", "environment-variables"]
+  "pages": [
+    "docker",
+    "environment-variables",
+    "deployment",
+    "upgrades",
+    "backups"
+  ]
 }

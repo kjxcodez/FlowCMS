@@ -1,0 +1,113 @@
+---
+title: Webhook Integration Guide
+description: Register, receive, and verify cryptographic webhooks from FlowCMS.
+---
+
+# Webhook Integration Guide
+
+Webhooks notify your application when changes occur in FlowCMS, enabling workflows like triggering site rebuilds, purging cache tags, or synchronizing search databases.
+
+This guide walks through setting up a webhook listener in a Next.js App Router API Route and performing cryptographic signature verification.
+
+---
+
+## 1. Get Your Webhook Secret
+
+When you create a webhook under **Settings > Webhooks** in your FlowCMS dashboard:
+1. Copy the automatically generated **Webhook Secret**.
+2. Save it to your application's environment variables:
+   ```bash
+   FLOWCMS_WEBHOOK_SECRET="whsec_your_secret_here"
+   ```
+
+---
+
+## 2. Implement the Receiver with Signature Verification
+
+When FlowCMS dispatches a webhook:
+- The body contains the event metadata and mutated payload.
+- It attaches headers: `X-Flow-Signature`, `X-Flow-Timestamp`, and `X-Flow-Webhook-Id`.
+
+> [!IMPORTANT]
+> To verify the signature, you must read the **raw string request body**. Parsing the body to a JSON object prior to verification will distort whitespace/formatting and cause signature verification to fail.
+
+Here is a complete Next.js API Route Handler that implements constant-time signature verification:
+
+```typescript
+// app/api/webhooks/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
+
+const WEBHOOK_SECRET = process.env.FLOWCMS_WEBHOOK_SECRET || "";
+
+export async function POST(req: NextRequest) {
+  // 1. Extract required headers
+  const signature = req.headers.get("X-Flow-Signature");
+  const timestamp = req.headers.get("X-Flow-Timestamp");
+  const webhookId = req.headers.get("X-Flow-Webhook-Id");
+
+  if (!signature || !timestamp || !webhookId) {
+    return NextResponse.json({ error: "Missing webhook headers" }, { status: 400 });
+  }
+
+  try {
+    // 2. Read the raw text body (DO NOT parse as JSON yet)
+    const rawBody = await req.text();
+
+    // 3. Construct signature input: webhookId + timestamp + rawBody
+    const hmacInput = `${webhookId}:${timestamp}:${rawBody}`;
+
+    // 4. Calculate expected HMAC-SHA256 signature
+    const expectedSignature = crypto
+      .createHmac("sha256", WEBHOOK_SECRET)
+      .update(hmacInput)
+      .digest("hex");
+
+    // 5. Perform timing-safe (constant-time) comparison
+    const isVerified = crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+
+    if (!isVerified) {
+      console.warn("Webhook verification failed: Signature mismatch");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    }
+
+    // 6. Signature is valid! Parse body safely
+    const payload = JSON.parse(rawBody);
+    const { event } = payload;
+
+    console.log(`Received valid webhook event: ${event}`);
+
+    // 7. Handle specific events
+    switch (event) {
+      case "ENTRY_PUBLISHED":
+        await handleEntryPublished(payload);
+        break;
+      case "ENTRY_DELETED":
+        await handleEntryDeleted(payload);
+        break;
+      default:
+        console.log(`Unhandled webhook event type: ${event}`);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Error processing webhook:", err);
+    return NextResponse.json({ error: "Internal processing error" }, { status: 500 });
+  }
+}
+
+async function handleEntryPublished(payload: any) {
+  const { entryId } = payload;
+  console.log(`Entry published: ${entryId}. Triggering rebuild...`);
+  // Add your custom logic here (e.g., fetch entry data, rebuild page, clear Redis)
+}
+
+async function handleEntryDeleted(payload: any) {
+  const { entryId } = payload;
+  console.log(`Entry deleted: ${entryId}. Purging from search index...`);
+  // Add your custom logic here
+}
+```
