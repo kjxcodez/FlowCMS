@@ -1,0 +1,87 @@
+---
+title: Media Library
+description: Upload, organize, and reference media assets in FlowCMS.
+---
+
+# Media Library
+
+The Media Library is a centralized asset manager built into FlowCMS. It lets you upload images, documents, and other files, organize them into folders, and reference them from any collection entry via a dedicated media field type.
+
+## Uploading Files
+
+Files are uploaded by sending a `multipart/form-data` POST request to the internal API:
+
+```
+POST /api/internal/media
+Content-Type: multipart/form-data
+```
+
+The dashboard upload UI handles this automatically. Each file must be **10 MB or smaller**. Attempting to upload a larger file will return an error.
+
+Multiple files can be uploaded in a single request (bulk upload is supported).
+
+## Storage Backend
+
+FlowCMS stores all uploaded media in **Supabase Storage**. The following environment variables are required for media uploads to work:
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_KEY
+STORAGE_PROVIDER=supabase
+```
+
+When a media field is rendered, files are served directly from Supabase's CDN URLs. FlowCMS stores only the asset ID and metadata in its own database — the file bytes live in Supabase.
+
+## Folder Organization
+
+The Media Library supports hierarchical folder organization. Folders are represented by the `MediaFolder` model, which supports parent/child relationships, allowing you to nest folders to any depth.
+
+You can:
+
+- Create folders and subfolders from the dashboard
+- Move assets between folders
+- Browse assets by folder
+
+## Search
+
+You can search the Media Library from the dashboard. The search is case-insensitive and matches against:
+
+- Filename
+- Alt text
+- Title
+- Caption
+- Folder names
+
+## Storage Limits by Plan
+
+The total storage available to your workspace depends on your plan:
+
+| Plan       | Storage Limit |
+|------------|---------------|
+| HOBBY      | 1 GB          |
+| PRO        | 10 GB         |
+| AGENCY     | 50 GB         |
+| ENTERPRISE | Unlimited     |
+
+The dashboard shows your current storage usage on the billing/overview page.
+
+## Using Media in Collections
+
+Collections can include a **media field** type. This field stores the asset's ID, which FlowCMS resolves to the full Supabase URL when the entry is read via the API.
+
+When you include a media field in a collection schema and populate an entry, the API response will include the full asset URL for that field so your frontend can render it directly.
+
+## Finding Where an Asset Is Used
+
+To see which entries reference a particular media item, use the usage endpoint:
+
+```
+GET /api/internal/media/{id}/usage
+```
+
+This returns a list of all entries that reference the asset, so you can safely determine whether it is safe to delete a file or understand the impact of updating it.
+
+## Bulk Operations
+
+The dashboard supports bulk operations on media assets, including bulk delete and bulk move to folder. Select multiple assets using the checkboxes and choose an action from the toolbar.

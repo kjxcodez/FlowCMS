@@ -1,0 +1,75 @@
+---
+title: Invitations
+description: How workspace invitations work in FlowCMS, from sending to acceptance.
+---
+
+# Invitations
+
+This page describes the complete invitation lifecycle in FlowCMS — from sending an invite through acceptance, expiry, and revocation.
+
+## Sending an Invitation
+
+A workspace ADMIN or OWNER can invite new members from **Settings > Members > Invite Member**. The inviter provides:
+
+- The invitee's **email address**
+- The **role** to assign (VIEWER, EDITOR, or ADMIN — OWNER cannot be assigned via invitation)
+
+FlowCMS generates a unique, cryptographically secure token and sends an invitation email to the provided address. The email contains:
+
+- The workspace name
+- The role being offered
+- A one-click accept link containing the invitation token
+- The expiry date (7 days from the time of sending)
+
+## Invitation Statuses
+
+An invitation can be in one of the following states:
+
+| Status     | Meaning                                                                              |
+|------------|--------------------------------------------------------------------------------------|
+| `PENDING`  | The invitation has been sent and is awaiting a response                              |
+| `ACCEPTED` | The recipient clicked the accept link and joined the workspace                       |
+| `EXPIRED`  | The 7-day window passed without the recipient accepting                              |
+| `REVOKED`  | An ADMIN or OWNER manually cancelled the invitation before it was accepted           |
+
+## Accepting an Invitation
+
+When the recipient clicks the accept link:
+
+1. FlowCMS validates the token and checks that it has not expired or been revoked.
+2. If the recipient is not yet registered, they are prompted to create an account using the invited email address.
+3. If the recipient already has an account with that email address, they are prompted to sign in.
+4. Upon successful authentication, a `WorkspaceMember` record is created linking their account to the workspace with the assigned role.
+5. The invitation status is updated to `ACCEPTED`.
+
+The recipient must sign in with the same email address the invitation was sent to. Signing in with a different address is not permitted.
+
+## Invitation Expiry
+
+Invitations expire automatically after **7 days** if not accepted. An expired invitation cannot be accepted. To re-invite an expired invitee, an ADMIN or OWNER must send a new invitation.
+
+The invitation status transitions to `EXPIRED` automatically when the deadline passes. This is also recorded in the workspace audit log.
+
+## Revoking an Invitation
+
+An ADMIN or OWNER can revoke a `PENDING` invitation at any time before it is accepted. To do so:
+
+1. Navigate to **Settings > Members**.
+2. Find the pending invitation in the invitations list.
+3. Click **Revoke**.
+
+Once revoked, the invite link is immediately invalidated and the status is set to `REVOKED`. If the recipient attempts to use the link after revocation, they will see an error.
+
+## Audit Logging of Invitation Events
+
+All invitation activity is recorded in the workspace audit log. The following actions are logged:
+
+| Action             | When it is recorded                                          |
+|--------------------|--------------------------------------------------------------|
+| `MEMBER_INVITED`   | An invitation is sent                                        |
+| `INVITE_ACCEPTED`  | The recipient accepts the invitation                         |
+| `INVITE_REJECTED`  | The recipient explicitly declines the invitation             |
+| `INVITE_EXPIRED`   | An invitation reaches its 7-day deadline without acceptance  |
+| `INVITE_MISMATCH`  | The recipient attempts to accept with a different email      |
+
+Audit log access requires the AGENCY or ENTERPRISE plan. See the [Audit Logs](/docs/features/audit-logs) page for details.

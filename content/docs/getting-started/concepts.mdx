@@ -1,0 +1,94 @@
+---
+title: Core Concepts
+description: Understand the key building blocks of FlowCMS before diving into the API.
+---
+
+FlowCMS is built around a small set of composable concepts. Understanding them will make every other part of the documentation easier to follow.
+
+## Workspace
+
+A **workspace** is your top-level organizational unit in FlowCMS. Everything — collections, entries, media, team members, API keys — lives inside a workspace.
+
+A user can belong to multiple workspaces with different roles in each.
+
+## Collections
+
+A **collection** is a content type definition. It defines the structure (schema) of a group of related content items.
+
+For example:
+- A `Blog Posts` collection defines that each post has a title (text), a body (rich text), and a category (reference).
+- A `Products` collection defines that each product has a name, price (number), and image (media).
+
+Collections have two modes:
+- **Structured** — Field-based schema with typed fields (default)
+- **Visual** — Block-based visual page builder
+
+## Fields
+
+**Fields** define the data shape of a collection. Each field has:
+- A **name** (display label)
+- A **slug** (the JSON key in the entry's `data` object)
+- A **type** (text, richtext, number, boolean, date, media, reference)
+- Whether it is **required**
+- Whether it allows **multiple** values
+
+See [Content Modeling](/docs/core-concepts/content-modeling) for the full field type reference.
+
+## Entries
+
+An **entry** is a single instance of content within a collection. It has:
+- A **slug** — URL-safe identifier, unique within its collection and environment
+- A **status** — `DRAFT`, `PUBLISHED`, or `ARCHIVED`
+- A **data** object — key-value pairs matching the collection's field definitions
+- A **version** number — incremented each time the entry is published
+
+## Environments
+
+**Environments** are isolated content branches within a workspace. Each environment maintains its own set of entries.
+
+Common use cases:
+- `production` — Live content served to your site
+- `staging` — Pre-release content for internal review
+
+API keys are bound to a specific environment, so your production frontend only ever reads from the production environment.
+
+## API Keys
+
+**API keys** authenticate requests to the public REST API (`/api/v1/`). Each key is:
+- Bound to a single **environment**
+- Assigned specific **scopes** that limit what the key can do
+- Hashed with SHA-256 — the raw key is shown only once at creation
+
+## Preview / Draft Tokens
+
+**Draft tokens** allow you to preview `DRAFT` entries via the API before they are published. They are separate from API keys and can be:
+- Scoped to a specific collection or entry
+- Set to expire at a specific time
+- Revoked instantly
+
+## Publishing Workflow
+
+Entries follow a state machine:
+
+```
+DRAFT → PUBLISHED → ARCHIVED
+  ↑                    |
+  └────────────────────┘ (unarchive)
+```
+
+Only `PUBLISHED` entries are returned by the public API by default. Draft entries are included when a valid draft token is provided.
+
+## Webhooks
+
+**Webhooks** notify your external systems when content changes. You register an HTTPS endpoint and subscribe to events like `ENTRY_PUBLISHED`, `MEDIA_UPLOADED`, etc. FlowCMS will POST a signed payload to your endpoint when those events occur.
+
+## Team Roles
+
+Members of a workspace are assigned one of four roles:
+
+| Role | Description |
+|------|-------------|
+| **Owner** | Full control, including billing and workspace deletion |
+| **Admin** | Manage content, members, API keys, and webhooks |
+| **Editor** | Create and edit entries; cannot publish |
+| **Viewer** | Read-only access to the dashboard |

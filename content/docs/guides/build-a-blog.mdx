@@ -1,0 +1,376 @@
+---
+title: Build a Blog with Next.js 15
+description: A practical step-by-step tutorial for building a fully functional blog using Next.js 15 App Router and FlowCMS as the content backend.
+---
+
+# Build a Blog with Next.js 15
+
+This tutorial walks you through building a blog from scratch using Next.js 15 App Router and FlowCMS as your content backend. By the end you will have a working blog with a listing page and individual post pages, both powered by FlowCMS entries.
+
+## Prerequisites
+
+- A FlowCMS account with a workspace set up
+- A Next.js 15 project (create one with `npx create-next-app@latest`)
+- Basic familiarity with Next.js App Router and TypeScript
+
+---
+
+## Step 1: Create the "Blog Posts" Collection
+
+Log into your FlowCMS dashboard and navigate to your workspace.
+
+1. Click **Collections** in the left sidebar.
+2. Click **New Collection**.
+3. Name it `Blog Posts` — the API slug will be automatically set to `blog_posts`.
+4. Add the following fields:
+
+| Field Name       | Field Type  | Required |
+| ---------------- | ----------- | -------- |
+| `title`          | Text        | Yes      |
+| `body`           | Rich Text   | Yes      |
+| `excerpt`        | Text Area   | No       |
+| `cover_image`    | Media       | No       |
+| `published_date` | Date        | No       |
+| `author`         | Text        | No       |
+
+5. Click **Save Collection**.
+
+Your collection is now ready. Go to **Entries** and create a few test posts so you have data to work with.
+
+---
+
+## Step 2: Generate an API Key
+
+You need an API key with at least the `read:entries` scope to fetch content from your Next.js app.
+
+1. In the dashboard, go to **Settings > API Keys**.
+2. Click **Generate New Key**.
+3. Give it a name like `Blog Frontend`.
+4. Under **Scopes**, select `read:entries`.
+5. Select the **Production** environment (or whichever environment your entries live in).
+6. Click **Generate** and copy the key immediately — it will not be shown again.
+
+Test the key with curl before moving on:
+
+```bash
+curl -X GET "https://www.getflowcms.com/api/v1/entries?collectionSlug=blog_posts" \
+  -H "Authorization: Bearer flw_your_api_key_here" \
+  -H "X-API-Version: 1"
+```
+
+You should receive a JSON response containing your entries.
+
+---
+
+## Step 3: Set Up Environment Variables
+
+In the root of your Next.js project, create or edit `.env.local`:
+
+```bash
+FLOWCMS_API_KEY=flw_your_api_key_here
+FLOWCMS_API_URL=https://www.getflowcms.com
+```
+
+Never commit `.env.local` to version control. Add it to `.gitignore` if it is not already there.
+
+---
+
+## Step 4: Define TypeScript Types
+
+Create `src/types/blog.ts` to type the data coming from FlowCMS:
+
+```typescript
+export interface FlowCMSEntry {
+  id: string;
+  slug: string;
+  status: "DRAFT" | "PUBLISHED";
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  data: Record<string, unknown>;
+}
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  publishedAt: string | null;
+  title: string;
+  body: string; // HTML string from the rich text field
+  excerpt: string | null;
+  cover_image: string | null;
+  published_date: string | null;
+  author: string | null;
+}
+
+export function toBlogPost(entry: FlowCMSEntry): BlogPost {
+  const data = entry.data as Record<string, unknown>;
+  return {
+    id: entry.id,
+    slug: entry.slug,
+    publishedAt: entry.publishedAt,
+    title: (data.title as string) ?? "Untitled",
+    body: (data.body as string) ?? "",
+    excerpt: (data.excerpt as string) ?? null,
+    cover_image: (data.cover_image as string) ?? null,
+    published_date: (data.published_date as string) ?? null,
+    author: (data.author as string) ?? null,
+  };
+}
+```
+
+---
+
+## Step 5: Create a Reusable Fetch Helper
+
+Create `src/lib/flowcms.ts`:
+
+```typescript
+const API_URL = process.env.FLOWCMS_API_URL ?? "https://www.getflowcms.com";
+const API_KEY = process.env.FLOWCMS_API_KEY ?? "";
+
+interface FetchEntriesOptions {
+  collectionSlug: string;
+  page?: number;
+  perPage?: number;
+  revalidate?: number;
+  tags?: string[];
+}
+
+interface EntriesResponse {
+  data: import("@/types/blog").FlowCMSEntry[];
+  meta: {
+    total: number;
+    page: number;
+    perPage: number;
+    totalPages: number;
+  };
+}
+
+export async function fetchEntries(
+  options: FetchEntriesOptions
+): Promise<EntriesResponse> {
+  const { collectionSlug, page = 1, perPage = 10, revalidate = 60, tags } = options;
+
+  const params = new URLSearchParams({
+    collectionSlug,
+    page: String(page),
+    perPage: String(perPage),
+  });
+
+  const response = await fetch(
+    `${API_URL}/api/v1/entries?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "X-API-Version": "1",
+      },
+      next: {
+        revalidate,
+        ...(tags && tags.length > 0 ? { tags } : {}),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `FlowCMS API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchEntry(
+  collectionSlug: string,
+  slug: string,
+  revalidate = 60
+): Promise<import("@/types/blog").FlowCMSEntry> {
+  const response = await fetch(
+    `${API_URL}/api/v1/entries/${slug}?collectionSlug=${collectionSlug}`,
+    {
+      headers: {
+        Authorization: `Bearer ${API_KEY}`,
+        "X-API-Version": "1",
+      },
+      next: { revalidate, tags: [`entry-${slug}`] },
+    }
+  );
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Entry not found: ${slug}`);
+    }
+    throw new Error(
+      `FlowCMS API error: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return response.json();
+}
+```
+
+---
+
+## Step 6: Build the Blog Listing Page
+
+Create `src/app/blog/page.tsx`:
+
+```tsx
+import Link from "next/link";
+import { fetchEntries } from "@/lib/flowcms";
+import { toBlogPost } from "@/types/blog";
+
+export const revalidate = 60;
+
+export default async function BlogPage() {
+  const { data: entries } = await fetchEntries({
+    collectionSlug: "blog_posts",
+    perPage: 20,
+    revalidate: 60,
+    tags: ["blog_posts"],
+  });
+
+  const posts = entries.map(toBlogPost);
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 py-12">
+      <h1 className="text-3xl font-bold mb-8">Blog</h1>
+      <ul className="space-y-6">
+        {posts.map((post) => (
+          <li key={post.id} className="border-b pb-6">
+            {post.cover_image && (
+              <img
+                src={post.cover_image}
+                alt={post.title}
+                className="w-full h-48 object-cover rounded mb-4"
+              />
+            )}
+            <h2 className="text-xl font-semibold">
+              <Link href={`/blog/${post.slug}`} className="hover:underline">
+                {post.title}
+              </Link>
+            </h2>
+            {post.excerpt && (
+              <p className="text-gray-600 mt-2">{post.excerpt}</p>
+            )}
+            <div className="text-sm text-gray-400 mt-2">
+              {post.author && <span>By {post.author}</span>}
+              {post.published_date && (
+                <span className="ml-4">
+                  {new Date(post.published_date).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+```
+
+---
+
+## Step 7: Build the Single Post Page
+
+Create `src/app/blog/[slug]/page.tsx`:
+
+```tsx
+import { notFound } from "next/navigation";
+import { fetchEntries, fetchEntry } from "@/lib/flowcms";
+import { toBlogPost } from "@/types/blog";
+
+interface Props {
+  params: Promise<{ slug: string }>;
+}
+
+// Generate static paths at build time
+export async function generateStaticParams() {
+  const { data: entries } = await fetchEntries({
+    collectionSlug: "blog_posts",
+    perPage: 100,
+    revalidate: 3600,
+  });
+
+  return entries.map((entry) => ({ slug: entry.slug }));
+}
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  try {
+    const entry = await fetchEntry("blog_posts", slug);
+    const post = toBlogPost(entry);
+    return {
+      title: post.title,
+      description: post.excerpt ?? undefined,
+    };
+  } catch {
+    return { title: "Post Not Found" };
+  }
+}
+
+export default async function BlogPostPage({ params }: Props) {
+  const { slug } = await params;
+
+  let entry;
+  try {
+    entry = await fetchEntry("blog_posts", slug);
+  } catch {
+    notFound();
+  }
+
+  const post = toBlogPost(entry);
+
+  return (
+    <article className="max-w-2xl mx-auto px-4 py-12">
+      {post.cover_image && (
+        <img
+          src={post.cover_image}
+          alt={post.title}
+          className="w-full h-64 object-cover rounded mb-8"
+        />
+      )}
+      <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+      <div className="text-sm text-gray-500 mb-8 flex gap-4">
+        {post.author && <span>By {post.author}</span>}
+        {post.published_date && (
+          <span>{new Date(post.published_date).toLocaleDateString()}</span>
+        )}
+      </div>
+      {/* Rich text body is HTML — render with dangerouslySetInnerHTML */}
+      <div
+        className="prose prose-neutral max-w-none"
+        dangerouslySetInnerHTML={{ __html: post.body }}
+      />
+    </article>
+  );
+}
+```
+
+The `body` field from FlowCMS rich text is HTML. Use a CSS library such as `@tailwindcss/typography` (the `prose` class above) to style it, or sanitize it with `dompurify` before rendering if users can supply arbitrary content.
+
+---
+
+## Step 8: Verify with Curl
+
+Before running your app, confirm your API key and collection slug are correct:
+
+```bash
+# List entries
+curl -X GET "https://www.getflowcms.com/api/v1/entries?collectionSlug=blog_posts&page=1&perPage=5" \
+  -H "Authorization: Bearer flw_your_api_key_here" \
+  -H "X-API-Version: 1"
+
+# Fetch a single entry by slug
+curl -X GET "https://www.getflowcms.com/api/v1/entries/my-first-post?collectionSlug=blog_posts" \
+  -H "Authorization: Bearer flw_your_api_key_here" \
+  -H "X-API-Version: 1"
+```
+
+---
+
+## Next Steps
+
+- Add [Preview Mode](/docs/guides/preview-mode) so editors can view draft posts before publishing.
+- Set up [Webhooks](/docs/guides/webhooks-guide) to automatically revalidate Next.js cache when entries are published.
+- Explore the full [API Reference](/docs/api-reference/entries) for filtering, sorting, and pagination options.

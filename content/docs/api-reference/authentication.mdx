@@ -1,31 +1,76 @@
 ---
-title: API Authentication
-description: How to authenticate requests to the FlowCMS API.
+title: Authentication
+description: How to authenticate requests to the FlowCMS API using Bearer tokens and API keys.
 ---
+
+import { Callout } from 'fumadocs-ui/components/callout';
 
 # Authentication
 
-The FlowCMS API uses Bearer Tokens to authenticate requests. 
+The FlowCMS API uses **Bearer token** authentication. Every request must include your API key in the `Authorization` header along with the required `X-API-Version` header.
 
-## Passing your API Key
+## Required Headers
 
-You must include your API key in the `Authorization` header of every API request. Additionally, you must specify the API version using the `X-API-Version` header.
+Every API request must include both of the following headers:
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `Authorization` | `Bearer flw_<key>` | Your API key prefixed with `Bearer ` |
+| `X-API-Version` | `1` | The API version to use |
+
+## Example Request
 
 ```bash
-curl -X GET "https://getflowcms.com/api/v1/entries?type=blog_post" \
-  -H "Authorization: Bearer flw_123456789abcdef" \
+curl -X GET "https://www.getflowcms.com/api/v1/entries/blog-posts" \
+  -H "Authorization: Bearer flw_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" \
   -H "X-API-Version: 1"
 ```
 
+## API Key Format
+
+FlowCMS API keys follow the format `flw_` followed by 32 random characters:
+
+```
+flw_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+```
+
+Keys are hashed with SHA-256 before storage — the raw key is shown only once at creation time.
+
+## API Key Scopes
+
+Each API key is issued with one or more scopes that control which endpoints it can access.
+
+| Scope | Description |
+|-------|-------------|
+| `read:entries` | Read published and (with a draft token) draft entries |
+| `read:media` | List media assets |
+| `read:collections` | Read collection definitions and their field schemas |
+| `admin:workspace` | Full read access to workspace metadata; **bypasses all other scope checks** |
+
+<Callout type="warn" title="admin:workspace scope">
+  A key with `admin:workspace` bypasses all other scope checks and can access every read endpoint. Only grant this scope when absolutely necessary, and treat the key with the same care as a root credential.
+</Callout>
+
+## Scope Bypass Behaviour
+
+When a key carries the `admin:workspace` scope, FlowCMS skips the per-endpoint scope validation entirely. This means a single key with `admin:workspace` can call the collections, entries, media, and workspace endpoints without requiring `read:collections`, `read:entries`, or `read:media`.
+
 ## Creating API Keys
 
-1. Log into your FlowCMS Dashboard.
+1. Log into the [FlowCMS Dashboard](https://www.getflowcms.com).
 2. Navigate to **Settings > API Keys**.
-3. Click **Generate New Key**.
-4. Copy the raw key immediately — it will never be displayed again.
+3. Click **Create API Key**.
+4. Select the scopes you need and the environment the key should be bound to.
+5. Copy the raw key immediately — it is shown only once and cannot be retrieved again.
+
+<Callout type="info" title="Keys are environment-scoped">
+  Every API key must be bound to a specific environment (e.g. Production, Staging). A key issued for one environment cannot access data from another.
+</Callout>
 
 ## Security Best Practices
 
-- **Never** expose your API key in client-side code (e.g., React, Vue, vanilla JS).
-- Always proxy requests through your own backend or use API routes in frameworks like Next.js.
-- If a key is compromised, revoke it immediately from the dashboard.
+- **Never expose your API key in client-side code.** This includes React, Vue, Svelte, vanilla JS, or any code that ships to the browser.
+- **Use a backend proxy.** Route API calls through your own server, a Next.js API route, or an edge function so the key stays server-side only.
+- **Apply the principle of least privilege.** Issue keys with only the scopes your application actually needs. Default new keys to `read:entries` and `read:media`.
+- **Revoke compromised keys immediately.** Go to **Settings > API Keys**, find the key, and click **Revoke**. Then issue a replacement.
+- **Rotate keys periodically.** Even uncompromised keys benefit from regular rotation in high-security environments.

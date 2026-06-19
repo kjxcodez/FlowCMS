@@ -1,0 +1,64 @@
+---
+title: Team Management
+description: Manage workspace members and control access with role-based permissions.
+---
+
+# Team Management
+
+FlowCMS uses role-based access control (RBAC) to let workspace owners control what each team member can see and do. Every member of a workspace is assigned one of four roles.
+
+## Roles
+
+| Role   | Level | Description                                                                        |
+|--------|-------|------------------------------------------------------------------------------------|
+| OWNER  | 4     | Full control, including billing and workspace deletion                             |
+| ADMIN  | 3     | All EDITOR permissions plus publishing, member management, and workspace settings  |
+| EDITOR | 2     | Create and edit entries, upload media                                              |
+| VIEWER | 1     | Read-only access to the dashboard                                                  |
+
+### Role Capabilities
+
+| Capability                                        | VIEWER | EDITOR | ADMIN | OWNER |
+|---------------------------------------------------|--------|--------|-------|-------|
+| View content and media                            | Yes    | Yes    | Yes   | Yes   |
+| Create and edit entries                           | No     | Yes    | Yes   | Yes   |
+| Upload media                                      | No     | Yes    | Yes   | Yes   |
+| Publish and archive entries                       | No     | No     | Yes   | Yes   |
+| Manage workspace members                          | No     | No     | Yes   | Yes   |
+| Create and manage API keys                        | No     | No     | Yes   | Yes   |
+| Create and manage webhooks                        | No     | No     | Yes   | Yes   |
+| Manage environments                               | No     | No     | Yes   | Yes   |
+| Create and manage collections                     | No     | No     | Yes   | Yes   |
+| Manage billing and subscription                   | No     | No     | No    | Yes   |
+| Delete the workspace                              | No     | No     | No    | Yes   |
+
+## Inviting Members
+
+To invite someone to your workspace:
+
+1. Navigate to **Settings > Members**.
+2. Click **Invite Member**.
+3. Enter the invitee's email address and select their role.
+4. Click **Send Invite**.
+
+FlowCMS sends an invitation email containing a secure link. The invitation is valid for **7 days**. If the recipient does not accept within 7 days, the invitation expires and a new one must be sent.
+
+### Invitation Constraints
+
+- You cannot invite someone with the **OWNER** role. Ownership is transferred separately.
+- An invitation is scoped to the email address it was sent to. The recipient must sign in with that exact address.
+
+## Removing Members
+
+To remove a member, navigate to **Settings > Members**, find the member, and click **Remove**.
+
+Removal is subject to the following constraints:
+
+- You cannot remove **yourself** from the workspace.
+- You cannot remove the **last remaining owner**. A workspace must always have at least one owner.
+
+## Changing a Member's Role
+
+From **Settings > Members**, click the role badge next to a member's name to open the role selector. Select the new role and confirm. The change takes effect immediately.
+
+You cannot change a member's role to OWNER through this interface.
