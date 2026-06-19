@@ -10,10 +10,10 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   try {
-    const { workspace, role } = await requireWorkspace();
+    const { workspace, role, session } = await requireWorkspace();
     await requireRole(role, "ADMIN");
 
-    const userId = (await requireWorkspace()).session.user.id;
+    const userId = session.user.id;
 
     const { name } = await req.json();
     if (!name || name.length < 2) {
@@ -46,10 +46,10 @@ export async function PATCH(req: Request) {
 
 export async function DELETE() {
   try {
-    const { workspace, role } = await requireWorkspace();
+    const { workspace, role, session } = await requireWorkspace();
     await requireRole(role, "OWNER");
 
-    const userId = (await requireWorkspace()).session.user.id;
+    const userId = session.user.id;
 
     // Cascade delete handles entries, content types, members, etc.
     await prisma.workspace.delete({
