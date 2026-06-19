@@ -19,12 +19,11 @@ export const GET = withApiAuth(
       return apiError("NOT_FOUND", `Collection "${collectionSlug}" not found.`);
     }
 
-    const entry = await prisma.entry.findUnique({
+    const entry = await prisma.entry.findFirst({
       where: {
-        collectionId_slug: {
-          collectionId: collection.id,
-          slug: entrySlug,
-        },
+        collectionId: collection.id,
+        environmentId: environmentId || null,
+        slug: entrySlug,
       },
     });
 
@@ -33,7 +32,7 @@ export const GET = withApiAuth(
     }
 
     // Strictly verify that the entry belongs to the correct environment
-    if (entry.environmentId !== environmentId) {
+    if (entry.environmentId !== (environmentId || null)) {
       return apiError("NOT_FOUND", `Entry "${entrySlug}" not found in collection "${collectionSlug}".`);
     }
 

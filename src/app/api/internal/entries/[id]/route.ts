@@ -20,7 +20,7 @@ export async function GET(
     });
     if (!entry) return apiError("NOT_FOUND", "Entry not found.");
     return apiSuccess(entry);
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to fetch entry.");
   }
 }
@@ -47,12 +47,11 @@ export async function PATCH(
 
     // Check slug uniqueness if it's changing
     if (parsed.data.slug && parsed.data.slug !== existing.slug) {
-      const slugConflict = await prisma.entry.findUnique({
+      const slugConflict = await prisma.entry.findFirst({
         where: {
-          collectionId_slug: {
-            collectionId: existing.collectionId,
-            slug: parsed.data.slug,
-          },
+          collectionId: existing.collectionId,
+          environmentId: existing.environmentId,
+          slug: parsed.data.slug,
         },
       });
       if (slugConflict) {

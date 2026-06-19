@@ -205,7 +205,13 @@ export class WorkspaceService {
       // Seed Author
       const seedAuthorSlug = "jane-smith";
       let authorEntry = await tx.entry.findUnique({
-        where: { collectionId_slug: { collectionId: authorCollection.id, slug: seedAuthorSlug } },
+        where: {
+          collectionId_environmentId_slug: {
+            collectionId: authorCollection.id,
+            environmentId: environment.id,
+            slug: seedAuthorSlug,
+          },
+        },
       });
 
       if (!authorEntry) {
@@ -228,7 +234,13 @@ export class WorkspaceService {
       // Seed Category
       const seedCategorySlug = "technology";
       let categoryEntry = await tx.entry.findUnique({
-        where: { collectionId_slug: { collectionId: categoryCollection.id, slug: seedCategorySlug } },
+        where: {
+          collectionId_environmentId_slug: {
+            collectionId: categoryCollection.id,
+            environmentId: environment.id,
+            slug: seedCategorySlug,
+          },
+        },
       });
 
       if (!categoryEntry) {
@@ -250,7 +262,13 @@ export class WorkspaceService {
       // Seed Blog Post
       const seedBlogPostSlug = "welcome-to-flowcms";
       let blogEntry = await tx.entry.findUnique({
-        where: { collectionId_slug: { collectionId: blogCollection.id, slug: seedBlogPostSlug } },
+        where: {
+          collectionId_environmentId_slug: {
+            collectionId: blogCollection.id,
+            environmentId: environment.id,
+            slug: seedBlogPostSlug,
+          },
+        },
       });
 
       if (!blogEntry) {
@@ -280,7 +298,13 @@ export class WorkspaceService {
       // Seed Visual Page (Pages)
       const seedPageSlug = "home";
       let pageEntry = await tx.entry.findUnique({
-        where: { collectionId_slug: { collectionId: pagesCollection.id, slug: seedPageSlug } },
+        where: {
+          collectionId_environmentId_slug: {
+            collectionId: pagesCollection.id,
+            environmentId: environment.id,
+            slug: seedPageSlug,
+          },
+        },
       });
 
       if (!pageEntry) {

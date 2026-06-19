@@ -220,12 +220,12 @@ export async function verifyDraftPreview({
 
   // 5. If entrySlug is provided, validate entry slug & permission
   if (entrySlug) {
-    const entry = await prisma.entry.findUnique({
+    const resolvedEnvId = environmentId || token.environmentId || undefined;
+    const entry = await prisma.entry.findFirst({
       where: {
-        collectionId_slug: {
-          collectionId: collection.id,
-          slug: entrySlug,
-        },
+        collectionId: collection.id,
+        slug: entrySlug,
+        ...(resolvedEnvId ? { environmentId: resolvedEnvId } : {}),
       },
     });
 

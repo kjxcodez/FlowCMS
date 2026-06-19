@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     return apiSuccess(entries, { total, page, perPage });
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to fetch entries.");
   }
 }
@@ -109,8 +109,9 @@ export async function POST(req: NextRequest) {
     // Check slug uniqueness within collection
     const existing = await prisma.entry.findUnique({
       where: {
-        collectionId_slug: {
+        collectionId_environmentId_slug: {
           collectionId: parsed.data.collectionId,
+          environmentId,
           slug: parsed.data.slug,
         },
       },
