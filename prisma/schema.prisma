@@ -163,7 +163,7 @@ model Entry {
   collection  Collection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   environment Environment? @relation(fields: [environmentId], references: [id])
 
-  @@unique([collectionId, slug])
+  @@unique([collectionId, environmentId, slug])
   @@index([workspaceId, status])
   @@index([collectionId, status])
   @@index([workspaceId, environmentId])
