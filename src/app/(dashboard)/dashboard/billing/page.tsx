@@ -152,8 +152,10 @@ export default async function BillingPage() {
           <h3 className="font-display text-xl font-bold italic">Need more scale?</h3>
           <p className="text-muted-foreground text-sm">Custom limits, dedicated support, and enterprise features.</p>
         </div>
-        <Badge variant="outline" className="rounded-none border-border px-6 py-2 uppercase font-bold tracking-widest hover:bg-background transition-colors relative z-10 cursor-pointer">
-          Contact Sales
+        <Badge asChild variant="outline" className="rounded-none border-border px-6 py-2 uppercase font-bold tracking-widest hover:bg-background transition-colors relative z-10 cursor-pointer">
+          <a href="mailto:sales@getflowcms.com">
+            Contact Sales
+          </a>
         </Badge>
         <div className="absolute inset-0 pointer-events-none noise-overlay opacity-20" />
       </Card>
