@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/types/api";
 import { logAction } from "@/lib/audit";
 import { logger } from "@/lib/logger";
+import { razorpay } from "@/lib/razorpay";
 
 export async function GET() {
   const { workspace, role } = await requireWorkspace();
@@ -45,6 +46,9 @@ export async function PATCH(req: Request) {
   }
 }
 
+/** Subscription statuses that are already terminal and do not require cancellation. */
+const TERMINAL_STATUSES = new Set(["cancelled", "expired", "completed"]);
+
 export async function DELETE() {
   let workspace;
   let userId;
@@ -56,7 +60,63 @@ export async function DELETE() {
 
     userId = session.user.id;
 
-    // Cascade delete handles entries, content types, members, etc.
+    // 1. Resolve billing/subscription record before any destructive action
+    const customer = await prisma.razorpayCustomer.findUnique({
+      where: { workspaceId: workspace.id },
+    });
+
+    // 2. Cancel active Razorpay subscription if one exists
+    if (customer?.subscriptionId) {
+      const isTerminal = customer.subscriptionStatus
+        ? TERMINAL_STATUSES.has(customer.subscriptionStatus)
+        : false;
+
+      if (!isTerminal) {
+        logger.info("Cancelling Razorpay subscription before workspace deletion", {
+          workspaceId: workspace.id,
+          subscriptionId: customer.subscriptionId,
+          currentStatus: customer.subscriptionStatus,
+        });
+
+        try {
+          // Cancel immediately (cancelAtCycleEnd = false)
+          await razorpay.subscriptions.cancel(customer.subscriptionId, false);
+
+          logger.info("Razorpay subscription cancelled successfully", {
+            workspaceId: workspace.id,
+            subscriptionId: customer.subscriptionId,
+          });
+        } catch (cancelErr: unknown) {
+          // If the subscription no longer exists on Razorpay's side (404), proceed with deletion
+          const statusCode = (cancelErr as { statusCode?: number })?.statusCode;
+          if (statusCode === 404) {
+            logger.warn("Razorpay subscription not found remotely, proceeding with deletion", {
+              workspaceId: workspace.id,
+              subscriptionId: customer.subscriptionId,
+            });
+          } else {
+            // Cancellation failed for a non-terminal subscription — block deletion to prevent orphaned billing
+            logger.error("Razorpay subscription cancellation failed, blocking workspace deletion", {
+              workspaceId: workspace.id,
+              subscriptionId: customer.subscriptionId,
+              error: String(cancelErr),
+            });
+            return apiError(
+              "INTERNAL_ERROR",
+              "Failed to cancel subscription. Please try again or contact support."
+            );
+          }
+        }
+      } else {
+        logger.info("Skipping Razorpay cancellation — subscription already terminal", {
+          workspaceId: workspace.id,
+          subscriptionId: customer.subscriptionId,
+          status: customer.subscriptionStatus,
+        });
+      }
+    }
+
+    // 3. Delete workspace (cascade handles entries, members, billing records, etc.)
     await prisma.workspace.delete({
       where: { id: workspace.id },
     });
