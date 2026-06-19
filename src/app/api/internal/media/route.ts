@@ -101,8 +101,10 @@ export async function POST(req: NextRequest) {
     if (!limit.allowed) {
       return apiError("STORAGE_LIMIT_REACHED", "Your workspace has reached its storage limit.");
     }
-
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let lastMediaRecord: any = null;
+
     for (const file of files) {
       // 1. Storage Provider Upload
       const { url } = await storage.upload(workspace.id, file);

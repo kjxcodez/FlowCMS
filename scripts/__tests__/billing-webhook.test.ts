@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert";
-import { POST } from "../../app/api/billing/webhook/route";
+import { POST } from "../../src/app/api/billing/webhook/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../prisma";
+import { prisma } from "../../src/lib/prisma";
 import { Redis } from "@upstash/redis";
 
 // Mock razorpay signature validation
@@ -116,7 +116,7 @@ function buildWebhookRequest(eventId: string, eventName: string, subId: string, 
 }
 
 test("Billing Webhook Route Handler Tests", async (t) => {
-  
+
   t.beforeEach(() => {
     mockRedisDb.clear();
     mockCustomer = {
@@ -136,7 +136,7 @@ test("Billing Webhook Route Handler Tests", async (t) => {
   await t.test("Plan Upgrade (Hobby -> Pro)", async () => {
     const req = buildWebhookRequest("evt_upg_1", "subscription.charged", "sub-123", "plan_pro", Math.floor(Date.now() / 1000));
     const res = await POST(req);
-    
+
     assert.strictEqual(res.status, 200, "Webhook should process successfully");
     assert.strictEqual(updatedWorkspacePlan, "PRO", "Plan should upgrade to PRO");
     assert.strictEqual(updatedCustomerStatus, "active", "Customer status should be active");
@@ -144,10 +144,10 @@ test("Billing Webhook Route Handler Tests", async (t) => {
 
   await t.test("Plan Downgrade (Agency -> Pro)", async () => {
     mockWorkspace.plan = "AGENCY";
-    
+
     const req = buildWebhookRequest("evt_dwn_1", "subscription.charged", "sub-123", "plan_pro", Math.floor(Date.now() / 1000));
     const res = await POST(req);
-    
+
     assert.strictEqual(res.status, 200, "Webhook should process successfully");
     assert.strictEqual(updatedWorkspacePlan, "PRO", "Plan should downgrade to PRO");
   });
@@ -160,12 +160,12 @@ test("Billing Webhook Route Handler Tests", async (t) => {
     assert.strictEqual(transactionExecuted, true);
 
     transactionExecuted = false;
-    
+
     // Send same event ID again
     const req2 = buildWebhookRequest("evt_dup_1", "subscription.charged", "sub-123", "plan_pro", timestamp);
     const res2 = await POST(req2);
     assert.strictEqual(res2.status, 200, "Second webhook should return 200 OK");
-    
+
     const bodyText = await res2.text();
     assert.ok(bodyText.includes("Duplicate"), "Should return duplicate message");
     assert.strictEqual(transactionExecuted, false, "Should not execute transaction again for duplicate event");
@@ -174,14 +174,14 @@ test("Billing Webhook Route Handler Tests", async (t) => {
   await t.test("Out-of-order Events Ignored", async () => {
     // Current database event date is set to now
     mockCustomer.lastEventAt = new Date();
-    
+
     // Send an event with timestamp 10 seconds in the past
     const oldTimestamp = Math.floor(Date.now() / 1000) - 10;
     const req = buildWebhookRequest("evt_old_1", "subscription.charged", "sub-123", "plan_pro", oldTimestamp);
-    
+
     const res = await POST(req);
     assert.strictEqual(res.status, 200, "Old event should return 200 OK");
-    
+
     const bodyText = await res.text();
     assert.ok(bodyText.includes("Out of order"), "Should return out of order message");
     assert.strictEqual(transactionExecuted, false, "Should not update database for out-of-order event");
