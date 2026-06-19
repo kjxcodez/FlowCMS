@@ -5,10 +5,15 @@ import { apiError, apiSuccess } from "@/types/api";
 
 export const runtime = "nodejs";
 
+interface ApiExplorerRequestBody {
+  collectionSlug: string;
+  apiKeyId?: string | null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { workspace } = await requireWorkspace();
-    const body = await req.json();
+    const body = (await req.json()) as ApiExplorerRequestBody;
     const { collectionSlug, apiKeyId } = body;
 
     if (!collectionSlug) {
@@ -29,6 +34,8 @@ export async function POST(req: NextRequest) {
 
     // 2. Verify and load API Key (if selected)
     let apiKeyName = "Session Auth (Dashboard)";
+    let environmentId: string;
+
     if (apiKeyId) {
       const key = await prisma.apiKey.findFirst({
         where: {
@@ -39,7 +46,38 @@ export async function POST(req: NextRequest) {
       if (!key) {
         return apiError("NOT_FOUND", "Selected API Key not found in this workspace.");
       }
+      if (!key.environmentId) {
+        return apiError("UNAUTHORIZED", "API key is not bound to an environment.");
+      }
       apiKeyName = key.name;
+      environmentId = key.environmentId;
+    } else {
+      // Default to workspace's default environment
+      let defaultEnv = await prisma.environment.findFirst({
+        where: {
+          workspaceId: workspace.id,
+          isDefault: true,
+        },
+      });
+      if (!defaultEnv) {
+        defaultEnv = await prisma.environment.findFirst({
+          where: {
+            workspaceId: workspace.id,
+            slug: "production",
+          },
+        });
+      }
+      if (!defaultEnv) {
+        defaultEnv = await prisma.environment.findFirst({
+          where: {
+            workspaceId: workspace.id,
+          },
+        });
+      }
+      if (!defaultEnv) {
+        return apiError("INVALID_ACTION", "No environments found in workspace.");
+      }
+      environmentId = defaultEnv.id;
     }
 
     // 3. Query entries of the collection (replicating the public REST API /api/v1/entries/[slug])
@@ -48,6 +86,7 @@ export async function POST(req: NextRequest) {
     const entries = await prisma.entry.findMany({
       where: {
         collectionId: collection.id,
+        environmentId,
         status: "PUBLISHED", // Public REST API strictly returns PUBLISHED entries only
       },
       orderBy: { updatedAt: "desc" },

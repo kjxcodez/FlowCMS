@@ -1,39 +1,55 @@
 import test from "node:test";
 import assert from "node:assert";
-import { POST } from "../../src/app/api/billing/webhook/route";
-import { NextRequest } from "next/server";
-import { prisma } from "../../src/lib/prisma";
-import { Redis } from "@upstash/redis";
+
+// 1. Mock Upstash Redis BEFORE requiring the route handler or any other files
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockRedisDb = new Map<string, any>();
+
+class MockRedis {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async set(key: string, value: any, options?: any) {
+    if (options?.nx && mockRedisDb.has(key)) {
+      return null;
+    }
+    mockRedisDb.set(key, value);
+    return "OK";
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async get(key: string): Promise<any> {
+    return mockRedisDb.get(key) ?? null;
+  }
+
+  async del(...keys: string[]) {
+    for (const k of keys) {
+      mockRedisDb.delete(k);
+    }
+    return 1;
+  }
+}
+
+const resolvedPath = require.resolve("@upstash/redis");
+const originalModule = require.cache[resolvedPath];
+
+require.cache[resolvedPath] = {
+  id: resolvedPath,
+  filename: resolvedPath,
+  loaded: true,
+  exports: {
+    Redis: MockRedis,
+  },
+} as any;
+
+// 2. Now require the route handler and prisma
+const { POST } = require("../../src/app/api/billing/webhook/route");
+const { prisma } = require("../../src/lib/prisma");
+const { NextRequest } = require("next/server");
 
 // Mock razorpay signature validation
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const razorpayUtils = require("razorpay/dist/utils/razorpay-utils");
 const originalValidate = razorpayUtils.validateWebhookSignature;
 razorpayUtils.validateWebhookSignature = () => true;
-
-// Mock Upstash Redis
-const originalSet = Redis.prototype.set;
-const originalDel = Redis.prototype.del;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let mockRedisDb = new Map<string, any>();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-Redis.prototype.set = (async (key: string, value: any, options?: any) => {
-  if (options?.nx && mockRedisDb.has(key)) {
-    return null;
-  }
-  mockRedisDb.set(key, value);
-  return "OK";
-}) as any; // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-Redis.prototype.del = (async (...keys: string[]) => {
-  for (const k of keys) {
-    mockRedisDb.delete(k);
-  }
-  return 1;
-}) as any; // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 // Mock Prisma
 const originalTransaction = prisma.$transaction;
@@ -190,8 +206,11 @@ test("Billing Webhook Route Handler Tests", async (t) => {
   t.after(() => {
     // Restore stubs
     razorpayUtils.validateWebhookSignature = originalValidate;
-    Redis.prototype.set = originalSet;
-    Redis.prototype.del = originalDel;
+    if (originalModule) {
+      require.cache[resolvedPath] = originalModule;
+    } else {
+      delete require.cache[resolvedPath];
+    }
     prisma.$transaction = originalTransaction;
     prisma.razorpayCustomer.findUnique = originalFindUniqueCustomer;
     prisma.razorpayCustomer.update = originalUpdateCustomer;
