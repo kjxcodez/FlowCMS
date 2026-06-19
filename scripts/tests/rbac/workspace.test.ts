@@ -90,7 +90,84 @@ export async function testWorkspace(ctx: {
     }
 
     // POST invitation
-    {
+    if (isAllowed) {
+      // Test 1: Valid ADMIN invitation
+      {
+        const inviteEmail = `invite-admin-${role.toLowerCase()}-${suffix}@example.com`;
+        const req = new NextRequest(`http://localhost:3000/api/internal/workspace/invitations`, {
+          method: "POST",
+          body: JSON.stringify({
+            email: inviteEmail,
+            role: "ADMIN",
+          }),
+        });
+        const res = await createInvitation(req);
+        assert(`Valid ADMIN invitation created successfully by ${role}`, res.status === 200, `Status: ${res.status}`);
+        if (res.status === 200) {
+          const body = await res.json();
+          await prisma.invitation.delete({ where: { id: body.data.id } }).catch(() => {});
+        }
+      }
+
+      // Test 2: Valid EDITOR invitation
+      {
+        const inviteEmail = `invite-editor-${role.toLowerCase()}-${suffix}@example.com`;
+        const req = new NextRequest(`http://localhost:3000/api/internal/workspace/invitations`, {
+          method: "POST",
+          body: JSON.stringify({
+            email: inviteEmail,
+            role: "EDITOR",
+          }),
+        });
+        const res = await createInvitation(req);
+        assert(`Valid EDITOR invitation created successfully by ${role}`, res.status === 200, `Status: ${res.status}`);
+        if (res.status === 200) {
+          const body = await res.json();
+          await prisma.invitation.delete({ where: { id: body.data.id } }).catch(() => {});
+        }
+      }
+
+      // Test 3: Valid VIEWER invitation
+      {
+        const inviteEmail = `invite-viewer-${role.toLowerCase()}-${suffix}@example.com`;
+        const req = new NextRequest(`http://localhost:3000/api/internal/workspace/invitations`, {
+          method: "POST",
+          body: JSON.stringify({
+            email: inviteEmail,
+            role: "VIEWER",
+          }),
+        });
+        const res = await createInvitation(req);
+        assert(`Valid VIEWER invitation created successfully by ${role}`, res.status === 200, `Status: ${res.status}`);
+        if (res.status === 200) {
+          const body = await res.json();
+          await prisma.invitation.delete({ where: { id: body.data.id } }).catch(() => {});
+        }
+      }
+
+      // Test 4: OWNER invitation attempt & Direct API call with OWNER role
+      {
+        const inviteEmail = `invite-owner-${role.toLowerCase()}-${suffix}@example.com`;
+        const req = new NextRequest(`http://localhost:3000/api/internal/workspace/invitations`, {
+          method: "POST",
+          body: JSON.stringify({
+            email: inviteEmail,
+            role: "OWNER",
+          }),
+        });
+        const res = await createInvitation(req);
+        assert(`OWNER invitation attempt by ${role} is rejected`, res.status === 400, `Status: ${res.status}`);
+        
+        // Assert that invitation was not created in the database
+        const invitationInDb = await prisma.invitation.findFirst({
+          where: {
+            workspaceId: workspace.id,
+            email: inviteEmail,
+          },
+        });
+        assert(`OWNER invitation not persisted in database`, invitationInDb === null);
+      }
+    } else {
       const req = new NextRequest(`http://localhost:3000/api/internal/workspace/invitations`, {
         method: "POST",
         body: JSON.stringify({
@@ -98,17 +175,8 @@ export async function testWorkspace(ctx: {
           role: "EDITOR",
         }),
       });
-
       const res = await createInvitation(req);
-      if (isAllowed) {
-        assert(`${role} is allowed to create invitation`, res.status === 200, `Status: ${res.status}`);
-        if (res.status === 200) {
-          const body = await res.json();
-          await prisma.invitation.delete({ where: { id: body.data.id } }).catch(() => {});
-        }
-      } else {
-        assert(`${role} is blocked from creating invitation`, res.status === 403, `Status: ${res.status}`);
-      }
+      assert(`${role} is blocked from creating invitation`, res.status === 403, `Status: ${res.status}`);
     }
   }
 

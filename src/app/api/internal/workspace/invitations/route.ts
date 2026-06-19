@@ -8,6 +8,7 @@ import { WorkspaceInviteEmail } from "@/components/emails/workspace-invite";
 import { logAction } from "@/lib/audit";
 import { canAccessFeature } from "@/lib/launch";
 import { logger } from "@/lib/logger";
+import { MemberRole } from "@/generated/prisma";
 
 export async function GET() {
   let workspace;
@@ -36,6 +37,11 @@ export async function GET() {
   }
 }
 
+interface InviteRequestBody {
+  email?: string;
+  role?: MemberRole;
+}
+
 export async function POST(req: NextRequest) {
   let workspace;
   try {
@@ -48,13 +54,27 @@ export async function POST(req: NextRequest) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
 
-    const { email, role: memberRole } = await req.json();
+    const body = (await req.json()) as InviteRequestBody;
+    const email = body.email;
+    const memberRole = body.role;
 
     if (!email || !email.includes("@")) {
       return apiError("INVALID_INPUT", "Invalid email address.");
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (memberRole === "OWNER") {
+      logger.warn("Attempted to invite user with OWNER role", {
+        workspaceId: workspace.id,
+        invitedBy: session.user.id,
+        email: normalizedEmail,
+      });
+      return apiError(
+        "INVALID_INPUT",
+        "Cannot invite users with OWNER role."
+      );
+    }
 
     // 1. Check if already a member
     const existingMember = await prisma.workspaceMember.findFirst({
@@ -128,3 +148,4 @@ export async function POST(req: NextRequest) {
     return apiError("INTERNAL_ERROR", "Failed to send invitation.");
   }
 }
+
