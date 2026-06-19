@@ -2,6 +2,7 @@ import { withApiAuth, requireScope } from "@/middleware/with-api-auth";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { verifyDraftPreview } from "@/lib/preview";
+import { EntryStatus } from "@/generated/prisma";
 
 export const runtime = "nodejs";
 
@@ -103,7 +104,9 @@ export const GET = withApiAuth(
           const referencedEntries = await prisma.entry.findMany({
             where: {
               id: { in: Array.from(allRefIds) },
+              workspaceId,
               environmentId,
+              ...(includeDrafts ? {} : { status: EntryStatus.PUBLISHED }),
             }
           });
           
