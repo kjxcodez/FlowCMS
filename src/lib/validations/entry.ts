@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const CreateEntrySchema = z.object({
   collectionId: z.string(),
+  environmentId: z.string().optional(),
   slug: z.string().min(1).max(64).regex(/^[a-z0-9-]+$/),
   data: z.record(z.string(), z.unknown()),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),

@@ -66,6 +66,46 @@ export async function POST(req: NextRequest) {
     });
     if (!collection) return apiError("NOT_FOUND", "Collection not found.");
 
+    // Resolve environmentId
+    let environmentId = parsed.data.environmentId;
+    if (environmentId) {
+      const env = await prisma.environment.findFirst({
+        where: {
+          id: environmentId,
+          workspaceId: workspace.id,
+        },
+      });
+      if (!env) {
+        return apiError("NOT_FOUND", "Environment not found.");
+      }
+    } else {
+      let defaultEnv = await prisma.environment.findFirst({
+        where: {
+          workspaceId: workspace.id,
+          isDefault: true,
+        },
+      });
+      if (!defaultEnv) {
+        defaultEnv = await prisma.environment.findFirst({
+          where: {
+            workspaceId: workspace.id,
+            slug: "production",
+          },
+        });
+      }
+      if (!defaultEnv) {
+        defaultEnv = await prisma.environment.findFirst({
+          where: {
+            workspaceId: workspace.id,
+          },
+        });
+      }
+      if (!defaultEnv) {
+        return apiError("INVALID_ACTION", "No environments found in workspace.");
+      }
+      environmentId = defaultEnv.id;
+    }
+
     // Check slug uniqueness within collection
     const existing = await prisma.entry.findUnique({
       where: {
@@ -83,6 +123,7 @@ export async function POST(req: NextRequest) {
       data: {
         collectionId: parsed.data.collectionId,
         workspaceId: workspace.id,
+        environmentId,
         slug: parsed.data.slug,
         data: parsed.data.data as Prisma.InputJsonValue,
         status: parsed.data.status ?? "DRAFT",
