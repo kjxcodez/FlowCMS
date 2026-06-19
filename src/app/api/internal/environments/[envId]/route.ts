@@ -3,14 +3,19 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { slugify } from "@/lib/utils";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ envId: string }> }
 ) {
+  let workspace;
+  let envId;
   try {
-    const { envId } = await params;
-    const { workspace, session, role } = await requireWorkspace();
+    envId = (await params).envId;
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     const env = await prisma.environment.findFirst({
@@ -96,7 +101,11 @@ export async function PATCH(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Environment update error:", err);
+    logger.error("Environment update failed", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+      environmentId: typeof envId !== "undefined" ? envId : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to update environment.");
   }
 }
@@ -105,9 +114,13 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ envId: string }> }
 ) {
+  let workspace;
+  let envId;
   try {
-    const { envId } = await params;
-    const { workspace, session, role } = await requireWorkspace();
+    envId = (await params).envId;
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "OWNER");
 
     const env = await prisma.environment.findFirst({
@@ -152,7 +165,11 @@ export async function DELETE(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Environment delete error:", err);
+    logger.error("Environment delete failed", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+      environmentId: typeof envId !== "undefined" ? envId : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to delete environment.");
   }
 }

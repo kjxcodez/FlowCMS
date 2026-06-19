@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 /**
  * Remove Member from Workspace
@@ -14,10 +15,14 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  let workspace;
+  let targetUserId;
   try {
     const { userId } = await params;
-    const { workspace, session, role } = await requireWorkspace();
-    const targetUserId = userId;
+    targetUserId = userId;
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
 
     await requireRole(role, "OWNER");
 
@@ -70,7 +75,7 @@ export async function DELETE(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Member removal error:", err);
+    logger.error("Member removal failed", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, targetUserId: typeof targetUserId !== "undefined" ? targetUserId : undefined });
     return apiError("INTERNAL_ERROR", "Failed to remove member.");
   }
 }

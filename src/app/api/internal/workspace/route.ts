@@ -2,6 +2,7 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/types/api";
 import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   const { workspace, role } = await requireWorkspace();
@@ -45,11 +46,15 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE() {
+  let workspace;
+  let userId;
   try {
-    const { workspace, role, session } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role, session } = sessionRes;
     await requireRole(role, "OWNER");
 
-    const userId = session.user.id;
+    userId = session.user.id;
 
     // Cascade delete handles entries, content types, members, etc.
     await prisma.workspace.delete({
@@ -70,7 +75,11 @@ export async function DELETE() {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("[WORKSPACE_DELETE_ERROR]", err);
+    logger.error("Failed to delete workspace", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+      userId: typeof userId !== "undefined" ? userId : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to delete workspace.");
   }
 }

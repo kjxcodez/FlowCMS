@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { apiError } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -43,7 +44,7 @@ export async function GET() {
       }
     });
   } catch (err) {
-    console.error("Admin stats error:", err);
+    logger.error("Failed to query admin operations stats", { error: err });
     return apiError("INTERNAL_ERROR", "Failed to fetch platform stats");
   }
 }

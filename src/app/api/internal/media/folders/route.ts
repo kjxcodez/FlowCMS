@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -10,15 +11,17 @@ export const runtime = "nodejs";
  * Returns all media folders in the workspace.
  */
 export async function GET() {
+  let workspace;
   try {
-    const { workspace } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
     const folders = await prisma.mediaFolder.findMany({
       where: { workspaceId: workspace.id },
       orderBy: { createdAt: "asc" },
     });
     return apiSuccess(folders);
   } catch (err) {
-    console.error("Failed to list media folders:", err);
+    logger.error("Failed to list media folders", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to retrieve media folders.");
   }
 }
@@ -28,8 +31,11 @@ export async function GET() {
  * Creates a new media folder.
  */
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     const body = await req.json();
@@ -52,7 +58,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Failed to create media folder:", err);
+    logger.error("Failed to create media folder", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to create media folder.");
   }
 }

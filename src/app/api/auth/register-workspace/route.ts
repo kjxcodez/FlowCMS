@@ -4,6 +4,8 @@ import { WorkspaceService } from "@/server/services/workspace.service";
 import { apiError, apiSuccess } from "@/types/api";
 import { RegisterWorkspaceSchema } from "@/lib/validations/workspace";
 
+import { logger } from "@/lib/logger";
+
 export const runtime = "nodejs";
 
 /**
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       apiKey: result.apiKey,
     });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.error("Workspace registration route exception:", err);
+    logger.error("Workspace registration route exception occurred", { error: err });
     return apiError("INTERNAL_ERROR", "Failed to register workspace and seed resources.");
   }
 }

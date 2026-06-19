@@ -3,6 +3,7 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { queueWebhook } from "@/lib/qstash";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -10,10 +11,15 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let workspace;
+  let id;
+
   try {
-    const { workspace, role } = await requireWorkspace();
+    const session = await requireWorkspace();
+    workspace = session.workspace;
+    const { role } = session;
     await requireRole(role, "ADMIN");
-    const { id } = await params;
+    id = (await params).id;
 
     // 1. Fetch the delivery record
     const delivery = await prisma.webhookDelivery.findUnique({
@@ -46,7 +52,11 @@ export async function POST(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Manual webhook replay exception:", err);
+    logger.error("Manual webhook replay exception occurred", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+      deliveryId: typeof id !== "undefined" ? id : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to replay webhook delivery.");
   }
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export async function reconcileStorageUsage(): Promise<void> {
   console.log("Starting active workspace storage reconciliation job...");
@@ -69,7 +70,7 @@ if (process.argv[1] && (process.argv[1].endsWith("reconcileStorageUsage.ts") || 
       process.exit(0);
     })
     .catch((err) => {
-      console.error("Reconciliation execution failure:", err);
+      logger.error("Reconciliation execution failure", { error: err });
       process.exit(1);
     });
 }

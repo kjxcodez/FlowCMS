@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
 import { WorkspaceService } from "@/server/services/workspace.service";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -10,8 +11,9 @@ export const runtime = "nodejs";
  * Completes developer onboarding by triggering the consolidated Workspace provisioning transaction.
  */
 export async function POST(req: NextRequest) {
+  let session;
   try {
-    const session = await getSession();
+    session = await getSession();
     if (!session?.user) {
       return apiError("UNAUTHORIZED", "Not logged in");
     }
@@ -33,7 +35,10 @@ export async function POST(req: NextRequest) {
       apiKey: result.apiKey,
     });
   } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-    console.error("Atomic complete onboarding route failure:", err);
+    logger.error("Atomic complete onboarding route failure occurred", {
+      error: err,
+      userId: typeof session !== "undefined" && session?.user ? session.user.id : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to complete onboarding. Please try again.");
   }
 }

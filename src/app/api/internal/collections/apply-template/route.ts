@@ -4,10 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { COLLECTION_TEMPLATES } from "@/config/templates/collections";
 import { logAction } from "@/lib/audit";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
 
     await requireRole(role, "ADMIN");
 
@@ -54,7 +58,10 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("[APPLY_TEMPLATE_ERROR]", err);
+    logger.error("Applying template failed", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to apply collection template.");
   }
 }

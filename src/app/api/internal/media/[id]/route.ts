@@ -3,6 +3,7 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { MediaService } from "@/server/services/media.service";
 import { apiError, apiSuccess } from "@/types/api";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -14,10 +15,14 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let workspace;
+  let id;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "EDITOR");
-    const { id } = await params;
+    id = (await params).id;
     const body = await req.json();
     const { title, alt, caption, folderId } = body;
 
@@ -54,7 +59,7 @@ export async function PATCH(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Failed to update media asset:", err);
+    logger.error("Failed to update media asset", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, mediaId: typeof id !== "undefined" ? id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to update media asset.");
   }
 }
@@ -67,10 +72,14 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let workspace;
+  let id;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "ADMIN");
-    const { id } = await params;
+    id = (await params).id;
 
     if (!id) {
       return apiError("INVALID_INPUT", "No media asset ID provided.");
@@ -82,7 +91,7 @@ export async function DELETE(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Internal Media deletion exception:", err);
+    logger.error("Internal media deletion exception occurred", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, mediaId: typeof id !== "undefined" ? id : undefined });
     if (err.message?.startsWith("NOT_FOUND")) {
       return apiError("NOT_FOUND", "Media asset not found in this workspace.");
     }

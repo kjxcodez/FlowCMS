@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -11,10 +12,14 @@ interface ApiExplorerRequestBody {
 }
 
 export async function POST(req: NextRequest) {
+  let workspace;
+  let collectionSlug;
   try {
-    const { workspace } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
     const body = (await req.json()) as ApiExplorerRequestBody;
-    const { collectionSlug, apiKeyId } = body;
+    collectionSlug = body.collectionSlug;
+    const { apiKeyId } = body;
 
     if (!collectionSlug) {
       return apiError("INVALID_INPUT", "Collection slug is required.");
@@ -60,41 +65,32 @@ export async function POST(req: NextRequest) {
         },
       });
       if (!defaultEnv) {
-        defaultEnv = await prisma.environment.findFirst({
-          where: {
+        // Fallback: create default if missing
+        defaultEnv = await prisma.environment.create({
+          data: {
             workspaceId: workspace.id,
+            name: "Production",
             slug: "production",
+            isDefault: true,
           },
         });
-      }
-      if (!defaultEnv) {
-        defaultEnv = await prisma.environment.findFirst({
-          where: {
-            workspaceId: workspace.id,
-          },
-        });
-      }
-      if (!defaultEnv) {
-        return apiError("INVALID_ACTION", "No environments found in workspace.");
       }
       environmentId = defaultEnv.id;
     }
 
-    // 3. Query entries of the collection (replicating the public REST API /api/v1/entries/[slug])
-    const start = Date.now();
-    
+    // 3. Query Entries
+    const startTime = performance.now();
     const entries = await prisma.entry.findMany({
       where: {
         collectionId: collection.id,
+        workspaceId: workspace.id,
         environmentId,
-        status: "PUBLISHED", // Public REST API strictly returns PUBLISHED entries only
+        status: "PUBLISHED",
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { publishedAt: "desc" },
     });
+    const duration = Math.round(performance.now() - startTime);
 
-    const duration = Date.now() - start;
-
-    // 4. Return results with rich parameters matching the public REST API headers
     return apiSuccess({
       entries,
       meta: {
@@ -119,7 +115,11 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("API Explorer Proxy failure:", err);
+    logger.error("API Explorer Proxy failure occurred", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+      collectionSlug: typeof collectionSlug !== "undefined" ? collectionSlug : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Unexpected API Explorer system execution failure.");
   }
 }

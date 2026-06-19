@@ -3,6 +3,7 @@ import { storage } from "@/lib/storage";
 import { emitPlatformEvent, PLATFORM_EVENTS } from "../events/emitter";
 import { incrementStorageUsage, decrementStorageUsage } from "@/lib/usage";
 import { dispatchWebhooks } from "@/lib/webhooks";
+import { logger } from "@/lib/logger";
 
 
 export interface MediaUploadParams {
@@ -92,7 +93,7 @@ export class MediaService {
     try {
       await storage.delete(storagePath);
     } catch (err) {
-      console.error(`Physical media deletion failed for path ${storagePath}:`, err);
+      logger.error("Physical media deletion failed", { error: err, storagePath, mediaId: id, workspaceId });
     }
 
     // 3. Database deletion
@@ -146,7 +147,7 @@ export class MediaService {
         try {
           await storage.delete(storagePath);
         } catch (err) {
-          console.error(`Physical bulk media deletion failed for path ${storagePath}:`, err);
+          logger.error("Physical bulk media deletion failed", { error: err, storagePath, mediaId: media.id, workspaceId });
         }
       })
     );

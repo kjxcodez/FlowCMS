@@ -6,6 +6,7 @@ import { ApiKeyService } from "@/server/services/api-key.service";
 import { CreateApiKeySchema } from "@/lib/validations/api-key";
 import { FEATURES } from "@/lib/launch";
 import { isAdminEmail } from "@/lib/admin";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -14,8 +15,11 @@ export const runtime = "nodejs";
  * Lists registered API keys with backward-compatible name-title properties.
  */
 export async function GET() {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
@@ -49,7 +53,7 @@ export async function GET() {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Failed to list API keys:", err);
+    logger.error("Failed to list API keys", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to retrieve API keys.");
   }
 }
@@ -59,8 +63,11 @@ export async function GET() {
  * Generates a secure, cryptographically random API key. Returns raw token exactly once.
  */
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
@@ -98,7 +105,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("API Key generation failed:", err);
+    logger.error("API Key generation failed", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     if (err.message?.startsWith("PLAN_LIMIT_REACHED")) {
       const message = err.message.includes(":") 
         ? err.message.split(":")[1].trim() 
@@ -114,15 +121,19 @@ export async function POST(req: NextRequest) {
  * Revokes access for a registered API key endpoint.
  */
 export async function DELETE(req: NextRequest) {
+  let workspace;
+  let id;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     if (!FEATURES.enableApiKeyGeneration && !isAdminEmail(session.user.email)) {
       return apiError("FORBIDDEN", "This feature is not available yet.");
     }
 
-    const id = req.nextUrl.searchParams.get("id");
+    id = req.nextUrl.searchParams.get("id");
     if (!id) {
       return apiError("INVALID_INPUT", "Key ID required.");
     }
@@ -133,7 +144,7 @@ export async function DELETE(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("API Key revocation failed:", err);
+    logger.error("API Key revocation failed", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, keyId: typeof id !== "undefined" ? id : undefined });
     if (err.message?.startsWith("NOT_FOUND")) {
       return apiError("NOT_FOUND", "API key not found.");
     }

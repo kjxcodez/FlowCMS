@@ -3,6 +3,7 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
 import { MediaService } from "@/server/services/media.service";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -11,8 +12,11 @@ export const runtime = "nodejs";
  * Perform bulk operations: 'move' or 'delete'.
  */
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "ADMIN");
     const body = await req.json();
     const { ids, action, targetFolderId } = body;
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Bulk media operation exception:", err);
+    logger.error("Bulk media operation exception occurred", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to execute bulk operation.");
   }
 }

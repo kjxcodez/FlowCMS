@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -13,10 +14,14 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let workspace;
+  let id;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "ADMIN");
-    const { id } = await params;
+    id = (await params).id;
     const body = await req.json();
     const { name, parentId } = body;
 
@@ -62,7 +67,7 @@ export async function PATCH(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Failed to update media folder:", err);
+    logger.error("Failed to update media folder", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, folderId: typeof id !== "undefined" ? id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to update media folder.");
   }
 }
@@ -75,10 +80,14 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let workspace;
+  let id;
   try {
-    const { workspace, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "ADMIN");
-    const { id } = await params;
+    id = (await params).id;
     
     const url = new URL(req.url);
     const mode = url.searchParams.get("mode") || "move"; // Default Option B: move contents
@@ -126,7 +135,7 @@ export async function DELETE(
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Failed to delete media folder:", err);
+    logger.error("Failed to delete media folder", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined, folderId: typeof id !== "undefined" ? id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to delete media folder.");
   }
 }

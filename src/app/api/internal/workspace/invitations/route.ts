@@ -7,10 +7,14 @@ import { sendEmail } from "@/lib/email";
 import { WorkspaceInviteEmail } from "@/components/emails/workspace-invite";
 import { logAction } from "@/lib/audit";
 import { canAccessFeature } from "@/lib/launch";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     if (!canAccessFeature("enableTeamInvites", session.user.email)) {
@@ -27,13 +31,17 @@ export async function GET() {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
+    logger.error("Failed to fetch workspace invitations", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to fetch invitations.");
   }
 }
 
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "ADMIN");
 
     if (!canAccessFeature("enableTeamInvites", session.user.email)) {
@@ -116,7 +124,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("[INVITE_ERROR]", err);
+    logger.error("Workspace invitation operation failed", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to send invitation.");
   }
 }

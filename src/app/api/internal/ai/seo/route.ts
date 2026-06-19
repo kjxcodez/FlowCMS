@@ -2,11 +2,15 @@ import { NextRequest } from "next/server";
 import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { apiError, apiSuccess } from "@/types/api";
 import { generateJsonAIResponse } from "@/lib/ai";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
     // Verify session, workspace, and role (requires EDITOR)
-    const { role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { role } = sessionRes;
     await requireRole(role, "EDITOR");
     
     const { content, context = "" } = await req.json();
@@ -39,7 +43,10 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("[AI_SEO_ERROR]", err);
+    logger.error("AI SEO analysis failed", {
+      error: err,
+      workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined,
+    });
     return apiError("INTERNAL_ERROR", "Failed to generate AI SEO metadata.");
   }
 }

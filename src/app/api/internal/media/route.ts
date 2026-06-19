@@ -6,6 +6,7 @@ import { storage } from "@/lib/storage";
 import { prisma } from "@/lib/prisma";
 import { checkStorageLimit } from "@/lib/usage";
 import { isAdminEmail } from "@/lib/admin";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -17,8 +18,10 @@ export const runtime = "nodejs";
  * - ?q=[search] (recursive string match on name, alt, captions, folders)
  */
 export async function GET(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
     const url = new URL(req.url);
     const folderId = url.searchParams.get("folderId");
     const q = url.searchParams.get("q");
@@ -63,7 +66,7 @@ export async function GET(req: NextRequest) {
 
     return apiSuccess(media);
   } catch (err) {
-    console.error("Failed to list media:", err);
+    logger.error("Failed to list media assets", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to retrieve media library.");
   }
 }
@@ -73,8 +76,11 @@ export async function GET(req: NextRequest) {
  * Uploads an asset via the unified Storage abstraction and registers it in the database.
  */
 export async function POST(req: NextRequest) {
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "EDITOR");
     const formData = await req.formData();
     const files = formData.getAll("file").filter((val): val is File => val instanceof File);
@@ -125,7 +131,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("Internal media upload failure:", err);
+    logger.error("Internal media upload failure", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Unexpected upload system failure.");
   }
 }

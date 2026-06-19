@@ -3,13 +3,17 @@ import { requireWorkspace, requireRole, ForbiddenError } from "@/lib/session";
 import { razorpay, RAZORPAY_PLANS, PlanKey } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { logger } from "@/lib/logger";
 import { FEATURES } from "@/lib/launch";
 
 export async function POST(req: NextRequest) {
   if (!FEATURES.enableBilling) return apiError("FORBIDDEN", "This feature is not available yet.");
   
+  let workspace;
   try {
-    const { workspace, session, role } = await requireWorkspace();
+    const sessionRes = await requireWorkspace();
+    workspace = sessionRes.workspace;
+    const { session, role } = sessionRes;
     await requireRole(role, "OWNER");
 
     const body = await req.json();
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
       } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         // If not found in Razorpay, we can proceed with a new one
         if (err.statusCode !== 404) {
-          console.error("[RAZORPAY_VERIFICATION_ERROR]", err);
+          logger.error("Razorpay signature verification error occurred", { error: err, workspaceId: workspace.id });
           return apiError("INTERNAL_ERROR", "Could not verify subscription status.");
         }
       }
@@ -97,7 +101,7 @@ export async function POST(req: NextRequest) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
     }
-    console.error("[RAZORPAY_CHECKOUT_ERROR]", err);
+    logger.error("Razorpay checkout initialization failure", { error: err, workspaceId: typeof workspace !== "undefined" ? workspace.id : undefined });
     return apiError("INTERNAL_ERROR", "Failed to initialize subscription checkout.");
   }
 }
