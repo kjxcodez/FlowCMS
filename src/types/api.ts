@@ -23,6 +23,7 @@ export interface ApiErrorResponse {
 export const API_ERRORS = {
   UNAUTHORIZED: { code: "UNAUTHORIZED", status: 401 },
   FORBIDDEN: { code: "FORBIDDEN", status: 403 },
+  FEATURE_NOT_AVAILABLE: { code: "FEATURE_NOT_AVAILABLE", status: 403 },
   NOT_FOUND: { code: "NOT_FOUND", status: 404 },
   RATE_LIMITED: { code: "RATE_LIMITED", status: 429 },
   PLAN_LIMIT_REACHED: { code: "PLAN_LIMIT_REACHED", status: 402 },

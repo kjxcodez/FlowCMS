@@ -43,16 +43,10 @@ export async function POST(req: NextRequest) {
 
     const isPlatformAdmin = isAdminEmail(session.user.email);
     if (!isPlatformAdmin && !PLAN_LIMITS[workspace.plan]?.webhooks) {
-      // For Early Access Beta, allow Hobby tier users to create at least 1 active webhook
-      const existingWebhooksCount = await prisma.webhook.count({
-        where: { workspaceId: workspace.id },
-      });
-      if (existingWebhooksCount >= 1) {
-        return apiError(
-          "PLAN_LIMIT_REACHED",
-          "Hobby plan is limited to 1 active webhook. Please upgrade to Pro for unlimited endpoints."
-        );
-      }
+      return apiError(
+        "FEATURE_NOT_AVAILABLE",
+        "Webhooks are not available on your current plan."
+      );
     }
 
     const body = await req.json();
@@ -80,9 +74,16 @@ export async function POST(req: NextRequest) {
     });
 
     return apiSuccess(webhook);
-  } catch (err) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
     if (err instanceof ForbiddenError) {
       return apiError("FORBIDDEN", err.message);
+    }
+    if (err.message?.startsWith("FEATURE_NOT_AVAILABLE")) {
+      const message = err.message.includes(":") 
+        ? err.message.split(":")[1].trim() 
+        : "Webhooks are not available on your current plan.";
+      return apiError("FEATURE_NOT_AVAILABLE", message);
     }
     return apiError("INTERNAL_ERROR", "Failed to create webhook.");
   }

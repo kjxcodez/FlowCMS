@@ -84,8 +84,7 @@ export default function WebhooksPage() {
   const plan = workspace?.plan || "HOBBY";
   const limits = getPlanConfig(plan);
   const isHobby = !limits.webhooks && !workspace?.isAdmin;
-  const webhookCount = webhooks?.length || 0;
-  const isLimitReached = isHobby && webhookCount >= 1;
+  const isLimitReached = isHobby;
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -184,14 +183,13 @@ export default function WebhooksPage() {
         </div>
       </header>
 
-      {/* Warning Box for Hobby users who reached limit */}
       {isLimitReached && (
         <section className="p-5 bg-amber-500/5 border border-amber-500/20 rounded-sm flex gap-4 relative overflow-hidden">
           <AlertTriangle className="size-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="space-y-1.5 relative z-10">
             <h4 className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-500">Hobby Plan Limitation</h4>
             <p className="text-xs text-ink-muted leading-relaxed font-light">
-              Your workspace is currently using the 1 allocated webhook under the Hobby plan. Upgrade to a Pro plan to connect unlimited endpoints.
+              Webhooks are not available on the Hobby plan. Upgrade to a Pro plan to register webhook endpoints.
             </p>
           </div>
         </section>
@@ -251,10 +249,11 @@ export default function WebhooksPage() {
 
               <div className="pt-10">
                 <Button 
+                  disabled={isLimitReached}
                   onClick={() => setIsCreateOpen(true)} 
                   className="h-11 px-8 text-[11px] font-bold uppercase tracking-widest rounded-sm shadow-xl"
                 >
-                  <Plus className="size-4 mr-2" />
+                  {isLimitReached ? <Lock className="size-3.5 mr-2" /> : <Plus className="size-4 mr-2" />}
                   Register First Endpoint
                 </Button>
               </div>
@@ -295,6 +294,9 @@ export default function WebhooksPage() {
         <div className="grid grid-cols-1 gap-6">
           {webhooks?.map((webhook: Webhook) => (
             <Card key={webhook.id} className="group bg-paper border-border hover:border-accent hover:shadow-2xl transition-all duration-300 overflow-hidden relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 graph-bg opacity-[0.04]" />
+              
               <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button 
                   variant="ghost" 
@@ -400,11 +402,11 @@ export default function WebhooksPage() {
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-4 max-w-xl">
                <h3 className="font-display text-2xl font-semibold text-white flex items-center gap-2">
-                 Need multiple webhooks?
+                 Unlock Webhooks
                  <Sparkles className="size-5 text-accent-bright animate-pulse" />
                </h3>
                <p className="text-sm text-white/50 leading-relaxed font-light">
-                 Hobby tier is configured for a single destination callback endpoint. Upgrade to Pro or Agency plans to unlock unlimited webhooks and multi-server CDNs.
+                 Webhooks are not available on the Hobby plan. Upgrade to Pro or Agency plans to unlock webhook integration and real-time content synchronization.
                </p>
             </div>
             <Button asChild className="h-12 px-8 bg-white text-sidebar text-[11px] font-bold uppercase tracking-widest rounded-sm hover:bg-accent-bright transition-all shadow-xl whitespace-nowrap">

@@ -28,15 +28,9 @@ export class WebhookService {
     isPlatformAdmin: boolean
   ) {
     if (!isPlatformAdmin && !PLAN_LIMITS[plan]?.webhooks) {
-      // Free beta fallback: Allow Hobby tier users to register exactly 1 active webhook
-      const count = await prisma.webhook.count({
-        where: { workspaceId },
-      });
-      if (count >= 1) {
-        throw new Error(
-          "PLAN_LIMIT_REACHED: Hobby plan is limited to 1 active webhook. Please upgrade to Pro for unlimited endpoints."
-        );
-      }
+      throw new Error(
+        "FEATURE_NOT_AVAILABLE: Webhooks are not available on your current plan."
+      );
     }
 
     const webhook = await prisma.webhook.create({
