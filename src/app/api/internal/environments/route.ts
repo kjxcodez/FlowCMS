@@ -14,7 +14,7 @@ export async function GET() {
       orderBy: { createdAt: "asc" }
     });
     return apiSuccess(environments);
-  } catch (err) {
+  } catch {
     return apiError("INTERNAL_ERROR", "Failed to fetch environments.");
   }
 }
