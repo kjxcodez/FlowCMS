@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import test from "node:test";
 import assert from "node:assert";
 import crypto from "crypto";
@@ -7,7 +8,7 @@ import crypto from "crypto";
 const mockRedisDb = new Map<string, any>();
 class MockRedis {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async set(key: string, value: any, options?: any) {
+  async set(key: string, value: any) {
     mockRedisDb.set(key, value);
     return "OK";
   }
@@ -21,7 +22,6 @@ class MockRedis {
     }
     return 1;
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async incr(key: string) {
     const val = (mockRedisDb.get(key) || 0) + 1;
     mockRedisDb.set(key, val);
@@ -39,9 +39,8 @@ require.cache[resolvedRedisPath] = {
 // 2. Mock Upstash Ratelimit
 const resolvedRatelimitPath = require.resolve("@upstash/ratelimit");
 class MockRatelimit {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(options: any) {}
-  async limit(key: string) {
+  constructor() {}
+  async limit() {
     return {
       success: true,
       limit: 100,
@@ -72,11 +71,11 @@ const originalFindUniqueCollection = prisma.collection.findUnique;
 const originalFindUniqueEntry = prisma.entry.findUnique;
 const originalFindFirstEntry = prisma.entry.findFirst;
 const originalFindUniqueDraftToken = prisma.draftToken.findUnique;
+const originalUpdateDraftToken = prisma.draftToken.update;
 const originalFindUniqueMonthlyUsage = prisma.monthlyUsage.findUnique;
 const originalUpsertMonthlyUsage = prisma.monthlyUsage.upsert;
 const originalCreateUsageLog = prisma.usageLog.create;
 const originalCreateAuditLog = prisma.auditLog.create;
-const originalUpdateDraftToken = prisma.draftToken.update;
 
 // Compute correct hash of mock key
 const rawKey = "flw_mock_key";
@@ -90,15 +89,15 @@ let mockEntry: any = null; // eslint-disable-line @typescript-eslint/no-explicit
 let mockDraftToken: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 let capturedEntryWhere: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.apiKey.findMany = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.apiKey.findMany = (async () => {
   return mockApiKeys;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.apiKey.update = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.apiKey.update = (async () => {
   return {};
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.collection.findUnique = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.collection.findUnique = (async () => {
   return mockCollection;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -107,31 +106,31 @@ prisma.entry.findUnique = (async (args: any) => { // eslint-disable-line @typesc
   return mockEntry;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.entry.findFirst = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.entry.findFirst = (async () => {
   return mockEntry;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.draftToken.findUnique = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.draftToken.findUnique = (async () => {
   return mockDraftToken;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.draftToken.update = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.draftToken.update = (async () => {
   return {};
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.monthlyUsage.findUnique = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.monthlyUsage.findUnique = (async () => {
   return null;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.monthlyUsage.upsert = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.monthlyUsage.upsert = (async () => {
   return {};
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.usageLog.create = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.usageLog.create = (async () => {
   return {};
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-prisma.auditLog.create = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+prisma.auditLog.create = (async () => {
   return {};
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -360,11 +359,11 @@ test("API v1 Entry Resolution Environment-Scoped Uniqueness Tests", async (t) =>
     prisma.entry.findUnique = originalFindUniqueEntry;
     prisma.entry.findFirst = originalFindFirstEntry;
     prisma.draftToken.findUnique = originalFindUniqueDraftToken;
+    prisma.draftToken.update = originalUpdateDraftToken;
     prisma.monthlyUsage.findUnique = originalFindUniqueMonthlyUsage;
     prisma.monthlyUsage.upsert = originalUpsertMonthlyUsage;
     prisma.usageLog.create = originalCreateUsageLog;
     prisma.auditLog.create = originalCreateAuditLog;
-    prisma.draftToken.update = originalUpdateDraftToken;
     delete require.cache[resolvedRedisPath];
     delete require.cache[resolvedRatelimitPath];
   });
