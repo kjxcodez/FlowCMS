@@ -21,6 +21,12 @@ class MockRedis {
     }
     return 1;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async incr(key: string) {
+    const val = (mockRedisDb.get(key) || 0) + 1;
+    mockRedisDb.set(key, val);
+    return val;
+  }
 }
 const resolvedRedisPath = require.resolve("@upstash/redis");
 require.cache[resolvedRedisPath] = {
@@ -30,42 +36,33 @@ require.cache[resolvedRedisPath] = {
   exports: { Redis: MockRedis },
 } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-// 2. Mock verifyDraftPreview
-const previewLib = require("../../src/lib/preview");
-let mockVerifyDraftPreviewResult: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
-previewLib.verifyDraftPreview = async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-  if (mockVerifyDraftPreviewResult) {
-    return mockVerifyDraftPreviewResult(args);
+// 2. Mock Upstash Ratelimit
+const resolvedRatelimitPath = require.resolve("@upstash/ratelimit");
+class MockRatelimit {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(options: any) {}
+  async limit(key: string) {
+    return {
+      success: true,
+      limit: 100,
+      remaining: 100,
+      reset: Date.now() + 60000,
+    };
   }
-  return { allowed: false, errorResponse: { status: 401, code: "UNAUTHORIZED", message: "Mocked unauthorized" } };
-};
+  static slidingWindow() {
+    return {};
+  }
+}
+require.cache[resolvedRatelimitPath] = {
+  id: resolvedRatelimitPath,
+  filename: resolvedRatelimitPath,
+  loaded: true,
+  exports: { Ratelimit: MockRatelimit },
+} as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-// 3. Mock Rate Limiting and Usage to bypass Redis requirements
-const rateLimitLib = require("../../src/lib/rate-limit");
-rateLimitLib.checkRateLimit = async () => {
-  return {
-    allowed: true,
-    remaining: 100,
-    resetAt: Date.now() + 60000,
-    limit: 100,
-  };
-};
-
-const usageLib = require("../../src/lib/usage");
-usageLib.checkUsageLimit = async () => {
-  return {
-    allowed: true,
-    used: 10,
-    limit: 1000,
-  };
-};
-usageLib.incrementUsage = async () => {
-  return {};
-};
-
-// 4. Require the route and prisma
-const { GET } = require("../../src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route");
-const { prisma } = require("../../src/lib/prisma");
+// 3. Require the route and prisma using aliases
+const { GET } = require("@/app/api/v1/entries/[collectionSlug]/[entrySlug]/route");
+const { prisma } = require("@/lib/prisma");
 const { NextRequest } = require("next/server");
 
 // Save originals
@@ -73,6 +70,13 @@ const originalFindManyApiKey = prisma.apiKey.findMany;
 const originalUpdateApiKey = prisma.apiKey.update;
 const originalFindUniqueCollection = prisma.collection.findUnique;
 const originalFindUniqueEntry = prisma.entry.findUnique;
+const originalFindFirstEntry = prisma.entry.findFirst;
+const originalFindUniqueDraftToken = prisma.draftToken.findUnique;
+const originalFindUniqueMonthlyUsage = prisma.monthlyUsage.findUnique;
+const originalUpsertMonthlyUsage = prisma.monthlyUsage.upsert;
+const originalCreateUsageLog = prisma.usageLog.create;
+const originalCreateAuditLog = prisma.auditLog.create;
+const originalUpdateDraftToken = prisma.draftToken.update;
 
 // Compute correct hash of mock key
 const rawKey = "flw_mock_key";
@@ -83,6 +87,7 @@ const correctKeyHash = `sha256:${hash}`;
 let mockApiKeys: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
 let mockCollection: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 let mockEntry: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
+let mockDraftToken: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 let capturedEntryWhere: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 prisma.apiKey.findMany = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -102,6 +107,34 @@ prisma.entry.findUnique = (async (args: any) => { // eslint-disable-line @typesc
   return mockEntry;
 }) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
+prisma.entry.findFirst = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return mockEntry;
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.draftToken.findUnique = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return mockDraftToken;
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.draftToken.update = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {};
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.monthlyUsage.findUnique = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return null;
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.monthlyUsage.upsert = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {};
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.usageLog.create = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {};
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+prisma.auditLog.create = (async (args: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return {};
+}) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
 function buildGetRequest(headers: Record<string, string>, searchParams: Record<string, string> = {}) {
   const url = new URL("http://localhost/api/v1/entries/blog-posts/hello-world");
   Object.entries(searchParams).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -114,7 +147,7 @@ function buildGetRequest(headers: Record<string, string>, searchParams: Record<s
 test("API v1 Entry Resolution Environment-Scoped Uniqueness Tests", async (t) => {
   t.beforeEach(() => {
     mockRedisDb.clear();
-    mockVerifyDraftPreviewResult = null;
+    mockDraftToken = null;
     mockApiKeys = [
       {
         id: "key-id",
@@ -289,11 +322,15 @@ test("API v1 Entry Resolution Environment-Scoped Uniqueness Tests", async (t) =>
       data: { title: "Draft Post" },
     };
 
-    mockVerifyDraftPreviewResult = () => {
-      return {
-        allowed: true,
-        token: { environmentId: "env-prod-id" },
-      };
+    mockDraftToken = {
+      id: "token-id",
+      token: "valid-draft-token",
+      workspaceId: "ws-id",
+      environmentId: "env-prod-id",
+      active: true,
+      expiresAt: new Date(Date.now() + 86400000),
+      allowedCollectionId: null,
+      allowedEntryId: null,
     };
 
     const req = buildGetRequest({
@@ -321,6 +358,14 @@ test("API v1 Entry Resolution Environment-Scoped Uniqueness Tests", async (t) =>
     prisma.apiKey.update = originalUpdateApiKey;
     prisma.collection.findUnique = originalFindUniqueCollection;
     prisma.entry.findUnique = originalFindUniqueEntry;
+    prisma.entry.findFirst = originalFindFirstEntry;
+    prisma.draftToken.findUnique = originalFindUniqueDraftToken;
+    prisma.monthlyUsage.findUnique = originalFindUniqueMonthlyUsage;
+    prisma.monthlyUsage.upsert = originalUpsertMonthlyUsage;
+    prisma.usageLog.create = originalCreateUsageLog;
+    prisma.auditLog.create = originalCreateAuditLog;
+    prisma.draftToken.update = originalUpdateDraftToken;
     delete require.cache[resolvedRedisPath];
+    delete require.cache[resolvedRatelimitPath];
   });
 });
