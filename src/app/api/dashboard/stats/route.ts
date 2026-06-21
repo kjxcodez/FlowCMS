@@ -1,6 +1,7 @@
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess } from "@/types/api";
+import { getStorageUsage } from "@/lib/usage";
 
 export const runtime = "nodejs";
 
@@ -32,16 +33,14 @@ export async function GET() {
       }),
     ]);
 
-  const storageResult = await prisma.media.aggregate({
-    where: { workspaceId: workspace.id },
-    _sum: { size: true }
-  });
+  const storageBytes = await getStorageUsage(workspace.id);
 
   return apiSuccess({
     collections,
     entries,
     mediaCount,
     apiRequests: usage?.apiRequests ?? 0,
-    storageBytes: storageResult._sum.size ?? 0,
+    storageBytes,
   });
 }
+

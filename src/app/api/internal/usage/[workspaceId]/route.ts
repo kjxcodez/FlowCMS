@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireWorkspace } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { apiError, apiSuccess } from "@/types/api";
+import { getStorageUsage } from "@/lib/usage";
 
 export async function GET(
   _req: NextRequest,
@@ -29,11 +30,8 @@ export async function GET(
     }
   });
 
-  // Get storage usage from media files
-  const storageResult = await prisma.media.aggregate({
-    where: { workspaceId: workspace.id },
-    _sum: { size: true }
-  });
+  // Get storage usage using helper
+  const storageBytes = await getStorageUsage(workspace.id);
 
   // Get collection count
   const collectionCount = await prisma.collection.count({
@@ -42,9 +40,10 @@ export async function GET(
 
   return apiSuccess({
     apiRequests: monthlyUsage?.apiRequests ?? 0,
-    storageBytes: storageResult._sum.size ?? 0,
+    storageBytes,
     collections: collectionCount,
     month,
     year,
   });
 }
+

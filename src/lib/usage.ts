@@ -238,3 +238,12 @@ export async function checkStorageLimit(
   };
 }
 
+export async function getStorageUsage(workspaceId: string): Promise<number> {
+  const aggregate = await prisma.media.aggregate({
+    where: { workspaceId },
+    _sum: { size: true },
+  });
+  return aggregate._sum.size ?? 0;
+}
+
+
