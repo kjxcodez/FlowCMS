@@ -10,11 +10,11 @@ const originalCreateAuditLog = prisma.auditLog.create;
 
 let mockWebhookCount = 0;
 
-prisma.webhook.count = (async (args: any) => {
+prisma.webhook.count = (async () => {
   return mockWebhookCount;
-}) as any;
+}) as unknown as typeof prisma.webhook.count;
 
-prisma.webhook.create = (async (args: any) => {
+prisma.webhook.create = (async () => {
   return {
     id: "mock-webhook-id",
     workspaceId: "mock-workspace-id",
@@ -24,15 +24,19 @@ prisma.webhook.create = (async (args: any) => {
     enabled: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
-}) as any;
+  } as unknown as ReturnType<typeof originalCreate>;
+}) as unknown as typeof prisma.webhook.create;
 
-prisma.auditLog.create = (async (args: any) => {
-  return { id: "mock-log-id" };
-}) as any;
+prisma.auditLog.create = (async () => {
+  return { id: "mock-log-id" } as unknown as ReturnType<typeof originalCreateAuditLog>;
+}) as unknown as typeof prisma.auditLog.create;
 
 test("Webhook Limit Regression Tests", async (t) => {
-  await t.test("Hobby Plan Rejection", async () => {
+  t.beforeEach(() => {
+    mockWebhookCount = 0;
+  });
+
+  await t.test("Case 1: Hobby Plan Rejection (Feature unavailable)", async () => {
     // Hobby plan doesn't support webhooks at all
     await assert.rejects(
       async () => {
@@ -45,14 +49,15 @@ test("Webhook Limit Regression Tests", async (t) => {
           false
         );
       },
-      (err: any) => {
+      (err: Error) => {
         return err.message.includes("FEATURE_NOT_AVAILABLE") && err.message.includes("Webhooks are not available on your current plan.");
       },
       "Should reject when Hobby plan attempts to create webhook"
     );
   });
 
-  await t.test("Pro Plan Success", async () => {
+  await t.test("Case 2: Pro workspace below limit succeeds", async () => {
+    mockWebhookCount = 5; // Limit is 10
     const res = await WebhookService.createWebhook(
       "ws-id",
       "https://example.com/webhook",
@@ -61,10 +66,31 @@ test("Webhook Limit Regression Tests", async (t) => {
       "PRO",
       false
     );
-    assert.ok(res.id, "Should allow creating webhook on Pro plan");
+    assert.ok(res.id, "Should allow creating webhook on Pro plan when below limit");
   });
 
-  await t.test("Agency Plan Success", async () => {
+  await t.test("Case 3: Pro workspace at limit rejected", async () => {
+    mockWebhookCount = 10; // Limit is 10
+    await assert.rejects(
+      async () => {
+        await WebhookService.createWebhook(
+          "ws-id",
+          "https://example.com/webhook",
+          ["ENTRY_PUBLISHED"],
+          "user-id",
+          "PRO",
+          false
+        );
+      },
+      (err: Error) => {
+        return err.message.includes("LIMIT_EXCEEDED") && err.message.includes("Webhook limit reached for your plan.");
+      },
+      "Should reject when Pro plan is at count limit"
+    );
+  });
+
+  await t.test("Case 4: Agency workspace below limit succeeds", async () => {
+    mockWebhookCount = 40; // Limit is 50
     const res = await WebhookService.createWebhook(
       "ws-id",
       "https://example.com/webhook",
@@ -73,10 +99,31 @@ test("Webhook Limit Regression Tests", async (t) => {
       "AGENCY",
       false
     );
-    assert.ok(res.id, "Should allow creating webhook on Agency plan");
+    assert.ok(res.id, "Should allow creating webhook on Agency plan when below limit");
   });
 
-  await t.test("Enterprise Plan Success", async () => {
+  await t.test("Case 5: Agency workspace at limit rejected", async () => {
+    mockWebhookCount = 50; // Limit is 50
+    await assert.rejects(
+      async () => {
+        await WebhookService.createWebhook(
+          "ws-id",
+          "https://example.com/webhook",
+          ["ENTRY_PUBLISHED"],
+          "user-id",
+          "AGENCY",
+          false
+        );
+      },
+      (err: Error) => {
+        return err.message.includes("LIMIT_EXCEEDED") && err.message.includes("Webhook limit reached for your plan.");
+      },
+      "Should reject when Agency plan is at count limit"
+    );
+  });
+
+  await t.test("Case 6: Enterprise workspace succeeds with no limit", async () => {
+    mockWebhookCount = 10000; // Limit is unlimited (-1)
     const res = await WebhookService.createWebhook(
       "ws-id",
       "https://example.com/webhook",
@@ -85,10 +132,10 @@ test("Webhook Limit Regression Tests", async (t) => {
       "ENTERPRISE",
       false
     );
-    assert.ok(res.id, "Should allow creating webhook on Enterprise plan");
+    assert.ok(res.id, "Should allow creating webhook on Enterprise plan regardless of count");
   });
 
-  await t.test("Admin Override Success for Hobby Plan", async () => {
+  await t.test("Case 7: AdminOverride bypasses Hobby feature restriction", async () => {
     const res = await WebhookService.createWebhook(
       "ws-id",
       "https://example.com/webhook",
@@ -97,11 +144,28 @@ test("Webhook Limit Regression Tests", async (t) => {
       "HOBBY",
       true
     );
-    assert.ok(res.id, "Admin should bypass Hobby limits");
+    assert.ok(res.id, "Admin should bypass Hobby plan feature restriction");
   });
 
-  // Restore originals
+  await t.test("Case 7: AdminOverride bypasses count limits", async () => {
+    mockWebhookCount = 10; // Pro limit is 10
+    const res = await WebhookService.createWebhook(
+      "ws-id",
+      "https://example.com/webhook",
+      ["ENTRY_PUBLISHED"],
+      "user-id",
+      "PRO",
+      true
+    );
+    assert.ok(res.id, "Admin should bypass Pro count limits");
+  });
+});
+
+// Restore originals
+test("Cleanup", async () => {
+  await new Promise((resolve) => setTimeout(resolve, 50));
   prisma.webhook.count = originalCount;
   prisma.webhook.create = originalCreate;
   prisma.auditLog.create = originalCreateAuditLog;
 });
+

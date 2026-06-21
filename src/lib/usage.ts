@@ -246,4 +246,26 @@ export async function getStorageUsage(workspaceId: string): Promise<number> {
   return aggregate._sum.size ?? 0;
 }
 
+export async function checkWebhookLimit(
+  workspaceId: string,
+  plan: string,
+  isAdmin = false
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  if (isAdmin) return { allowed: true, used: 0, limit: -1 };
+  const limits = getPlanConfig(plan);
+  if (!limits || limits.webhookLimit === -1) {
+    return { allowed: true, used: 0, limit: -1 };
+  }
+
+  const count = await prisma.webhook.count({
+    where: { workspaceId },
+  });
+  return {
+    allowed: count < limits.webhookLimit,
+    used: count,
+    limit: limits.webhookLimit,
+  };
+}
+
+
 

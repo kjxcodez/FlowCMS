@@ -27,11 +27,26 @@ export class WebhookService {
     plan: "HOBBY" | "PRO" | "AGENCY" | "ENTERPRISE",
     isPlatformAdmin: boolean
   ) {
-    if (!isPlatformAdmin && !PLAN_LIMITS[plan]?.webhooks) {
-      throw new Error(
-        "FEATURE_NOT_AVAILABLE: Webhooks are not available on your current plan."
-      );
+    if (!isPlatformAdmin) {
+      if (!PLAN_LIMITS[plan]?.webhooks) {
+        throw new Error(
+          "FEATURE_NOT_AVAILABLE: Webhooks are not available on your current plan."
+        );
+      }
+
+      const limit = PLAN_LIMITS[plan]?.webhookLimit;
+      if (limit !== undefined && limit !== -1) {
+        const count = await prisma.webhook.count({
+          where: { workspaceId },
+        });
+        if (count >= limit) {
+          throw new Error(
+            "LIMIT_EXCEEDED: Webhook limit reached for your plan."
+          );
+        }
+      }
     }
+
 
     const webhook = await prisma.webhook.create({
       data: {

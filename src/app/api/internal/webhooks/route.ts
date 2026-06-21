@@ -9,6 +9,7 @@ import { logAction } from "@/lib/audit";
 import { canAccessFeature } from "@/lib/launch";
 import { isAdminEmail } from "@/lib/admin";
 import { WebhookEvent } from "@/generated/prisma";
+import { checkWebhookLimit } from "@/lib/usage";
 
 export async function GET() {
   try {
@@ -42,12 +43,23 @@ export async function POST(req: NextRequest) {
     }
 
     const isPlatformAdmin = isAdminEmail(session.user.email);
-    if (!isPlatformAdmin && !PLAN_LIMITS[workspace.plan]?.webhooks) {
-      return apiError(
-        "FEATURE_NOT_AVAILABLE",
-        "Webhooks are not available on your current plan."
-      );
+    if (!isPlatformAdmin) {
+      if (!PLAN_LIMITS[workspace.plan]?.webhooks) {
+        return apiError(
+          "FEATURE_NOT_AVAILABLE",
+          "Webhooks are not available on your current plan."
+        );
+      }
+
+      const limitCheck = await checkWebhookLimit(workspace.id, workspace.plan);
+      if (!limitCheck.allowed) {
+        return apiError(
+          "PLAN_LIMIT_REACHED",
+          "Webhook limit reached for your plan."
+        );
+      }
     }
+
 
     const body = await req.json();
     const parsed = CreateWebhookSchema.safeParse(body);

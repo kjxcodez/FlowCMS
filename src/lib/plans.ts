@@ -12,6 +12,7 @@ export interface PlanConfig {
   sso: boolean;
   auditLogs: boolean;
   apiKeys: number;              // -1 for unlimited
+  webhookLimit: number;          // -1 for unlimited
 }
 
 export const PLANS: Record<Plan, PlanConfig> = {
@@ -27,6 +28,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     sso: false,
     auditLogs: false,
     apiKeys: 2,
+    webhookLimit: 0,
   },
   PRO: {
     name: "Pro",
@@ -40,6 +42,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     sso: false,
     auditLogs: false,
     apiKeys: 10,
+    webhookLimit: 10,
   },
   AGENCY: {
     name: "Agency",
@@ -53,6 +56,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     sso: false,
     auditLogs: true,
     apiKeys: 50,
+    webhookLimit: 50,
   },
   ENTERPRISE: {
     name: "Enterprise",
@@ -66,6 +70,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     sso: true,
     auditLogs: true,
     apiKeys: -1,
+    webhookLimit: -1,
   },
 };
 
