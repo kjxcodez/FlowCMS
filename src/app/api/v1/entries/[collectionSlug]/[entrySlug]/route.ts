@@ -19,20 +19,21 @@ export const GET = withApiAuth(
       return apiError("NOT_FOUND", `Collection "${collectionSlug}" not found.`);
     }
 
-    const entry = await prisma.entry.findFirst({
+    if (!environmentId) {
+      return apiError("UNAUTHORIZED", "API key is not bound to an environment.");
+    }
+
+    const entry = await prisma.entry.findUnique({
       where: {
-        collectionId: collection.id,
-        environmentId: environmentId || null,
-        slug: entrySlug,
+        collectionId_environmentId_slug: {
+          collectionId: collection.id,
+          environmentId,
+          slug: entrySlug,
+        },
       },
     });
 
     if (!entry) {
-      return apiError("NOT_FOUND", `Entry "${entrySlug}" not found in collection "${collectionSlug}".`);
-    }
-
-    // Strictly verify that the entry belongs to the correct environment
-    if (entry.environmentId !== (environmentId || null)) {
       return apiError("NOT_FOUND", `Entry "${entrySlug}" not found in collection "${collectionSlug}".`);
     }
 
@@ -51,7 +52,7 @@ export const GET = withApiAuth(
         workspaceId,
         collectionSlug,
         entrySlug,
-        environmentId: environmentId || undefined,
+        environmentId,
         ip: req.headers.get("x-forwarded-for") || undefined,
         userAgent: req.headers.get("user-agent") || undefined,
       });
