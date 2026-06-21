@@ -3,7 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
 
-export function BillingPlans(_props: { currentPlan: string }) {
+export function BillingPlans({}: { currentPlan: string }) {
   return (
     <div className="pt-4 max-w-2xl mx-auto">
       <Card className="bg-[#0F110A] border-accent/20 border-l-4 border-l-accent overflow-hidden shadow-2xl p-10 group relative">
