@@ -12,6 +12,7 @@ const originalUserFindUnique = prisma.user.findUnique;
 const originalMemberFindFirst = prisma.workspaceMember.findFirst;
 const originalCollectionFindFirst = prisma.collection.findFirst;
 const originalEnvFindFirst = prisma.environment.findFirst;
+const originalEnvCreate = prisma.environment.create;
 const originalApiKeyFindFirst = prisma.apiKey.findFirst;
 const originalEntryFindMany = prisma.entry.findMany;
 
@@ -85,6 +86,17 @@ prisma.environment.findFirst = (async (): Promise<Environment | null> => {
   }
   return null;
 }) as typeof prisma.environment.findFirst;
+
+prisma.environment.create = (async (args: any): Promise<Environment> => {
+  return {
+    id: "env-prod-slug-id",
+    workspaceId: (args?.data?.workspaceId as string) || "ws-id",
+    name: (args?.data?.name as string) || "Production",
+    slug: (args?.data?.slug as string) || "production",
+    isDefault: (args?.data?.isDefault as boolean) || false,
+    createdAt: new Date(),
+  };
+}) as typeof prisma.environment.create;
 
 let mockApiKeyFindFirstResult: (() => ApiKey | null) | null = null;
 prisma.apiKey.findFirst = (async (): Promise<ApiKey | null> => {
@@ -243,6 +255,7 @@ test("API Explorer Environment Scoping Tests", async (t) => {
     prisma.workspaceMember.findFirst = originalMemberFindFirst;
     prisma.collection.findFirst = originalCollectionFindFirst;
     prisma.environment.findFirst = originalEnvFindFirst;
+    prisma.environment.create = originalEnvCreate;
     prisma.apiKey.findFirst = originalApiKeyFindFirst;
     prisma.entry.findMany = originalEntryFindMany;
   });
