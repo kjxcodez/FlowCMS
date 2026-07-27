@@ -10,6 +10,19 @@ import {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Maintenance mode flag (can be toggled via NEXT_PUBLIC_MAINTENANCE_MODE env var, defaults to true)
+  const isMaintenanceActive = process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== "false";
+
+  const isMaintenancePage =
+    pathname.startsWith("/maintenance") || pathname.startsWith("/maintainance");
+
+  if (isMaintenanceActive) {
+    if (!isMaintenancePage) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
+    }
+    return NextResponse.next();
+  }
+
   const sessionToken =
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("__Secure-better-auth.session_token")?.value;

@@ -45,3 +45,5 @@ DESIGN.md
 /plans
 /internal-guides
 .source
+
+send-founder-email.js
