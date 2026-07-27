@@ -3,25 +3,52 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  Wrench,
+  Cpu,
   ShieldCheck,
   Bell,
   Sparkles,
   ArrowRight,
-  Radio,
+  Zap,
   Server,
   Lock,
-  RefreshCw,
+  Layers,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 export default function MaintenancePage() {
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      setIsSubscribed(true);
+    if (!email.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/maintenance/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setIsSubscribed(true);
+      } else {
+        setErrorMsg(data.error || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setErrorMsg("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -79,7 +106,7 @@ export default function MaintenancePage() {
               FlowCMS
             </span>
             <p className="text-[9px] sm:text-[10px] font-mono text-[#9F9C90] uppercase tracking-widest">
-              System Operations
+              Core Architecture Shift
             </p>
           </div>
         </motion.div>
@@ -94,13 +121,13 @@ export default function MaintenancePage() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#CAFF4D] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#CAFF4D]"></span>
           </span>
-          <span className="text-[#E8E5DB] whitespace-nowrap">MAINTENANCE IN PROGRESS</span>
+          <span className="text-[#E8E5DB] whitespace-nowrap">SYSTEM RE-ENGINEERING IN PROGRESS</span>
         </motion.div>
       </header>
 
       {/* Main Content */}
       <main className="relative z-10 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-16 flex flex-col items-center text-center">
-        {/* Animated Gear & Radar Visual */}
+        {/* Animated Central Core Emblem */}
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -120,7 +147,7 @@ export default function MaintenancePage() {
             />
           </motion.div>
 
-          {/* Center Industrial Wrench Emblem */}
+          {/* Center High-Tech CPU Emblem */}
           <div className="absolute inset-0 flex items-center justify-center">
             <motion.div
               whileHover={{ scale: 1.08 }}
@@ -130,13 +157,13 @@ export default function MaintenancePage() {
                 animate={{ rotate: [0, 90, 180, 270, 360] }}
                 transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
               >
-                <Wrench className="w-7 h-7 sm:w-9 sm:h-9" />
+                <Cpu className="w-7 h-7 sm:w-9 sm:h-9" />
               </motion.div>
             </motion.div>
           </div>
         </motion.div>
 
-        {/* Hero Notice */}
+        {/* Hero Hook & Copy */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -144,20 +171,20 @@ export default function MaintenancePage() {
           className="space-y-3 sm:space-y-4 max-w-2xl mb-8 sm:mb-12 px-2"
         >
           <div className="inline-flex items-center space-x-2 px-3 sm:px-3.5 py-1 bg-[#1E3123] border border-[#2E4A35] text-[#CAFF4D] text-[11px] sm:text-xs font-mono uppercase tracking-widest">
-            <Radio className="w-3.5 h-3.5 animate-pulse text-[#CAFF4D] shrink-0" />
-            <span>Scheduled Maintenance</span>
+            <Zap className="w-3.5 h-3.5 text-[#CAFF4D] shrink-0 animate-pulse" />
+            <span>Major Architecture Transformation</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-[#E8E5DB] tracking-tight leading-tight">
-            We’re currently performing system updates.
+            Re-engineering FlowCMS for Next-Gen Speed & Scale.
           </h1>
 
           <p className="text-sm sm:text-base md:text-lg text-[#9F9C90] font-light leading-relaxed">
-            Our team is improving system infrastructure and performing critical updates. All application routes are temporarily paused and will return online as soon as the updates complete.
+            We are executing a core architectural evolution—upgrading underlying database query meshes, protocol buffers, and global edge delivery layers. System routes are temporarily paused while we deploy this infrastructure upgrade.
           </p>
         </motion.div>
 
-        {/* Real Status Cards */}
+        {/* Architectural Pillars Grid */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -166,42 +193,42 @@ export default function MaintenancePage() {
         >
           <div className="bg-[#161811] border border-[#2A2C22] p-5 sm:p-6 text-left space-y-2.5 sm:space-y-3">
             <div className="p-2.5 bg-[#0F1109] border border-[#2A2C22] w-fit text-[#CAFF4D]">
-              <RefreshCw className="w-5 h-5 animate-spin" />
+              <Layers className="w-5 h-5" />
             </div>
             <h3 className="font-serif font-semibold text-base sm:text-lg text-[#E8E5DB]">
-              System Upgrade
+              Protocol Mesh Upgrade
             </h3>
             <p className="text-xs text-[#9F9C90] leading-relaxed font-sans">
-              Applying essential framework and server enhancements for smoother performance.
+              Migrating to high-throughput zero-latency content pipelines for faster API responses.
             </p>
           </div>
 
           <div className="bg-[#161811] border border-[#2A2C22] p-5 sm:p-6 text-left space-y-2.5 sm:space-y-3">
             <div className="p-2.5 bg-[#0F1109] border border-[#2A2C22] w-fit text-[#CAFF4D]">
-              <ShieldCheck className="w-5 h-5" />
+              <Server className="w-5 h-5" />
             </div>
             <h3 className="font-serif font-semibold text-base sm:text-lg text-[#E8E5DB]">
-              Data & Content Safe
+              Database Cluster Sync
             </h3>
             <p className="text-xs text-[#9F9C90] leading-relaxed font-sans">
-              All databases, media assets, and configuration data remain secure and untouched.
+              Re-indexing relational clusters and optimizing multi-tenant schema query structures.
             </p>
           </div>
 
           <div className="bg-[#161811] border border-[#2A2C22] p-5 sm:p-6 text-left space-y-2.5 sm:space-y-3 sm:col-span-2 md:col-span-1">
             <div className="p-2.5 bg-[#0F1109] border border-[#2A2C22] w-fit text-[#CAFF4D]">
-              <Server className="w-5 h-5" />
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="font-serif font-semibold text-base sm:text-lg text-[#E8E5DB]">
-              Automated Restore
+              100% Data Integrity
             </h3>
             <p className="text-xs text-[#9F9C90] leading-relaxed font-sans">
-              Normal routing and access will automatically resume as soon as deployment finishes.
+              All workspaces, collection entries, and media vaults remain encrypted and fully safe.
             </p>
           </div>
         </motion.div>
 
-        {/* Email Notification Form */}
+        {/* Email Notification Form with Real API Integration */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -213,41 +240,65 @@ export default function MaintenancePage() {
               <Bell className="w-5 h-5" />
             </div>
             <h3 className="text-lg sm:text-xl font-serif font-bold text-[#E8E5DB]">
-              Get Notified When We’re Back
+              Get Notified When System Is Live
             </h3>
             <p className="text-xs text-[#9F9C90]">
-              Enter your email to receive an update as soon as service access is restored.
+              Enter your email to receive an instant dispatch as soon as the architecture deployment completes.
             </p>
           </div>
 
           <AnimatePresence mode="wait">
             {!isSubscribed ? (
-              <motion.form
-                key="form"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onSubmit={handleSubscribe}
-                className="flex flex-col sm:flex-row gap-2.5 sm:gap-3"
-              >
-                <input
-                  type="email"
-                  required
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 min-w-0 bg-[#0F1109] border border-[#2A2C22] px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-[#E8E5DB] placeholder-[#4D4B42] focus:outline-none focus:border-[#7CAC88] focus:ring-1 focus:ring-[#CAFF4D]"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="bg-[#CAFF4D] hover:bg-[#D6FF6A] text-[#18180F] font-mono text-xs uppercase font-bold tracking-wider px-5 sm:px-6 py-2.5 sm:py-3 border-none flex items-center justify-center space-x-2 transition-colors cursor-pointer shrink-0"
+              <div className="space-y-3">
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onSubmit={handleSubscribe}
+                  className="flex flex-col sm:flex-row gap-2.5 sm:gap-3"
                 >
-                  <span>Notify Me</span>
-                  <ArrowRight className="w-4 h-4" />
-                </motion.button>
-              </motion.form>
+                  <input
+                    type="email"
+                    required
+                    disabled={isSubmitting}
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 min-w-0 bg-[#0F1109] border border-[#2A2C22] px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-[#E8E5DB] placeholder-[#4D4B42] focus:outline-none focus:border-[#7CAC88] focus:ring-1 focus:ring-[#CAFF4D] disabled:opacity-50"
+                  />
+                  <motion.button
+                    whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                    whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#CAFF4D] hover:bg-[#D6FF6A] text-[#18180F] font-mono text-xs uppercase font-bold tracking-wider px-5 sm:px-6 py-2.5 sm:py-3 border-none flex items-center justify-center space-x-2 transition-colors cursor-pointer shrink-0 disabled:opacity-60"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Notify Me</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </motion.button>
+                </motion.form>
+
+                {errorMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs font-mono text-[#E05555] flex items-center justify-center space-x-1.5"
+                  >
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{errorMsg}</span>
+                  </motion.div>
+                )}
+              </div>
             ) : (
               <motion.div
                 key="success"
@@ -256,7 +307,7 @@ export default function MaintenancePage() {
                 className="bg-[#1E3123] border border-[#2E4A35] p-3.5 sm:p-4 text-[#CAFF4D] font-mono text-xs uppercase tracking-wider flex items-center justify-center space-x-2"
               >
                 <Sparkles className="w-4 h-4 shrink-0" />
-                <span>Thank you! We'll send an update when services are live.</span>
+                <span>Success! Registered for instant system restoration dispatch.</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -267,11 +318,11 @@ export default function MaintenancePage() {
       <footer className="relative z-10 border-t border-[#2A2C22] bg-[#080905] py-5 sm:py-6 px-4 sm:px-6 text-center text-xs font-mono text-[#4D4B42]">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-center sm:text-left">
           <div>
-            © {new Date().getFullYear()} FlowCMS Infrastructure.
+            © {new Date().getFullYear()} FlowCMS Core Platform.
           </div>
           <div className="flex items-center space-x-2 text-[#9F9C90]">
             <Lock className="w-3.5 h-3.5 text-[#7CAC88] shrink-0" />
-            <span>Secure System Standby Mode</span>
+            <span>Core Architecture Migration</span>
           </div>
         </div>
       </footer>

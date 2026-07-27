@@ -14,7 +14,9 @@ export async function middleware(request: NextRequest) {
   const isMaintenanceActive = process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== "false";
 
   const isMaintenancePage =
-    pathname.startsWith("/maintenance") || pathname.startsWith("/maintainance");
+    pathname.startsWith("/maintenance") ||
+    pathname.startsWith("/maintainance") ||
+    pathname.startsWith("/api/maintenance/notify");
 
   if (isMaintenanceActive) {
     if (!isMaintenancePage) {
