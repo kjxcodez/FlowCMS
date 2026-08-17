@@ -147,7 +147,7 @@ export async function captureCriticalError(
         lastSeenAt: new Date(),
         status: "OPEN",
         stack: stackTrace,
-        metadata: sanitizedMeta ? (sanitizedMeta as any) : undefined,
+        metadata: sanitizedMeta ? JSON.parse(JSON.stringify(sanitizedMeta)) : undefined,
       },
     });
   } catch (err) {

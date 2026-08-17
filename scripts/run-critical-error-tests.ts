@@ -1,3 +1,26 @@
+import fs from "fs";
+import path from "path";
+
+const envPath = path.resolve(__dirname, "../apps/app/.env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eqIdx = trimmed.indexOf("=");
+    if (eqIdx > 0) {
+      const key = trimmed.substring(0, eqIdx).trim();
+      let val = trimmed.substring(eqIdx + 1).trim();
+      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+        val = val.substring(1, val.length - 1);
+      }
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
+
 import { captureCriticalError, normalizeErrorMessage, generateErrorFingerprint } from "../apps/app/src/lib/errors/capture-critical-error";
 import { prisma } from "../apps/app/src/lib/prisma";
 
