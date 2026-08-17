@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { WebhookService } from "../../src/server/services/webhook.service";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { WebhookService } from "../../apps/app/src/server/services/webhook.service";
 
 // Save originals
 const originalCount = prisma.webhook.count;

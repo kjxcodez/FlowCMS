@@ -1,5 +1,5 @@
-import { Plan } from "../src/generated/prisma";
-import { PLANS } from "../src/lib/plans";
+import { Plan } from "../apps/app/src/generated/prisma";
+import { PLANS } from "../apps/app/src/lib/plans";
 
 async function runPlanTests() {
   console.log("==================================================");

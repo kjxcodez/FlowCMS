@@ -21,7 +21,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: apps/app/Dockerfile
     restart: always
     ports:
       - "3000:3000"

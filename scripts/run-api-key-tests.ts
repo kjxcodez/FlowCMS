@@ -1,11 +1,11 @@
-import { prisma } from "../src/lib/prisma";
-import { ApiKeyService } from "../src/server/services/api-key.service";
-import { GET as getEntries } from "../src/app/api/v1/entries/[collectionSlug]/route";
-import { GET as getEntry } from "../src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
-import { GET as getMedia } from "../src/app/api/v1/media/route";
-import { GET as getWorkspace } from "../src/app/api/v1/workspace/route";
-import { withApiAuth, requireScope } from "../src/middleware/with-api-auth";
-import { apiSuccess } from "../src/types/api";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { ApiKeyService } from "../apps/app/src/server/services/api-key.service";
+import { GET as getEntries } from "../apps/app/src/app/api/v1/entries/[collectionSlug]/route";
+import { GET as getEntry } from "../apps/app/src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
+import { GET as getMedia } from "../apps/app/src/app/api/v1/media/route";
+import { GET as getWorkspace } from "../apps/app/src/app/api/v1/workspace/route";
+import { withApiAuth, requireScope } from "../apps/app/src/middleware/with-api-auth";
+import { apiSuccess } from "../apps/app/src/types/api";
 import { NextRequest } from "next/server";
 
 async function runApiKeyTests() {

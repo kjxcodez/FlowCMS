@@ -1,8 +1,8 @@
-import { prisma } from "../src/lib/prisma";
-import { auth } from "../src/lib/auth";
-import { POST as createEntry } from "../src/app/api/internal/entries/route";
-import { PATCH as updateEntry, DELETE as deleteEntry } from "../src/app/api/internal/entries/[id]/route";
-import { verifyDraftPreview } from "../src/lib/preview";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { auth } from "../apps/app/src/lib/auth";
+import { POST as createEntry } from "../apps/app/src/app/api/internal/entries/route";
+import { PATCH as updateEntry, DELETE as deleteEntry } from "../apps/app/src/app/api/internal/entries/[id]/route";
+import { verifyDraftPreview } from "../apps/app/src/lib/preview";
 import { NextRequest } from "next/server";
 
 // Global mock state

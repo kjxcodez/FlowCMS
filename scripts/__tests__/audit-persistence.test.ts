@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { logAction } from "../../src/lib/audit";
-import { Plan } from "../../src/generated/prisma";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { logAction } from "../../apps/app/src/lib/audit";
+import { Plan } from "../../apps/app/src/generated/prisma";
 
 // Mock implementation helper
 const originalCreate = prisma.auditLog.create;

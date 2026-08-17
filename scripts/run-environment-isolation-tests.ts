@@ -1,9 +1,9 @@
-import { prisma } from "../src/lib/prisma";
-import { ApiKeyService } from "../src/server/services/api-key.service";
-import { GET as getEntries } from "../src/app/api/v1/entries/[collectionSlug]/route";
-import { GET as getEntry } from "../src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
-import { verifyDraftPreview } from "../src/lib/preview";
-import { dispatchWebhooks } from "../src/lib/webhooks";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { ApiKeyService } from "../apps/app/src/server/services/api-key.service";
+import { GET as getEntries } from "../apps/app/src/app/api/v1/entries/[collectionSlug]/route";
+import { GET as getEntry } from "../apps/app/src/app/api/v1/entries/[collectionSlug]/[entrySlug]/route";
+import { verifyDraftPreview } from "../apps/app/src/lib/preview";
+import { dispatchWebhooks } from "../apps/app/src/lib/webhooks";
 import { NextRequest } from "next/server";
 
 // Simple mock for qstash.publishJSON to intercept and track webhook calls in tests

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { checkStorageLimit } from "../../src/lib/usage";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { checkStorageLimit } from "../../apps/app/src/lib/usage";
 
 // Save original prisma aggregate
 const originalAggregate = prisma.media.aggregate;

@@ -1,8 +1,8 @@
-import { prisma } from "../src/lib/prisma";
-import { ApiKeyService } from "../src/server/services/api-key.service";
-import { GET as getEntries } from "../src/app/api/v1/entries/[collectionSlug]/route";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { ApiKeyService } from "../apps/app/src/server/services/api-key.service";
+import { GET as getEntries } from "../apps/app/src/app/api/v1/entries/[collectionSlug]/route";
 import { NextRequest } from "next/server";
-import { EntryStatus } from "../src/generated/prisma";
+import { EntryStatus } from "../apps/app/src/generated/prisma";
 
 async function runTests() {
   console.log("==================================================");
