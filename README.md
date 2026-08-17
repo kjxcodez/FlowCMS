@@ -1,159 +1,70 @@
-# Turborepo starter
+# FlowCMS
 
-This Turborepo starter is maintained by the Turborepo core team.
+FlowCMS is a modern, headless Content Management System (CMS) built with Next.js, TypeScript, Prisma ORM, and Supabase PostgreSQL.
 
-## Using this example
+## Features
 
-Run the following command:
+- **Content Management**: Structured and visual collections for managing entries, media, and environments.
+- **Authentication**: Powered by Better Auth with support for email/password and OAuth (Google).
+- **Database & Pooling**: Prisma ORM with `@prisma/adapter-pg` configured for Supabase Supavisor connection pooling.
+- **API & Webhooks**: Headless API endpoints (`/api/v1`) with background webhook delivery powered by Upstash QStash.
+- **Billing & Usage**: Integrated Razorpay billing and rate limiting via Upstash Redis.
 
-```sh
-npx create-turbo@latest
-```
+## Tech Stack
 
-## What's inside?
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router, React 19)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **ORM**: [Prisma ORM 7](https://www.prisma.io/) with `@prisma/adapter-pg`
+- **Database**: [Supabase PostgreSQL](https://supabase.com/) with Supavisor Pooler
+- **Monorepo Engine**: [Turborepo](https://turbo.build/) & [pnpm](https://pnpm.io/)
+- **UI & Styling**: Tailwind CSS, Radix UI / Base UI, Motion, Lucide Icons
 
-This Turborepo includes the following packages/apps:
+## Getting Started
 
-### Apps and Packages
+### Prerequisites
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- Node.js `>=18` (Node 22 LTS recommended)
+- pnpm `^9.0.0` (`corepack enable pnpm`)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Local Setup
 
-### Utilities
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/kjxcodez/FlowCMS.git
+   cd FlowCMS
+   ```
 
-This Turborepo has some additional tools already setup for you:
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+3. **Configure Environment Variables**:
+   Copy `.env.example` to `.env` in `apps/app`:
+   ```bash
+   cp apps/app/.env.example apps/app/.env
+   ```
 
-### Build
+4. **Generate Prisma Client**:
+   ```bash
+   cd apps/app && pnpm prisma generate
+   ```
 
-To build all apps and packages, run the following command:
+5. **Run Development Server**:
+   From the repository root:
+   ```bash
+   pnpm dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+## Monorepo Commands
 
-```sh
-cd my-turborepo
-turbo build
-```
+- `pnpm dev`: Run local development server
+- `pnpm build`: Build all packages for production
+- `pnpm lint`: Run ESLint checks
+- `pnpm check-types`: Run TypeScript compiler type checking (`tsc --noEmit`)
 
-Without global `turbo`, use your package manager:
+## Contributing & Governance
 
-```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+- Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for development rules and guidelines.
+- To report security vulnerabilities, review [SECURITY.md](./SECURITY.md).
