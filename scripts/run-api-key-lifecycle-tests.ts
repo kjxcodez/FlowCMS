@@ -1,7 +1,7 @@
-import { prisma } from "../src/lib/prisma";
-import { ApiKeyService } from "../src/server/services/api-key.service";
-import { verifyApiKey, invalidateApiKeyCache } from "../src/lib/api-key";
-import { redis } from "../src/lib/cache";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { ApiKeyService } from "../apps/app/src/server/services/api-key.service";
+import { verifyApiKey, invalidateApiKeyCache } from "../apps/app/src/lib/api-key";
+import { redis } from "../apps/app/src/lib/cache";
 import crypto from "crypto";
 
 async function runApiKeyLifecycleTests() {

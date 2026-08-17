@@ -1,0 +1,63 @@
+version: 2
+
+updates:
+  # Keep npm/pnpm dependencies current (covers pnpm-lock.yaml at the monorepo root)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    # Group minor + patch updates for common dependency categories to avoid PR spam
+    groups:
+      prisma:
+        patterns:
+          - "prisma"
+          - "@prisma/*"
+      next-ecosystem:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      radix-ui:
+        patterns:
+          - "radix-ui"
+          - "@radix-ui/*"
+          - "@base-ui/*"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      upstash:
+        patterns:
+          - "@upstash/*"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      dev-tooling:
+        patterns:
+          - "typescript"
+          - "eslint*"
+          - "@eslint/*"
+          - "prettier"
+          - "turbo"
+          - "@types/*"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 10
+
+  # Keep GitHub Actions dependencies current
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+    open-pull-requests-limit: 5

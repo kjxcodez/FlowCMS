@@ -1,5 +1,5 @@
-import { prisma } from "../src/lib/prisma";
-import { verifyDraftPreview } from "../src/lib/preview";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { verifyDraftPreview } from "../apps/app/src/lib/preview";
 
 async function runTests() {
   console.log("=== STARTING DRAFT PREVIEW SECURITY TESTS ===");

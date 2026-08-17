@@ -1,6 +1,6 @@
-import { prisma } from "../src/lib/prisma";
-import { auth } from "../src/lib/auth";
-import { qstash } from "../src/lib/qstash";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { auth } from "../apps/app/src/lib/auth";
+import { qstash } from "../apps/app/src/lib/qstash";
 import { testCollections } from "./tests/rbac/collections.test";
 import { testEntries } from "./tests/rbac/entries.test";
 import { testMedia } from "./tests/rbac/media.test";

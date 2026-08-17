@@ -1,12 +1,12 @@
-import { GET as getWorkspace, PATCH as updateWorkspace, DELETE as deleteWorkspace } from "../../../src/app/api/internal/workspace/route";
-import { POST as checkoutSession } from "../../../src/app/api/billing/checkout/route";
-import { DELETE as removeMember } from "../../../src/app/api/internal/members/[userId]/route";
-import { GET as getInvitations, POST as createInvitation } from "../../../src/app/api/internal/workspace/invitations/route";
-import { DELETE as deleteInvitation } from "../../../src/app/api/internal/workspace/invitations/[id]/route";
+import { GET as getWorkspace, PATCH as updateWorkspace, DELETE as deleteWorkspace } from "../../../apps/app/src/app/api/internal/workspace/route";
+import { POST as checkoutSession } from "../../../apps/app/src/app/api/billing/checkout/route";
+import { DELETE as removeMember } from "../../../apps/app/src/app/api/internal/members/[userId]/route";
+import { GET as getInvitations, POST as createInvitation } from "../../../apps/app/src/app/api/internal/workspace/invitations/route";
+import { DELETE as deleteInvitation } from "../../../apps/app/src/app/api/internal/workspace/invitations/[id]/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../../../src/lib/prisma";
+import { prisma } from "../../../apps/app/src/lib/prisma";
 import { setMockUser } from "../../run-rbac-tests";
-import { FEATURES } from "../../../src/lib/launch";
+import { FEATURES } from "../../../apps/app/src/lib/launch";
 
 export async function testWorkspace(ctx: {
   workspace: any;

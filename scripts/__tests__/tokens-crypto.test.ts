@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { signPayload, verifyPayload } from "../../src/lib/security/tokens";
+import { signPayload, verifyPayload } from "../../apps/app/src/lib/security/tokens";
 
 // Set secret environment variable if not present
 if (!process.env.BETTER_AUTH_SECRET) {

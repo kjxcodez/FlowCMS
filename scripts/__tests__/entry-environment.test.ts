@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { auth } from "../../src/lib/auth";
-import { POST } from "../../src/app/api/internal/entries/route";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { auth } from "../../apps/app/src/lib/auth";
+import { POST } from "../../apps/app/src/app/api/internal/entries/route";
 import { NextRequest } from "next/server";
 
 // Save original methods

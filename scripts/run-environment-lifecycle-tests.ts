@@ -1,9 +1,9 @@
 /* eslint-disable */
-import { prisma } from "../src/lib/prisma";
-import { auth } from "../src/lib/auth";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { auth } from "../apps/app/src/lib/auth";
 import { NextRequest } from "next/server";
-import { POST as createEnvironment } from "../src/app/api/internal/environments/route";
-import { PATCH as updateEnvironment, DELETE as deleteEnvironment } from "../src/app/api/internal/environments/[envId]/route";
+import { POST as createEnvironment } from "../apps/app/src/app/api/internal/environments/route";
+import { PATCH as updateEnvironment, DELETE as deleteEnvironment } from "../apps/app/src/app/api/internal/environments/[envId]/route";
 
 // Global mock state
 let mockSessionUser: any = null;

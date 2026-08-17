@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { auth } from "../../src/lib/auth";
-import { POST } from "../../src/app/api/internal/api-explorer/run/route";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { auth } from "../../apps/app/src/lib/auth";
+import { POST } from "../../apps/app/src/app/api/internal/api-explorer/run/route";
 import { NextRequest } from "next/server";
-import { ApiKey, User, WorkspaceMember, Collection, Environment, Entry, EntryStatus } from "../../src/generated/prisma";
+import { ApiKey, User, WorkspaceMember, Collection, Environment, Entry, EntryStatus } from "../../apps/app/src/generated/prisma";
 
 // Save original methods
 const originalGetSession = auth.api.getSession;

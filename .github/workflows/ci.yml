@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same PR/branch to avoid wasting runner minutes
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install pnpm
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm turbo lint
+
+      - name: Typecheck
+        run: pnpm turbo check-types
+
+      - name: Build
+        run: pnpm turbo build
+        env:
+          # Stub env vars so Next.js build-time validation passes.
+          # These are NOT real credentials. The DB is never contacted during build;
+          # prisma.ts only runs at request time (server components / route handlers).
+          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci_stub"
+          DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci_stub"
+          BETTER_AUTH_SECRET: "ci-stub-secret-not-real"
+          BETTER_AUTH_URL: "http://localhost:3000"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+          NEXT_PUBLIC_SUPABASE_URL: "https://stub.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "stub"

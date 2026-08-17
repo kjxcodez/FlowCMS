@@ -1,8 +1,8 @@
-import { POST as createCollection } from "../../../src/app/api/internal/collections/route";
-import { PATCH as updateCollection, DELETE as deleteCollection } from "../../../src/app/api/internal/collections/[id]/route";
-import { POST as applyTemplate } from "../../../src/app/api/internal/collections/apply-template/route";
+import { POST as createCollection } from "../../../apps/app/src/app/api/internal/collections/route";
+import { PATCH as updateCollection, DELETE as deleteCollection } from "../../../apps/app/src/app/api/internal/collections/[id]/route";
+import { POST as applyTemplate } from "../../../apps/app/src/app/api/internal/collections/apply-template/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../../../src/lib/prisma";
+import { prisma } from "../../../apps/app/src/lib/prisma";
 import { setMockUser } from "../../run-rbac-tests";
 
 export async function testCollections(ctx: {

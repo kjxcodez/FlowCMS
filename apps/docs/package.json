@@ -1,0 +1,14 @@
+{
+  "name": "@flowcms/docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "echo \"apps/docs dev script placeholder\"",
+    "build": "echo \"apps/docs build script placeholder\"",
+    "lint": "echo \"apps/docs lint script placeholder\"",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,563 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Auth ───────────────────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  emailVerified Boolean  @default(false)
+  onboarded     Boolean  @default(false)
+  image         String?
+  isSuspended   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions         Session[]
+  accounts         Account[]
+  workspaceMembers WorkspaceMember[]
+  auditLogs        AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ── Workspace ──────────────────────────────────────────────────────
+model Workspace {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  plan          Plan      @default(HOBBY)
+  planExpiresAt DateTime?
+  trialEndsAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  members          WorkspaceMember[]
+  environments     Environment[]
+  collections      Collection[]
+  media            Media[]
+  folders          MediaFolder[]
+  apiKeys          ApiKey[]
+  webhooks         Webhook[]
+  usageLogs        UsageLog[]
+  monthlyUsage     MonthlyUsage[]
+  auditLogs        AuditLog[]
+  invitations      Invitation[]
+  draftTokens      DraftToken[]
+  customDomains    CustomDomain[]
+  razorpayCustomer RazorpayCustomer?
+  notifications    Notification[]
+  criticalErrors   CriticalError[]
+}
+
+model WorkspaceMember {
+  id          String     @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        MemberRole @default(EDITOR)
+  createdAt   DateTime   @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+}
+
+// ── Environments ───────────────────────────────────────────────────
+model Environment {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  apiKeys     ApiKey[]
+  entries     Entry[]
+  draftTokens DraftToken[]
+  webhooks    Webhook[]
+
+  @@unique([workspaceId, slug])
+}
+
+// ── Content ────────────────────────────────────────────────────────
+model Collection {
+  id          String         @id @default(cuid())
+  workspaceId String
+  name        String
+  slug        String
+  description String?
+  mode        CollectionMode @default(STRUCTURED)
+  fields      Json
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries   Entry[]
+
+  @@unique([workspaceId, slug])
+}
+
+enum CollectionMode {
+  STRUCTURED
+  VISUAL
+}
+
+model Entry {
+  id            String      @id @default(cuid())
+  collectionId  String
+  workspaceId   String
+  environmentId String?
+  slug          String
+  data          Json
+  status        EntryStatus @default(DRAFT)
+  version       Int         @default(1)
+  localeCode    String?     @default("en")
+  publishedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  collection  Collection   @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
+
+  @@unique([collectionId, environmentId, slug])
+  @@index([workspaceId, status])
+  @@index([collectionId, status])
+  @@index([workspaceId, environmentId])
+  @@index([collectionId, environmentId])
+  @@index([status, environmentId])
+}
+
+// ── Media ──────────────────────────────────────────────────────────
+model Media {
+  id          String   @id @default(cuid())
+  workspaceId String
+  filename    String
+  url         String
+  mimeType    String
+  size        Int
+  alt         String?
+  title       String?
+  caption     String?
+  width       Int?
+  height      Int?
+
+  folderId    String?
+  folder      MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, folderId])
+}
+
+model MediaFolder {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  parent MediaFolder? @relation("FolderHierarchy", fields: [parentId], references: [id])
+
+  children MediaFolder[] @relation("FolderHierarchy")
+  media    Media[]
+
+  @@index([workspaceId])
+  @@index([workspaceId, parentId])
+}
+
+// ── API Keys ───────────────────────────────────────────────────────
+model ApiKey {
+  id            String    @id @default(cuid())
+  workspaceId   String
+  environmentId String?
+  name          String
+  keyHash       String    @unique
+  keyPrefix     String
+  scopes        String[]  @default(["read:entries", "read:media"])
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
+
+  @@index([workspaceId, environmentId])
+}
+
+// ── Webhooks ───────────────────────────────────────────────────────
+model Webhook {
+  id            String         @id @default(cuid())
+  workspaceId   String
+  environmentId String?
+  url           String
+  events        WebhookEvent[]
+  secret        String
+  enabled       Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment?       @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  deliveries  WebhookDelivery[]
+
+  @@index([workspaceId, environmentId])
+}
+
+model WebhookDelivery {
+  id            String   @id @default(cuid())
+  webhookId     String
+  event         String
+  payload       Json
+  statusCode    Int?
+  success       Boolean
+  duration      Int?
+  retryCount    Int      @default(0)
+  failureReason String?
+  responseBody  String?
+  createdAt     DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+}
+
+// ── Observability ──────────────────────────────────────────────────
+model UsageLog {
+  id          String   @id @default(cuid())
+  workspaceId String
+  apiKeyId    String?
+  endpoint    String
+  method      String
+  statusCode  Int
+  duration    Int
+  ip          String?
+  userAgent   String?
+  cacheHit    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, apiKeyId])
+}
+
+model MonthlyUsage {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  year         Int
+  month        Int
+  apiRequests  Int      @default(0)
+  storageBytes Int      @default(0)
+  collections  Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, year, month])
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  workspaceId  String?
+  userId       String?
+  apiKeyId     String?
+  action       AuditAction
+  resourceType String
+  resourceId   String
+  resourceName String?
+  before       Json?
+  after        Json?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime    @default(now())
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, resourceType, resourceId])
+}
+
+// ── Billing ────────────────────────────────────────────────────────
+model RazorpayCustomer {
+  id                 String    @id @default(cuid())
+  workspaceId        String    @unique
+  razorpayCustomerId String?
+  subscriptionId     String?   @unique
+  planId             String?
+  subscriptionStatus String? // "created" | "authenticated" | "active" | "paused" | "cancelled" | "expired"
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  lastEventAt        DateTime? // For event sequencing
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ── Team ───────────────────────────────────────────────────────────
+model Invitation {
+  id          String           @id @default(cuid())
+  workspaceId String
+  email       String
+  role        MemberRole       @default(EDITOR)
+  token       String           @unique
+  status      InvitationStatus @default(PENDING)
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime         @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, email])
+}
+
+// ── Preview & Domains ──────────────────────────────────────────────
+model DraftToken {
+  id                  String      @id @default(cuid())
+  workspaceId         String
+  environmentId       String?
+  name                String
+  token               String      @unique
+  active              Boolean     @default(true)
+  expiresAt           DateTime?
+  lastUsedAt          DateTime?
+  createdAt           DateTime    @default(now())
+  allowedCollectionId String?
+  allowedEntryId      String?
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  environment Environment? @relation(fields: [environmentId], references: [id])
+}
+
+model CustomDomain {
+  id          String   @id @default(cuid())
+  workspaceId String
+  domain      String   @unique
+  verified    Boolean  @default(false)
+  verifyToken String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ── Templates ─────────────────────────────────────────────────────
+model CollectionTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    String
+  fields      Json
+  previewData Json?
+  isPremium   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model PageTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  category    String
+  blocks      Json
+  thumbnail   String?
+  isPremium   Boolean  @default(false)
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// ── Enums ──────────────────────────────────────────────────────────
+enum Plan {
+  HOBBY
+  PRO
+  AGENCY
+  ENTERPRISE
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum EntryStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum WebhookEvent {
+  ENTRY_CREATED
+  ENTRY_UPDATED
+  ENTRY_PUBLISHED
+  ENTRY_DELETED
+  PAGE_CREATED
+  PAGE_UPDATED
+  PAGE_PUBLISHED
+  PAGE_DELETED
+  COLLECTION_CREATED
+  COLLECTION_UPDATED
+  COLLECTION_DELETED
+  MEDIA_UPLOADED
+  MEDIA_UPDATED
+  MEDIA_DELETED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  UNPUBLISH
+  ARCHIVE
+  API_KEY_CREATED
+  API_KEY_REVOKED
+  WEBHOOK_FIRED
+  MEMBER_INVITED
+  MEMBER_REMOVED
+  PLAN_CHANGED
+  WEBHOOK_CREATED
+  WEBHOOK_DELETED
+  DRAFT_TOKEN_USED
+  DRAFT_TOKEN_FAILED
+  INVITE_ACCEPTED
+  INVITE_REJECTED
+  INVITE_EXPIRED
+  INVITE_MISMATCH
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+// ── Email Logging ──────────────────────────────────────────────────
+model EmailLog {
+  id                String      @id @default(cuid())
+  idempotencyKey    String      @unique // e.g., "invite_{entryId}_{token}"
+  to                String
+  template          String
+  eventType         String // e.g., "WAITLIST_INVITE"
+  status            EmailStatus @default(PENDING)
+  providerMessageId String? // ID from Resend
+  error             String?
+  attempts          Int         @default(0)
+  lastAttempt       DateTime?
+  createdAt         DateTime    @default(now())
+
+  @@index([to])
+  @@index([idempotencyKey])
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// ── Notifications ─────────────────────────────────────────────────
+model Notification {
+  id          String   @id @default(cuid())
+  workspaceId String
+  userId      String?
+  title       String
+  message     String
+  type        String // "info", "warning", "error", "success"
+  read        Boolean  @default(false)
+  link        String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, read])
+}
+
+// ── Error Tracking ──────────────────────────────────────────────────
+enum ErrorStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  IGNORED
+}
+
+model CriticalError {
+  id              String      @id @default(cuid())
+  fingerprint     String      @unique
+  errorName       String?
+  message         String      @db.Text
+  route           String?
+  method          String?
+  environment     String?
+  deploymentId    String?
+  requestId       String?
+  operation       String?
+  userId          String?
+  workspaceId     String?
+  occurrenceCount Int         @default(1)
+  firstSeenAt     DateTime    @default(now())
+  lastSeenAt      DateTime    @default(now())
+  status          ErrorStatus @default(OPEN)
+  stack           String?     @db.Text
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([lastSeenAt])
+  @@index([status])
+  @@index([workspaceId])
+}
+

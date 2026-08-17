@@ -1,6 +1,6 @@
-import { prisma } from "../src/lib/prisma";
-import { auth } from "../src/lib/auth";
-import { GET } from "../src/app/api/auth/invite/[token]/route";
+import { prisma } from "../apps/app/src/lib/prisma";
+import { auth } from "../apps/app/src/lib/auth";
+import { GET } from "../apps/app/src/app/api/auth/invite/[token]/route";
 import { NextRequest } from "next/server";
 
 // Mock auth session to control logged in state easily during tests

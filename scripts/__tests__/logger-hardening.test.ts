@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { auth } from "../../src/lib/auth";
-import { logger } from "../../src/lib/logger";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { auth } from "../../apps/app/src/lib/auth";
+import { logger } from "../../apps/app/src/lib/logger";
 import { NextRequest } from "next/server";
-import { WorkspaceService } from "../../src/server/services/workspace.service";
+import { WorkspaceService } from "../../apps/app/src/server/services/workspace.service";
 
 // Import route handlers to test
-import { POST as apiExplorerPOST } from "../../src/app/api/internal/api-explorer/run/route";
-import { POST as onboardingPOST } from "../../src/app/api/internal/onboarding/complete/route";
-import { POST as replayPOST } from "../../src/app/api/internal/webhooks/deliveries/[id]/replay/route";
-import { PATCH as envPATCH, DELETE as envDELETE } from "../../src/app/api/internal/environments/[envId]/route";
+import { POST as apiExplorerPOST } from "../../apps/app/src/app/api/internal/api-explorer/run/route";
+import { POST as onboardingPOST } from "../../apps/app/src/app/api/internal/onboarding/complete/route";
+import { POST as replayPOST } from "../../apps/app/src/app/api/internal/webhooks/deliveries/[id]/replay/route";
+import { PATCH as envPATCH, DELETE as envDELETE } from "../../apps/app/src/app/api/internal/environments/[envId]/route";
 
 // Save original methods
 const originalGetSession = auth.api.getSession;

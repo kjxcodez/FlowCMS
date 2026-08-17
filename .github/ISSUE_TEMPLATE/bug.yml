@@ -1,0 +1,70 @@
+name: Bug Report
+description: Report a bug or unintended behavior in FlowCMS
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug in FlowCMS! Please fill out the form below as completely as possible. Do not include passwords, API keys, or database credentials.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe what happened...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Area
+      description: What part of FlowCMS is affected?
+      options:
+        - "App UI / Dashboard"
+        - "Authentication (Better Auth)"
+        - "API (v1 / Internal)"
+        - "Database / Prisma / Supabase"
+        - "Webhooks / QStash"
+        - "Media Storage"
+        - "Billing (Razorpay)"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Explain step-by-step how to reproduce the bug.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or Stack Trace
+      description: Paste relevant browser console logs, server logs, or stack traces (redact secrets!).
+      render: shell
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser version, Node.js version, deployment environment (e.g. Vercel, Docker, Local).
+      placeholder: e.g. Windows 11, Chrome 120, Node 22, Vercel

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { getStorageUsage, checkStorageLimit } from "../../src/lib/usage";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { getStorageUsage, checkStorageLimit } from "../../apps/app/src/lib/usage";
 
 // Mock media data array
 interface MockMediaItem {

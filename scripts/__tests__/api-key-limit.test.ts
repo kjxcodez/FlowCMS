@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert";
-import { prisma } from "../../src/lib/prisma";
-import { ApiKeyService } from "../../src/server/services/api-key.service";
+import { prisma } from "../../apps/app/src/lib/prisma";
+import { ApiKeyService } from "../../apps/app/src/server/services/api-key.service";
 
 // Save originals
 const originalCount = prisma.apiKey.count;

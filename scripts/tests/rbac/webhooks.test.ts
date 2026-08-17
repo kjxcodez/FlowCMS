@@ -1,9 +1,9 @@
-import { GET as getWebhooks, POST as createWebhook, DELETE as deleteWebhook } from "../../../src/app/api/internal/webhooks/route";
-import { POST as replayWebhook } from "../../../src/app/api/internal/webhooks/deliveries/[id]/replay/route";
+import { GET as getWebhooks, POST as createWebhook, DELETE as deleteWebhook } from "../../../apps/app/src/app/api/internal/webhooks/route";
+import { POST as replayWebhook } from "../../../apps/app/src/app/api/internal/webhooks/deliveries/[id]/replay/route";
 import { NextRequest } from "next/server";
-import { prisma } from "../../../src/lib/prisma";
+import { prisma } from "../../../apps/app/src/lib/prisma";
 import { setMockUser } from "../../run-rbac-tests";
-import { WebhookEvent } from "../../../src/generated/prisma";
+import { WebhookEvent } from "../../../apps/app/src/generated/prisma";
 
 export async function testWebhooks(ctx: {
   workspace: any;
